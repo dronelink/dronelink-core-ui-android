@@ -5,6 +5,15 @@
     <string name="Mission_start_cancelled">Countdown Stopped</string>
     <string name="Mission_start_engage_droneSerialNumberUnavailable_title">Unidentified Drone</string>
     <string name="Mission_start_engage_droneSerialNumberUnavailable_message">Unable to determine the serial number of your drone. Try reconnecting or power-cycling.</string>
-
+    <string name="Telemetry_distance_prefix">D</string>
+    <string name="Telemetry_distance_suffix_imperial">ft</string>
+    <string name="Telemetry_distance_suffix_metric">m</string>
+    <string name="Telemetry_altitude_prefix">A</string>
+    <string name="Telemetry_horizontalSpeed_prefix">H/S</string>
+    <string name="Telemetry_horizontalSpeed_suffix_imperial">mph</string>
+    <string name="Telemetry_horizontalSpeed_suffix_metric">km/h</string>
+    <string name="Telemetry_verticalSpeed_prefix">V/S</string>
+    <string name="Telemetry_verticalSpeed_suffix_imperial">fps</string>
+    <string name="Telemetry_verticalSpeed_suffix_metric">m/s</string>
     <string name="MissionDisengageReason_user_disengaged">Mission Paused</string>
 </resources>
