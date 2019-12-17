@@ -10,6 +10,7 @@ import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
+import android.location.Location;
 import android.os.Bundle;
 
 import androidx.annotation.Nullable;
@@ -30,6 +31,7 @@ import com.dronelink.core.DroneSessionManager;
 import com.dronelink.core.Dronelink;
 import com.dronelink.core.MissionExecutor;
 import com.dronelink.core.mission.component.Component;
+import com.dronelink.core.mission.core.GeoCoordinate;
 import com.dronelink.core.mission.core.Message;
 import com.dronelink.core.mission.core.MessageGroup;
 
@@ -91,22 +93,63 @@ public class MissionFragment extends Fragment implements Dronelink.Listener, Dro
 
                 final Message[] engageDisallowedReasons = missionExecutor.engageDisallowedReasons(session);
                 if (engageDisallowedReasons == null || engageDisallowedReasons.length == 0) {
-                    startCountdown();
-                }
-                else {
-                    final AlertDialog.Builder alertDialog = new AlertDialog.Builder(getActivity());
-                    alertDialog.setTitle(engageDisallowedReasons[0].title);
-                    if (engageDisallowedReasons[0].details != null) {
-                        alertDialog.setMessage(engageDisallowedReasons[0].details);
-                    }
-                    alertDialog.setPositiveButton(getString(R.string.Mission_dismiss), new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(final DialogInterface d, int i) {
-                            d.dismiss();
+                    missionExecutor.droneTakeoffAltitudeAlternate = null;
+                    if (missionExecutor.getRequiredTakeoffArea() == null) {
+                        final Location actualTakeoffLocation = session.getState().value.getTakeoffLocation();
+                        final GeoCoordinate suggestedTakeoffCoordinate = missionExecutor.getTakeoffCoordinate();
+                        if (actualTakeoffLocation.distanceTo(suggestedTakeoffCoordinate.getLocation()) > 10) {
+                            final Location deviceLocation = Dronelink.getInstance().getLocation();
+                            if (deviceLocation != null && deviceLocation.hasAltitude()) {
+                                missionExecutor.droneTakeoffAltitudeAlternate = Dronelink.getInstance().getAltitude();
+                            }
+
+                            final String distance = missionExecutor.format("distance", new Double(actualTakeoffLocation.distanceTo(suggestedTakeoffCoordinate.getLocation())), "");
+                            final String altitude = missionExecutor.droneTakeoffAltitudeAlternate == null ? null : missionExecutor.format("altitude", missionExecutor.droneTakeoffAltitudeAlternate, "");
+                            String message = "";
+                            if (altitude == null) {
+                                message = getString(R.string.Mission_start_takeoffLocationWarning_message_deviceAltitudeUnavailable, distance);
+                            }
+                            else {
+                                message = getString(R.string.Mission_start_takeoffLocationWarning_message_deviceAltitudeAvailable, distance, altitude);
+                            }
+
+                            final AlertDialog.Builder alertDialog = new AlertDialog.Builder(getActivity());
+                            alertDialog.setTitle(R.string.Mission_start_takeoffLocationWarning_title);
+                            alertDialog.setMessage(message);
+                            alertDialog.setPositiveButton(getString(R.string.Mission_continue), new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(final DialogInterface d, int i) {
+                                    d.dismiss();
+                                    startCountdown();
+                                }
+                            });
+                            alertDialog.setNegativeButton(getString(R.string.Mission_cancel), new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(final DialogInterface d, int i) {
+                                    d.dismiss();
+                                }
+                            });
+                            alertDialog.show();
+                            return;
                         }
-                    });
-                    alertDialog.show();
+                    }
+
+                    startCountdown();
+                    return;
                 }
+
+                final AlertDialog.Builder alertDialog = new AlertDialog.Builder(getActivity());
+                alertDialog.setTitle(engageDisallowedReasons[0].title);
+                if (engageDisallowedReasons[0].details != null) {
+                    alertDialog.setMessage(engageDisallowedReasons[0].details);
+                }
+                alertDialog.setPositiveButton(getString(R.string.Mission_dismiss), new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(final DialogInterface d, int i) {
+                        d.dismiss();
+                    }
+                });
+                alertDialog.show();
             }
         });
         closeButton = getView().findViewById(R.id.closeButton);
