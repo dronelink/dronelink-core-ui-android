@@ -29,6 +29,7 @@ import android.widget.TextView;
 import com.dronelink.core.DroneSession;
 import com.dronelink.core.DroneSessionManager;
 import com.dronelink.core.Dronelink;
+import com.dronelink.core.FuncExecutor;
 import com.dronelink.core.MissionExecutor;
 import com.dronelink.core.mission.component.Component;
 import com.dronelink.core.mission.core.GeoCoordinate;
@@ -44,7 +45,7 @@ public class MissionFragment extends Fragment implements Dronelink.Listener, Dro
     private Timer countdownTimer;
     private int countdownRemaining = 0;
     private boolean engaging = false;
-    private ImageButton primaryButton;;
+    private ImageButton primaryButton;
     private ImageButton closeButton;
     private TextView titleTextView;
     private TextView timeElapsedTextView;
@@ -63,7 +64,7 @@ public class MissionFragment extends Fragment implements Dronelink.Listener, Dro
     public MissionFragment() {}
 
     @Override
-    public void onCreate(final  Bundle savedInstanceState) {
+    public void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
     }
 
@@ -103,8 +104,8 @@ public class MissionFragment extends Fragment implements Dronelink.Listener, Dro
                                 missionExecutor.droneTakeoffAltitudeAlternate = Dronelink.getInstance().getAltitude();
                             }
 
-                            final String distance = missionExecutor.format("distance", new Double(actualTakeoffLocation.distanceTo(suggestedTakeoffCoordinate.getLocation())), "");
-                            final String altitude = missionExecutor.droneTakeoffAltitudeAlternate == null ? null : missionExecutor.format("altitude", missionExecutor.droneTakeoffAltitudeAlternate, "");
+                            final String distance = Dronelink.getInstance().format("distance", new Double(actualTakeoffLocation.distanceTo(suggestedTakeoffCoordinate.getLocation())), "");
+                            final String altitude = missionExecutor.droneTakeoffAltitudeAlternate == null ? null : Dronelink.getInstance().format("altitude", missionExecutor.droneTakeoffAltitudeAlternate, "");
                             String message = "";
                             if (altitude == null) {
                                 message = getString(R.string.Mission_start_takeoffLocationWarning_message_deviceAltitudeUnavailable, distance);
@@ -301,8 +302,8 @@ public class MissionFragment extends Fragment implements Dronelink.Listener, Dro
             progressBar.setProgress((int)(Math.min(totalTime == 0 ? 0.0 : timeElapsed / totalTime, 1.0) * 100));
             closeButton.setVisibility(engaged ? View.INVISIBLE : View.VISIBLE);
             titleTextView.setText(engaging ? getString(R.string.Mission_start_engaging) : missionExecutor.missionDescriptors.toString());
-            timeElapsedTextView.setText(missionExecutor.format("timeElapsed", timeElapsed, "00:00"));
-            timeRemainingTextView.setText(missionExecutor.format("timeElapsed", timeRemaining, "00:00"));
+            timeElapsedTextView.setText(Dronelink.getInstance().format("timeElapsed", timeElapsed, "00:00"));
+            timeRemainingTextView.setText(Dronelink.getInstance().format("timeElapsed", timeRemaining, "00:00"));
             if (expanded && missionExecutor.isEngaged()) {
                 final StringBuilder messages = new StringBuilder();
                 for (final MessageGroup messageGroup : missionExecutor.getExecutingMessageGroups()) {
@@ -355,6 +356,14 @@ public class MissionFragment extends Fragment implements Dronelink.Listener, Dro
         executor.removeListener(this);
         missionExecutor = null;
         getActivity().runOnUiThread(updateViews);
+    }
+
+    @Override
+    public void onFuncLoaded(final FuncExecutor executor) {
+    }
+
+    @Override
+    public void onFuncUnloaded(final FuncExecutor executor) {
     }
 
     @Override

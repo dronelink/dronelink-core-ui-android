@@ -1,4 +1,17 @@
 <resources>
+    <string name="Func_yes">Yes</string>
+    <string name="Func_no">No</string>
+    <string name="Func_primary_intro">Get Started</string>
+    <string name="Func_primary_execute">Generate Mission</string>
+    <string name="Func_primary_executing">Generating...</string>
+    <string name="Func_input_drone">Mark</string>
+    <string name="Func_input_drone_unavailable">Please connect a drone</string>
+    <string name="Func_input_required">This input is required.</string>
+    <string name="Func_input_none">No Input</string>
+    <string name="Func_input_choose">Choose...</string>
+    <string name="Func_input_summary">Input Summary</string>
+    <string name="Func_back">Back</string>
+    <string name="Func_next">Next</string>
     <string name="Mission_dismiss">Dismiss</string>
     <string name="Mission_cancel">Cancel</string>
     <string name="Mission_continue">Continue</string>

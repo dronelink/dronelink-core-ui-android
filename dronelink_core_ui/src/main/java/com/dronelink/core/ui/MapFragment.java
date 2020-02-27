@@ -23,6 +23,7 @@ import com.dronelink.core.Convert;
 import com.dronelink.core.DroneSession;
 import com.dronelink.core.DroneSessionManager;
 import com.dronelink.core.Dronelink;
+import com.dronelink.core.FuncExecutor;
 import com.dronelink.core.MissionExecutor;
 import com.dronelink.core.adapters.DroneStateAdapter;
 import com.dronelink.core.mission.core.GeoCoordinate;
@@ -202,28 +203,30 @@ public class MapFragment extends Fragment implements Dronelink.Listener, DroneSe
 
 
                 final GeoCoordinate[][] pathCoordinates = missionExecutor.getEstimateSegmentCoordinates(null);
-                final List<LatLng> pathPoints = new LinkedList<>();
-                for (final GeoCoordinate[] segment : pathCoordinates) {
-                    for (final GeoCoordinate coordinate : segment) {
-                        pathPoints.add(new LatLng(coordinate.latitude, coordinate.longitude));
+                if (pathCoordinates != null) {
+                    final List<LatLng> pathPoints = new LinkedList<>();
+                    for (final GeoCoordinate[] segment : pathCoordinates) {
+                        for (final GeoCoordinate coordinate : segment) {
+                            pathPoints.add(new LatLng(coordinate.latitude, coordinate.longitude));
+                        }
                     }
-                }
 
-                if (pathPoints.size() > 0) {
-                    missionPathBackgroundAnnotation = map.addPolyline(new PolylineOptions().addAll(pathPoints).width(6).color(Color.parseColor("#0277bd")));
-                    missionPathForegroundAnnotation = map.addPolyline(new PolylineOptions().addAll(pathPoints).width((float)2.5).color(Color.parseColor("#26c6da")));
+                    if (pathPoints.size() > 0) {
+                        missionPathBackgroundAnnotation = map.addPolyline(new PolylineOptions().addAll(pathPoints).width(6).color(Color.parseColor("#0277bd")));
+                        missionPathForegroundAnnotation = map.addPolyline(new PolylineOptions().addAll(pathPoints).width((float) 2.5).color(Color.parseColor("#26c6da")));
 
-                    map.getLocationComponent().getLocationEngine().getLastLocation(new LocationEngineCallback<LocationEngineResult>() {
-                        @Override
-                        public void onSuccess(LocationEngineResult result) {
-                            updateBounds(pathPoints, result.getLastLocation());
-                        }
+                        map.getLocationComponent().getLocationEngine().getLastLocation(new LocationEngineCallback<LocationEngineResult>() {
+                            @Override
+                            public void onSuccess(LocationEngineResult result) {
+                                updateBounds(pathPoints, result.getLastLocation());
+                            }
 
-                        @Override
-                        public void onFailure(@NonNull Exception exception) {
-                            updateBounds(pathPoints, null);
-                        }
-                    });
+                            @Override
+                            public void onFailure(@NonNull Exception exception) {
+                                updateBounds(pathPoints, null);
+                            }
+                        });
+                    }
                 }
             }
         }
@@ -262,6 +265,14 @@ public class MapFragment extends Fragment implements Dronelink.Listener, DroneSe
         executor.removeListener(this);
         missionExecutor = null;
         getActivity().runOnUiThread(updateMissionEstimate);
+    }
+
+    @Override
+    public void onFuncLoaded(final FuncExecutor executor) {
+    }
+
+    @Override
+    public void onFuncUnloaded(final FuncExecutor executor) {
     }
 
     @Override
