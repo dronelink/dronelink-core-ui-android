@@ -1,3 +1,2 @@
 include ':dronelink_core_ui'
 rootProject.name='DronelinkCoreUI'
-

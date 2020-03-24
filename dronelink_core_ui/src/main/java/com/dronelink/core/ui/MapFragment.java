@@ -62,6 +62,8 @@ public class MapFragment extends Fragment implements Dronelink.Listener, DroneSe
     private Annotation missionRequiredTakeoffAreaAnnotation;
     private Annotation missionPathBackgroundAnnotation;
     private Annotation missionPathForegroundAnnotation;
+    private Annotation missionReengagementBackgroundAnnotation;
+    private Annotation missionReengagementForegroundAnnotation;
     private final long updateMillis = 100;
     private Timer updateTimer;
 
@@ -189,6 +191,14 @@ public class MapFragment extends Fragment implements Dronelink.Listener, DroneSe
                 map.removeAnnotation(missionPathForegroundAnnotation);
             }
 
+            if (missionReengagementBackgroundAnnotation != null) {
+                map.removeAnnotation(missionReengagementBackgroundAnnotation);
+            }
+
+            if (missionReengagementForegroundAnnotation != null) {
+                map.removeAnnotation(missionReengagementForegroundAnnotation);
+            }
+
             if (missionExecutor != null) {
                 final MissionExecutor.TakeoffArea requiredTakeoffArea = missionExecutor.getRequiredTakeoffArea();
                 if (requiredTakeoffArea != null) {
@@ -202,6 +212,8 @@ public class MapFragment extends Fragment implements Dronelink.Listener, DroneSe
                 }
 
 
+                final List<LatLng> visiblePoints = new LinkedList<>();
+
                 final GeoCoordinate[][] pathCoordinates = missionExecutor.getEstimateSegmentCoordinates(null);
                 if (pathCoordinates != null) {
                     final List<LatLng> pathPoints = new LinkedList<>();
@@ -214,28 +226,37 @@ public class MapFragment extends Fragment implements Dronelink.Listener, DroneSe
                     if (pathPoints.size() > 0) {
                         missionPathBackgroundAnnotation = map.addPolyline(new PolylineOptions().addAll(pathPoints).width(6).color(Color.parseColor("#0277bd")));
                         missionPathForegroundAnnotation = map.addPolyline(new PolylineOptions().addAll(pathPoints).width((float) 2.5).color(Color.parseColor("#26c6da")));
-
-                        map.getLocationComponent().getLocationEngine().getLastLocation(new LocationEngineCallback<LocationEngineResult>() {
-                            @Override
-                            public void onSuccess(LocationEngineResult result) {
-                                updateBounds(pathPoints, result.getLastLocation());
-                            }
-
-                            @Override
-                            public void onFailure(@NonNull Exception exception) {
-                                updateBounds(pathPoints, null);
-                            }
-                        });
+                        visiblePoints.addAll(pathPoints);
                     }
                 }
+
+                final GeoCoordinate[][] reengagementCoordinates = missionExecutor.getReengagementCoordinates();
+                if (reengagementCoordinates != null) {
+                    final List<LatLng> reengagementPoints = new LinkedList<>();
+                    for (final GeoCoordinate[] segment : reengagementCoordinates) {
+                        for (final GeoCoordinate coordinate : segment) {
+                            reengagementPoints.add(new LatLng(coordinate.latitude, coordinate.longitude));
+                        }
+                    }
+
+                    if (reengagementPoints.size() > 0) {
+                        missionReengagementBackgroundAnnotation = map.addPolyline(new PolylineOptions().addAll(reengagementPoints).width(6).color(Color.parseColor("#6a1b9a")));
+                        missionReengagementForegroundAnnotation = map.addPolyline(new PolylineOptions().addAll(reengagementPoints).width((float) 2.5).color(Color.parseColor("#e040fb")));
+                        visiblePoints.addAll(reengagementPoints);
+                    }
+                }
+
+                updateBounds(visiblePoints);
             }
         }
     };
 
-    private void updateBounds(final List<LatLng> points, final Location userLocation) {
-        final LatLngBounds.Builder bounds = new LatLngBounds.Builder();
-        bounds.includes(points);
-        map.animateCamera(CameraUpdateFactory.newLatLngBounds(bounds.build(), 10));
+    private void updateBounds(final List<LatLng> points) {
+        if (points.size() > 0) {
+            final LatLngBounds.Builder bounds = new LatLngBounds.Builder();
+            bounds.includes(points);
+            map.animateCamera(CameraUpdateFactory.newLatLngBounds(bounds.build(), 10));
+        }
     }
 
 
