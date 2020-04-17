@@ -15,6 +15,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
+import android.os.Handler;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -60,12 +61,13 @@ public class MapFragment extends Fragment implements Dronelink.Listener, DroneSe
     private com.mapbox.mapboxsdk.maps.MapView mapView;
     private MapboxMap map;
     private Annotation missionRequiredTakeoffAreaAnnotation;
-    private Annotation missionPathBackgroundAnnotation;
-    private Annotation missionPathForegroundAnnotation;
-    private Annotation missionReengagementBackgroundAnnotation;
-    private Annotation missionReengagementForegroundAnnotation;
-    private final long updateMillis = 100;
+    private Annotation missionEstimateBackgroundAnnotation;
+    private Annotation missionEstimateForegroundAnnotation;
+    private Annotation missionReengagementEstimateBackgroundAnnotation;
+    private Annotation missionReengagementEstimateForegroundAnnotation;
     private Timer updateTimer;
+    private final long updateMillis = 100;
+    private boolean missionCentered = false;
 
     private DroneStateAdapter getDroneState() {
         if (session == null || session.getState() == null) {
@@ -116,8 +118,8 @@ public class MapFragment extends Fragment implements Dronelink.Listener, DroneSe
     public void onStop() {
         super.onStop();
         mapView.onStop();
-        Dronelink.getInstance().removeListener(this);
         Dronelink.getInstance().getSessionManager().removeListener(this);
+        Dronelink.getInstance().removeListener(this);
         if (missionExecutor != null) {
             missionExecutor.removeListener(this);
         }
@@ -172,10 +174,17 @@ public class MapFragment extends Fragment implements Dronelink.Listener, DroneSe
         }
     };
 
+
     @SuppressWarnings({"MissingPermission"})
-    private Runnable updateMissionEstimate = new Runnable() {
+    private Runnable updateMissionRequiredTakeoffArea = new Runnable() {
         public void run() {
             if (map == null) {
+                new Handler().postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        getActivity().runOnUiThread(updateMissionRequiredTakeoffArea);
+                    }
+                }, 100);
                 return;
             }
 
@@ -183,24 +192,9 @@ public class MapFragment extends Fragment implements Dronelink.Listener, DroneSe
                 map.removeAnnotation(missionRequiredTakeoffAreaAnnotation);
             }
 
-            if (missionPathBackgroundAnnotation != null) {
-                map.removeAnnotation(missionPathBackgroundAnnotation);
-            }
-
-            if (missionPathForegroundAnnotation != null) {
-                map.removeAnnotation(missionPathForegroundAnnotation);
-            }
-
-            if (missionReengagementBackgroundAnnotation != null) {
-                map.removeAnnotation(missionReengagementBackgroundAnnotation);
-            }
-
-            if (missionReengagementForegroundAnnotation != null) {
-                map.removeAnnotation(missionReengagementForegroundAnnotation);
-            }
 
             if (missionExecutor != null) {
-                final MissionExecutor.TakeoffArea requiredTakeoffArea = missionExecutor.getRequiredTakeoffArea();
+                final MissionExecutor.TakeoffArea requiredTakeoffArea = missionExecutor.requiredTakeoffArea;
                 if (requiredTakeoffArea != null) {
                     final Location takeoffLocation = requiredTakeoffArea.coordinate.getLocation();
                     final List<LatLng> takeoffAreaPoints = new LinkedList<>();
@@ -210,55 +204,88 @@ public class MapFragment extends Fragment implements Dronelink.Listener, DroneSe
                     }
                     missionRequiredTakeoffAreaAnnotation = map.addPolygon(new PolygonOptions().addAll(takeoffAreaPoints).alpha((float)0.75).fillColor(Color.parseColor("#ffa726")));
                 }
-
-
-                final List<LatLng> visiblePoints = new LinkedList<>();
-
-                final GeoCoordinate[][] pathCoordinates = missionExecutor.getEstimateSegmentCoordinates(null);
-                if (pathCoordinates != null) {
-                    final List<LatLng> pathPoints = new LinkedList<>();
-                    for (final GeoCoordinate[] segment : pathCoordinates) {
-                        for (final GeoCoordinate coordinate : segment) {
-                            pathPoints.add(new LatLng(coordinate.latitude, coordinate.longitude));
-                        }
-                    }
-
-                    if (pathPoints.size() > 0) {
-                        missionPathBackgroundAnnotation = map.addPolyline(new PolylineOptions().addAll(pathPoints).width(6).color(Color.parseColor("#0277bd")));
-                        missionPathForegroundAnnotation = map.addPolyline(new PolylineOptions().addAll(pathPoints).width((float) 2.5).color(Color.parseColor("#26c6da")));
-                        visiblePoints.addAll(pathPoints);
-                    }
-                }
-
-                final GeoCoordinate[][] reengagementCoordinates = missionExecutor.getReengagementCoordinates();
-                if (reengagementCoordinates != null) {
-                    final List<LatLng> reengagementPoints = new LinkedList<>();
-                    for (final GeoCoordinate[] segment : reengagementCoordinates) {
-                        for (final GeoCoordinate coordinate : segment) {
-                            reengagementPoints.add(new LatLng(coordinate.latitude, coordinate.longitude));
-                        }
-                    }
-
-                    if (reengagementPoints.size() > 0) {
-                        missionReengagementBackgroundAnnotation = map.addPolyline(new PolylineOptions().addAll(reengagementPoints).width(6).color(Color.parseColor("#6a1b9a")));
-                        missionReengagementForegroundAnnotation = map.addPolyline(new PolylineOptions().addAll(reengagementPoints).width((float) 2.5).color(Color.parseColor("#e040fb")));
-                        visiblePoints.addAll(reengagementPoints);
-                    }
-                }
-
-                updateBounds(visiblePoints);
             }
         }
     };
 
-    private void updateBounds(final List<LatLng> points) {
-        if (points.size() > 0) {
-            final LatLngBounds.Builder bounds = new LatLngBounds.Builder();
-            bounds.includes(points);
-            map.animateCamera(CameraUpdateFactory.newLatLngBounds(bounds.build(), 10));
-        }
-    }
+    @SuppressWarnings({"MissingPermission"})
+    private Runnable updateMissionEstimate = new Runnable() {
+        public void run() {
+            if (map == null) {
+                new Handler().postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        getActivity().runOnUiThread(updateMissionEstimate);
+                    }
+                }, 100);
+                return;
+            }
 
+            if (missionEstimateBackgroundAnnotation != null) {
+                map.removeAnnotation(missionEstimateBackgroundAnnotation);
+            }
+
+            if (missionEstimateForegroundAnnotation != null) {
+                map.removeAnnotation(missionEstimateForegroundAnnotation);
+            }
+
+            if (missionReengagementEstimateBackgroundAnnotation != null) {
+                map.removeAnnotation(missionReengagementEstimateBackgroundAnnotation);
+            }
+
+            if (missionReengagementEstimateForegroundAnnotation != null) {
+                map.removeAnnotation(missionReengagementEstimateForegroundAnnotation);
+            }
+
+            if (missionExecutor == null) {
+                return;
+            }
+
+            final MissionExecutor.Estimate estimate = missionExecutor.getEstimate();
+            if (estimate == null) {
+                return;
+            }
+
+            final List<LatLng> visibleCoordinates = new LinkedList<>();
+
+            final GeoCoordinate[] estimateCoordinates = estimate.coordinates;
+            if (estimateCoordinates != null && estimateCoordinates.length > 0) {
+                final List<LatLng> pathPoints = new LinkedList<>();
+                for (final GeoCoordinate coordinate : estimateCoordinates) {
+                    pathPoints.add(new LatLng(coordinate.latitude, coordinate.longitude));
+                }
+
+                missionEstimateBackgroundAnnotation = map.addPolyline(new PolylineOptions().addAll(pathPoints).width(6).color(Color.parseColor("#0277bd")));
+                missionEstimateForegroundAnnotation = map.addPolyline(new PolylineOptions().addAll(pathPoints).width((float) 2.5).color(Color.parseColor("#26c6da")));
+
+                if (!missionCentered) {
+                    visibleCoordinates.addAll(pathPoints);
+                }
+
+                final GeoCoordinate[] reengagementEstimateCoordinates = estimate.reengagementCoordinates;
+                if (reengagementEstimateCoordinates != null && reengagementEstimateCoordinates.length > 0) {
+                    final List<LatLng> reengagementPoints = new LinkedList<>();
+                    for (final GeoCoordinate coordinate : reengagementEstimateCoordinates) {
+                        reengagementPoints.add(new LatLng(coordinate.latitude, coordinate.longitude));
+                    }
+
+                    missionReengagementEstimateBackgroundAnnotation = map.addPolyline(new PolylineOptions().addAll(reengagementPoints).width(6).color(Color.parseColor("#6a1b9a")));
+                    missionReengagementEstimateForegroundAnnotation = map.addPolyline(new PolylineOptions().addAll(reengagementPoints).width((float) 2.5).color(Color.parseColor("#e040fb")));
+
+                    if (!missionCentered) {
+                        visibleCoordinates.addAll(reengagementPoints);
+                    }
+                }
+            }
+
+            if (visibleCoordinates.size() > 0) {
+                missionCentered = true;
+                final LatLngBounds.Builder bounds = new LatLngBounds.Builder();
+                bounds.includes(visibleCoordinates);
+                map.animateCamera(CameraUpdateFactory.newLatLngBounds(bounds.build(), 10));
+            }
+        }
+    };
 
     @Override
     public void onOpened(final DroneSession session) {
@@ -276,30 +303,40 @@ public class MapFragment extends Fragment implements Dronelink.Listener, DroneSe
 
     @Override
     public void onMissionLoaded(final MissionExecutor executor) {
-        executor.addListener(this);
         missionExecutor = executor;
-        getActivity().runOnUiThread(updateMissionEstimate);
+        missionCentered = false;
+        executor.addListener(this);
+        getActivity().runOnUiThread(updateMissionRequiredTakeoffArea);
+        if (executor.isEstimated()) {
+            getActivity().runOnUiThread(updateMissionEstimate);
+        }
     }
 
     @Override
     public void onMissionUnloaded(final MissionExecutor executor) {
-        executor.removeListener(this);
         missionExecutor = null;
+        missionCentered = false;
+        executor.removeListener(this);
+        getActivity().runOnUiThread(updateMissionRequiredTakeoffArea);
         getActivity().runOnUiThread(updateMissionEstimate);
     }
 
     @Override
-    public void onFuncLoaded(final FuncExecutor executor) {
-    }
+    public void onFuncLoaded(final FuncExecutor executor) {}
 
     @Override
-    public void onFuncUnloaded(final FuncExecutor executor) {
-    }
+    public void onFuncUnloaded(final FuncExecutor executor) {}
 
     @Override
-    public void onMissionEstimated(final MissionExecutor executor, final long durationMillis) {
+    public void onMissionEstimating(final MissionExecutor executor) {}
+
+    @Override
+    public void onMissionEstimated(final MissionExecutor executor, final MissionExecutor.Estimate estimate) {
         getActivity().runOnUiThread(updateMissionEstimate);
     }
+
+    @Override
+    public void onMissionEngaging(final MissionExecutor executor) {}
 
     @Override
     public void onMissionEngaged(final MissionExecutor executor, final MissionExecutor.Engagement engagement) {}
@@ -345,8 +382,8 @@ public class MapFragment extends Fragment implements Dronelink.Listener, DroneSe
                     }
                 }, 0, updateMillis);
 
-                Dronelink.getInstance().addListener(self);
                 Dronelink.getInstance().getSessionManager().addListener(self);
+                Dronelink.getInstance().addListener(self);
             }
         });
     }

@@ -7,6 +7,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".MissionFragment">
+
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/primaryButton"
         android:src="@drawable/baseline_play_arrow_white_48"
@@ -17,8 +18,16 @@
         custom:layout_constraintTop_toTopOf="parent"
         custom:layout_constraintStart_toStartOf="parent" />
 
+    <ProgressBar
+        android:id="@+id/activityIndicator"
+        android:layout_width="54dp"
+        android:layout_height="54dp"
+        custom:layout_constraintTop_toTopOf="@+id/primaryButton"
+        custom:layout_constraintStart_toStartOf="@+id/primaryButton"
+        android:indeterminateOnly="true" />
+
     <ImageButton
-        android:id="@+id/closeButton"
+        android:id="@+id/dismissButton"
         android:background="@drawable/baseline_close_white_24"
         android:layout_width="24dp"
         android:layout_height="24dp"
@@ -41,10 +50,23 @@
         android:layout_marginTop="4dp"
         custom:layout_constraintTop_toTopOf="@+id/primaryButton"
         custom:layout_constraintStart_toEndOf="@+id/primaryButton"
-        custom:layout_constraintEnd_toStartOf="@+id/closeButton" />
+        custom:layout_constraintEnd_toStartOf="@+id/dismissButton" />
 
     <TextView
-        android:id="@+id/timeElapsedTextView"
+        android:id="@+id/subtitleTextView"
+        android:textColor="#FFFFFF"
+        android:textSize="12sp"
+        android:scrollHorizontally="true"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:layout_width="0dp"
+        android:layout_height="30dp"
+        custom:layout_constraintTop_toBottomOf="@+id/titleTextView"
+        custom:layout_constraintStart_toStartOf="@+id/titleTextView"
+        custom:layout_constraintEnd_toEndOf="@+id/titleTextView" />
+
+    <TextView
+        android:id="@+id/executionDurationTextView"
         android:textColor="#FFFFFF"
         android:textSize="12sp"
         android:textStyle="bold"
@@ -66,7 +88,7 @@
         android:layout_width="50dp"
         android:layout_height="30dp"
         custom:layout_constraintTop_toBottomOf="@+id/titleTextView"
-        custom:layout_constraintEnd_toEndOf="@+id/closeButton" />
+        custom:layout_constraintEnd_toEndOf="@+id/dismissButton" />
 
     <ProgressBar
         android:id="@+id/progressBar"
@@ -74,8 +96,8 @@
         android:layout_width="0dp"
         android:layout_height="4dp"
         android:layout_marginTop="7dp"
-        custom:layout_constraintTop_toTopOf="@+id/timeElapsedTextView"
-        custom:layout_constraintStart_toEndOf="@+id/timeElapsedTextView"
+        custom:layout_constraintTop_toTopOf="@+id/executionDurationTextView"
+        custom:layout_constraintStart_toEndOf="@+id/executionDurationTextView"
         custom:layout_constraintEnd_toStartOf="@+id/timeRemainingTextView"/>
 
     <TextView
@@ -89,5 +111,5 @@
         android:layout_marginTop="8dp"
         custom:layout_constraintTop_toBottomOf="@+id/primaryButton"
         custom:layout_constraintStart_toStartOf="@+id/primaryButton"
-        custom:layout_constraintEnd_toEndOf="@+id/closeButton" />
+        custom:layout_constraintEnd_toEndOf="@+id/dismissButton" />
 </androidx.constraintlayout.widget.ConstraintLayout>

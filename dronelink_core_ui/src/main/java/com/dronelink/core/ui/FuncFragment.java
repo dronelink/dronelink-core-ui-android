@@ -413,7 +413,7 @@ public class FuncFragment extends Fragment implements Dronelink.Listener, DroneS
             nextButton.setVisibility(View.VISIBLE);
             nextButton.setText(getString(isLast() ? R.string.Func_primary_execute : R.string.Func_next));
             progressTextView.setVisibility(isLast() ? View.INVISIBLE : View.VISIBLE);
-            progressTextView.setText((inputIndex + 1) + " / " + (funcExecutor == null ? 0 : funcExecutor.getInputCount()));
+            progressTextView.setText(inputIndex + 1 == funcExecutor.getInputCount() ? ("" + (inputIndex + 1)) : ((inputIndex + 1) + " / " + (funcExecutor == null ? 0 : funcExecutor.getInputCount())));
 
             final FuncInput input = getInput();
             if (input != null) {
@@ -535,9 +535,10 @@ public class FuncFragment extends Fragment implements Dronelink.Listener, DroneS
         executor.addListener(this);
         inputIndex = 0;
         if (!hasInputs()) {
-            executor.addNextDynamicInput(session, new FuncExecutor.FuncExecuteError() {
+            executor.addNextDynamicInput(Dronelink.getInstance().getSessionManager().getSession(), new FuncExecutor.FuncExecuteError() {
                 @Override
                 public void error(final String value) {
+                    Dronelink.getInstance().unloadFunc();
                     showToast(value);
                 }
             });
