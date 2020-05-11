@@ -1,4 +1,4 @@
-//  MapFragment.java
+//  MapboxMapFragment.java
 //  DronelinkCoreUI
 //
 //  Created by Jim McAndrew on 11/8/19.
@@ -6,19 +6,22 @@
 //
 package com.dronelink.core.ui;
 
+import android.content.Context;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.location.Location;
 import android.os.Bundle;
+import android.os.Handler;
+import android.view.LayoutInflater;
+import android.view.MenuItem;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.PopupMenu;
+import android.widget.RelativeLayout;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
-
-import android.os.Handler;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
 
 import com.dronelink.core.Convert;
 import com.dronelink.core.DroneSession;
@@ -27,7 +30,7 @@ import com.dronelink.core.Dronelink;
 import com.dronelink.core.FuncExecutor;
 import com.dronelink.core.MissionExecutor;
 import com.dronelink.core.adapters.DroneStateAdapter;
-import com.dronelink.core.mission.core.GeoCoordinate;
+import com.dronelink.core.mission.core.GeoSpatial;
 import com.dronelink.core.mission.core.Message;
 import com.mapbox.android.core.location.LocationEngineCallback;
 import com.mapbox.android.core.location.LocationEngineResult;
@@ -55,7 +58,7 @@ import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
-public class MapFragment extends Fragment implements Dronelink.Listener, DroneSessionManager.Listener, MissionExecutor.Listener, OnMapReadyCallback {
+public class MapboxMapFragment extends Fragment implements Dronelink.Listener, DroneSessionManager.Listener, MissionExecutor.Listener, OnMapReadyCallback {
     private DroneSession session;
     private MissionExecutor missionExecutor;
     private com.mapbox.mapboxsdk.maps.MapView mapView;
@@ -76,7 +79,7 @@ public class MapFragment extends Fragment implements Dronelink.Listener, DroneSe
         return session.getState().value;
     }
 
-    public MapFragment() {}
+    public MapboxMapFragment() {}
 
     @Override
     public void onCreate(final Bundle savedInstanceState) {
@@ -85,7 +88,9 @@ public class MapFragment extends Fragment implements Dronelink.Listener, DroneSe
 
     @Override
     public View onCreateView(final LayoutInflater inflater, final ViewGroup container, final Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_map, container, false);
+        final View view = inflater.inflate(R.layout.fragment_mapbox_map, container, false);
+        view.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.FILL_PARENT, ViewGroup.LayoutParams.FILL_PARENT));
+        return view;
     }
 
     @Override
@@ -145,6 +150,39 @@ public class MapFragment extends Fragment implements Dronelink.Listener, DroneSe
     public void onSaveInstanceState(final Bundle outState) {
         super.onSaveInstanceState(outState);
         mapView.onSaveInstanceState(outState);
+    }
+
+    public interface MoreMenuItem {
+        String getTitle();
+        void onClick();
+    }
+
+    public void onMore(final Context context, final View anchor, final MapboxMapFragment.MoreMenuItem[] actions) {
+        final PopupMenu actionSheet = new PopupMenu(context, anchor);
+
+        if (actions != null) {
+            for (final MapboxMapFragment.MoreMenuItem action : actions) {
+                actionSheet.getMenu().add(action.getTitle());
+            }
+        }
+
+        actionSheet.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(final MenuItem item) {
+                if (actions != null) {
+                    for (final MapboxMapFragment.MoreMenuItem action : actions) {
+                        if (item.getTitle() == action.getTitle()) {
+                            action.onClick();
+                            return true;
+                        }
+                    }
+                }
+
+                return false;
+            }
+        });
+
+        actionSheet.show();
     }
 
     private void updateTimer() {
@@ -248,11 +286,11 @@ public class MapFragment extends Fragment implements Dronelink.Listener, DroneSe
 
             final List<LatLng> visibleCoordinates = new LinkedList<>();
 
-            final GeoCoordinate[] estimateCoordinates = estimate.coordinates;
-            if (estimateCoordinates != null && estimateCoordinates.length > 0) {
+            final GeoSpatial[] estimateSpatials = estimate.spatials;
+            if (estimateSpatials != null && estimateSpatials.length > 0) {
                 final List<LatLng> pathPoints = new LinkedList<>();
-                for (final GeoCoordinate coordinate : estimateCoordinates) {
-                    pathPoints.add(new LatLng(coordinate.latitude, coordinate.longitude));
+                for (final GeoSpatial spatial : estimateSpatials) {
+                    pathPoints.add(new LatLng(spatial.coordinate.latitude, spatial.coordinate.longitude));
                 }
 
                 missionEstimateBackgroundAnnotation = map.addPolyline(new PolylineOptions().addAll(pathPoints).width(6).color(Color.parseColor("#0277bd")));
@@ -262,11 +300,11 @@ public class MapFragment extends Fragment implements Dronelink.Listener, DroneSe
                     visibleCoordinates.addAll(pathPoints);
                 }
 
-                final GeoCoordinate[] reengagementEstimateCoordinates = estimate.reengagementCoordinates;
-                if (reengagementEstimateCoordinates != null && reengagementEstimateCoordinates.length > 0) {
+                final GeoSpatial[] reengagementEstimateSpatials = estimate.reengagementSpatials;
+                if (reengagementEstimateSpatials != null && reengagementEstimateSpatials.length > 0) {
                     final List<LatLng> reengagementPoints = new LinkedList<>();
-                    for (final GeoCoordinate coordinate : reengagementEstimateCoordinates) {
-                        reengagementPoints.add(new LatLng(coordinate.latitude, coordinate.longitude));
+                    for (final GeoSpatial spatial : reengagementEstimateSpatials) {
+                        reengagementPoints.add(new LatLng(spatial.coordinate.latitude, spatial.coordinate.longitude));
                     }
 
                     missionReengagementEstimateBackgroundAnnotation = map.addPolyline(new PolylineOptions().addAll(reengagementPoints).width(6).color(Color.parseColor("#6a1b9a")));
@@ -350,13 +388,13 @@ public class MapFragment extends Fragment implements Dronelink.Listener, DroneSe
     @Override
     public void onMapReady(@NonNull final MapboxMap mapboxMap) {
         map = mapboxMap;
-        final MapFragment self = this;
+        final MapboxMapFragment self = this;
         mapboxMap.setStyle(Style.SATELLITE_STREETS, new Style.OnStyleLoaded() {
             @Override
             public void onStyleLoaded(@NonNull Style style) {
                 enableLocationComponent(style);
 
-                style.addImage("drone-home", BitmapFactory.decodeResource(MapFragment.this.getResources(), R.drawable.home));
+                style.addImage("drone-home", BitmapFactory.decodeResource(MapboxMapFragment.this.getResources(), R.drawable.home));
                 final GeoJsonSource droneHomeSource = new GeoJsonSource("drone-home", Feature.fromGeometry(Point.fromLngLat(0, 0)));
                 style.addSource(droneHomeSource);
 
@@ -365,7 +403,7 @@ public class MapFragment extends Fragment implements Dronelink.Listener, DroneSe
                 droneHomeLayer.withProperties(PropertyFactory.iconImage("drone-home"));
                 style.addLayer(droneHomeLayer);
 
-                style.addImage("drone", BitmapFactory.decodeResource(MapFragment.this.getResources(), R.drawable.drone));
+                style.addImage("drone", BitmapFactory.decodeResource(MapboxMapFragment.this.getResources(), R.drawable.drone));
                 final GeoJsonSource droneSource = new GeoJsonSource("drone", Feature.fromGeometry(Point.fromLngLat(0, 0)));
                 style.addSource(droneSource);
 

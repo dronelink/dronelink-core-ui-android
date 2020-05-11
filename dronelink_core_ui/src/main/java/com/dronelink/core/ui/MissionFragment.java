@@ -447,8 +447,11 @@ public class MissionFragment extends Fragment implements Dronelink.Listener, Dro
         if (session != null) {
             final DroneStateAdapter state = session.getState().value;
             if (state != null) {
-                estimateContext.location = state.getLocation();
-                estimateContext.altitude = state.getAltitude();
+                final Location location = state.getLocation();
+                if (location != null) {
+                    estimateContext.location = location;
+                    estimateContext.altitude = state.getAltitude();
+                }
             }
         }
 
@@ -459,7 +462,7 @@ public class MissionFragment extends Fragment implements Dronelink.Listener, Dro
         }
 
         previousEstimateContext = estimateContext;
-        missionExecutor.estimate(session);
+        missionExecutor.estimate(session, true,true);
         return true;
     }
 

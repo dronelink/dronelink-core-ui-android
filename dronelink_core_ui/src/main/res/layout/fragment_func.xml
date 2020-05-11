@@ -84,8 +84,8 @@
         android:layout_height="32dp"
         android:layout_marginLeft="12dp"
         android:layout_marginRight="12dp"
-        android:layout_marginBottom="12dp"
-        custom:layout_constraintBottom_toTopOf="@+id/nextButton"
+        android:layout_marginTop="4dp"
+        custom:layout_constraintTop_toBottomOf="@+id/variableDescriptionTextView"
         custom:layout_constraintStart_toStartOf="parent"
         custom:layout_constraintEnd_toEndOf="parent" />
 
@@ -132,14 +132,26 @@
         android:textSize="10sp"
         android:textStyle="bold"
         android:layout_width="0dp"
-        android:layout_height="0dp"
+        android:layout_height="40dp"
         android:layout_marginTop="4dp"
-        android:layout_marginBottom="4dp"
+        android:scrollbars="vertical"
+        custom:layout_constraintTop_toBottomOf="@+id/variableDescriptionTextView"
+        custom:layout_constraintStart_toEndOf="@+id/variableDroneMarkButton"
+        custom:layout_constraintEnd_toStartOf="@+id/variableDroneClearButton" />
+
+    <ImageView
+        android:id="@+id/variableImageView"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginLeft="8dp"
+        android:layout_marginRight="8dp"
+        android:layout_marginTop="32dp"
+        android:layout_marginBottom="8dp"
         android:scrollbars="vertical"
         custom:layout_constraintTop_toBottomOf="@+id/variableDescriptionTextView"
         custom:layout_constraintBottom_toTopOf="@+id/nextButton"
-        custom:layout_constraintStart_toEndOf="@+id/variableDroneMarkButton"
-        custom:layout_constraintEnd_toStartOf="@+id/variableDroneClearButton" />
+        custom:layout_constraintStart_toStartOf="parent"
+        custom:layout_constraintEnd_toEndOf="parent" />
 
     <TextView
         android:id="@+id/variableSummaryTextView"

@@ -37,4 +37,10 @@
     <string name="Telemetry_verticalSpeed_suffix_imperial">fps</string>
     <string name="Telemetry_verticalSpeed_suffix_metric">m/s</string>
     <string name="MissionDisengageReason_user_disengaged">Mission Paused</string>
+    <string name="MicrosoftMap_reset">Reset</string>
+    <string name="MicrosoftMap_follow">Follow</string>
+    <string name="MicrosoftMap_chase_plane">Chase Plane (Beta)</string>
+    <string name="MicrosoftMap_fpv">FPV (Beta)</string>
+    <string name="MicrosoftMap_satellite">Satellite</string>
+    <string name="MicrosoftMap_streets">Streets + Buildings</string>
 </resources>

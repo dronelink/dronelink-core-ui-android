@@ -14,6 +14,7 @@ import androidx.fragment.app.Fragment;
 
 import android.text.InputType;
 import android.text.method.ScrollingMovementMethod;
+import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -34,6 +35,7 @@ import com.dronelink.core.FuncExecutor;
 import com.dronelink.core.MissionExecutor;
 import com.dronelink.core.mission.core.FuncInput;
 import com.dronelink.core.mission.core.enums.VariableValueType;
+import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -48,6 +50,7 @@ public class FuncFragment extends Fragment implements Dronelink.Listener, DroneS
     private TextView titleTextView;
     private TextView variableNameTextView;
     private TextView variableDescriptionTextView;
+    private ImageView variableImageView;
     private Spinner variableSpinner;
     private EditText variableEditText;
     private Button variableDroneMarkButton;
@@ -57,6 +60,7 @@ public class FuncFragment extends Fragment implements Dronelink.Listener, DroneS
     private TextView progressTextView;
     private ImageButton dismissButton;
 
+    private boolean expanded = false;
     private boolean intro = true;
     private int inputIndex = 0;
     private boolean isLast() { return funcExecutor != null && inputIndex == funcExecutor.getInputCount(); }
@@ -114,6 +118,7 @@ public class FuncFragment extends Fragment implements Dronelink.Listener, DroneS
         variableNameTextView = getView().findViewById(R.id.variableNameTextView);
         variableDescriptionTextView = getView().findViewById(R.id.variableDescriptionTextView);
         variableDescriptionTextView.setMovementMethod(new ScrollingMovementMethod());
+        variableImageView = getView().findViewById(R.id.variableImageView);
         variableSpinner = getView().findViewById(R.id.variableSpinner);
         variableEditText = getView().findViewById(R.id.variableEditText);
         variableDroneMarkButton = getView().findViewById(R.id.variableDroneMarkButton);
@@ -269,7 +274,7 @@ public class FuncFragment extends Fragment implements Dronelink.Listener, DroneS
                 break;
         }
 
-        if (!input.optional && value == null) {
+        if (!input.optional && value == null && input.variable.valueType != VariableValueType.NULL) {
             showToast(getString(R.string.Func_input_required));
             return false;
         }
@@ -286,8 +291,11 @@ public class FuncFragment extends Fragment implements Dronelink.Listener, DroneS
         if (input == null) {
             value = null;
             updateViews.run();
+            updateExpanded(false);
             return;
         }
+
+        updateExpanded(input.imageUrl != null && !input.imageUrl.isEmpty());
 
         final List<String> enumValues = new ArrayList<>();
         enumValues.add(getString(R.string.Func_input_choose));
@@ -355,6 +363,14 @@ public class FuncFragment extends Fragment implements Dronelink.Listener, DroneS
         }
     }
 
+    private void updateExpanded(final boolean value) {
+        if (expanded != value) {
+            expanded = value;
+            getView().getLayoutParams().height = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, (float) (expanded ? 330 : 165), getResources().getDisplayMetrics());
+            getView().requestLayout();
+        }
+    }
+
     @Override
     public void onStart() {
         super.onStart();
@@ -385,6 +401,7 @@ public class FuncFragment extends Fragment implements Dronelink.Listener, DroneS
             titleTextView.setVisibility(View.INVISIBLE);
             variableNameTextView.setVisibility(View.INVISIBLE);
             variableDescriptionTextView.setVisibility(View.INVISIBLE);
+            variableImageView.setVisibility(View.INVISIBLE);
             variableSpinner.setVisibility(View.INVISIBLE);
             variableEditText.setVisibility(View.INVISIBLE);
             variableDroneMarkButton.setVisibility(View.INVISIBLE);
@@ -424,7 +441,7 @@ public class FuncFragment extends Fragment implements Dronelink.Listener, DroneS
                     name = name + " (" + valueNumberMeasurementTypeDisplay + ")";
                 }
 
-                if (!input.optional) {
+                if (!input.optional && input.variable.valueType != VariableValueType.NULL) {
                     name = name + " *";
                 }
                 variableNameTextView.setText(name);
@@ -432,6 +449,11 @@ public class FuncFragment extends Fragment implements Dronelink.Listener, DroneS
                 if (!(input.descriptors.description == null || input.descriptors.description.isEmpty())) {
                     variableDescriptionTextView.setVisibility(View.VISIBLE);
                     variableDescriptionTextView.setText(input.descriptors.description);
+                }
+
+                if (input.imageUrl != null && !input.imageUrl.isEmpty()) {
+                    Picasso.get().load(input.imageUrl).into(variableImageView);
+                    variableImageView.setVisibility(View.VISIBLE);
                 }
 
                 switch (input.variable.valueType) {
