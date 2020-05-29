@@ -11,6 +11,7 @@ import android.content.DialogInterface;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.location.Location;
+import android.media.Image;
 import android.os.Bundle;
 
 import androidx.annotation.Nullable;
@@ -23,6 +24,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
@@ -40,7 +42,11 @@ import com.dronelink.core.mission.component.Component;
 import com.dronelink.core.mission.core.GeoCoordinate;
 import com.dronelink.core.mission.core.Message;
 import com.dronelink.core.mission.core.MessageGroup;
+import com.squareup.picasso.Picasso;
+import com.stfalcon.imageviewer.StfalconImageViewer;
+import com.stfalcon.imageviewer.loader.ImageLoader;
 
+import java.util.Collections;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -131,48 +137,7 @@ public class MissionFragment extends Fragment implements Dronelink.Listener, Dro
                     return;
                 }
 
-                missionExecutor.droneTakeoffAltitudeAlternate = null;
-                if (missionExecutor.requiredTakeoffArea == null) {
-                    final Location actualTakeoffLocation = session.getState().value.getTakeoffLocation();
-                    final GeoCoordinate suggestedTakeoffCoordinate = missionExecutor.takeoffCoordinate;
-                    if (actualTakeoffLocation.distanceTo(suggestedTakeoffCoordinate.getLocation()) > Convert.FeetToMeters(50)) {
-                        final Location deviceLocation = Dronelink.getInstance().getLocation();
-                        if (deviceLocation != null && deviceLocation.hasAltitude()) {
-                            missionExecutor.droneTakeoffAltitudeAlternate = Dronelink.getInstance().getAltitude();
-                        }
-
-                        final String distance = Dronelink.getInstance().format("distance", new Double(actualTakeoffLocation.distanceTo(suggestedTakeoffCoordinate.getLocation())), "");
-                        final String altitude = missionExecutor.droneTakeoffAltitudeAlternate == null ? null : Dronelink.getInstance().format("altitude", missionExecutor.droneTakeoffAltitudeAlternate, "");
-                        String message = "";
-                        if (altitude != null && missionExecutor.elevationsRequired) {
-                            message = getString(R.string.Mission_start_takeoffLocationWarning_message_deviceAltitudeAvailable, distance, altitude);
-                        }
-                        else {
-                            message = getString(R.string.Mission_start_takeoffLocationWarning_message_deviceAltitudeUnavailable, distance);
-                        }
-
-                        final AlertDialog.Builder alertDialog = new AlertDialog.Builder(getActivity());
-                        alertDialog.setTitle(R.string.Mission_start_takeoffLocationWarning_title);
-                        alertDialog.setMessage(message);
-                        alertDialog.setPositiveButton(getString(R.string.Mission_continue), new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(final DialogInterface d, int i) {
-                                d.dismiss();
-                                startCountdown();
-                            }
-                        });
-                        alertDialog.setNegativeButton(getString(R.string.Mission_cancel), new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(final DialogInterface d, int i) {
-                                d.dismiss();
-                            }
-                        });
-                        alertDialog.show();
-                        return;
-                    }
-                }
-
-                startCountdown();
+                promptConfirmation();
             }
         });
         dismissButton = getView().findViewById(R.id.dismissButton);
@@ -226,6 +191,98 @@ public class MissionFragment extends Fragment implements Dronelink.Listener, Dro
         if (missionExecutor != null) {
             missionExecutor.removeListener(this);
         }
+    }
+
+    private void promptConfirmation() {
+        if (missionExecutor == null || session == null) {
+            return;
+        }
+
+        if (missionExecutor.getEngagementCount() > 0 && missionExecutor.reengagementRules.confirmationMessage != null) {
+            final AlertDialog.Builder alertDialog = new AlertDialog.Builder(getActivity());
+            alertDialog.setTitle(missionExecutor.reengagementRules.confirmationMessage.title);
+            alertDialog.setMessage(missionExecutor.reengagementRules.confirmationMessage.details);
+            alertDialog.setPositiveButton(getString(R.string.resume), new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(final DialogInterface d, int i) {
+                    d.dismiss();
+                    promptTakeoffLocationWarning();
+                }
+            });
+            alertDialog.setNegativeButton(getString(R.string.cancel), new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(final DialogInterface d, int i) {
+                    d.dismiss();
+                }
+            });
+            if (missionExecutor.reengagementRules.confirmationInstructionsImageUrl != null) {
+                alertDialog.setNeutralButton(getString(R.string.learnMore), new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(final DialogInterface d, int i) {
+                        d.dismiss();
+                        new StfalconImageViewer.Builder<>(getContext(), Collections.singletonList(missionExecutor.reengagementRules.confirmationInstructionsImageUrl), new ImageLoader<String>() {
+                            @Override
+                            public void loadImage(final ImageView imageView, final String imageUrl) {
+                                Picasso.get().load(imageUrl).into(imageView);
+                            }
+                        }).show();
+                    }
+                });
+            }
+            alertDialog.show();
+            return;
+        }
+
+        promptTakeoffLocationWarning();
+    }
+
+    private void promptTakeoffLocationWarning() {
+        if (missionExecutor == null || session == null) {
+            return;
+        }
+
+        missionExecutor.droneTakeoffAltitudeAlternate = null;
+        if (missionExecutor.requiredTakeoffArea == null) {
+            final Location actualTakeoffLocation = session.getState().value.getTakeoffLocation();
+            final GeoCoordinate suggestedTakeoffCoordinate = missionExecutor.takeoffCoordinate;
+            if (actualTakeoffLocation.distanceTo(suggestedTakeoffCoordinate.getLocation()) > Convert.FeetToMeters(50)) {
+                final Location deviceLocation = Dronelink.getInstance().getLocation();
+                if (deviceLocation != null && deviceLocation.hasAltitude()) {
+                    missionExecutor.droneTakeoffAltitudeAlternate = Dronelink.getInstance().getAltitude();
+                }
+
+                final String distance = Dronelink.getInstance().format("distance", new Double(actualTakeoffLocation.distanceTo(suggestedTakeoffCoordinate.getLocation())), "");
+                final String altitude = missionExecutor.droneTakeoffAltitudeAlternate == null ? null : Dronelink.getInstance().format("altitude", missionExecutor.droneTakeoffAltitudeAlternate, "");
+                String message = "";
+                if (altitude != null && missionExecutor.elevationsRequired) {
+                    message = getString(R.string.Mission_start_takeoffLocationWarning_message_deviceAltitudeAvailable, distance, altitude);
+                }
+                else {
+                    message = getString(R.string.Mission_start_takeoffLocationWarning_message_deviceAltitudeUnavailable, distance);
+                }
+
+                final AlertDialog.Builder alertDialog = new AlertDialog.Builder(getActivity());
+                alertDialog.setTitle(R.string.Mission_start_takeoffLocationWarning_title);
+                alertDialog.setMessage(message);
+                alertDialog.setPositiveButton(getString(R.string.Mission_continue), new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(final DialogInterface d, int i) {
+                        d.dismiss();
+                        startCountdown();
+                    }
+                });
+                alertDialog.setNegativeButton(getString(R.string.Mission_cancel), new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(final DialogInterface d, int i) {
+                        d.dismiss();
+                    }
+                });
+                alertDialog.show();
+                return;
+            }
+        }
+
+        startCountdown();
     }
 
     private void startCountdown() {
@@ -325,7 +382,11 @@ public class MissionFragment extends Fragment implements Dronelink.Listener, Dro
     }
 
     private void toggleMissionExpanded() {
-        expanded = !expanded;
+        toggleMissionExpanded(!expanded);
+    }
+
+    private void toggleMissionExpanded(final boolean expanded) {
+        this.expanded = expanded;
         getView().getLayoutParams().height = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, (float)(expanded ? 135 : 70), getResources().getDisplayMetrics());
         getView().requestLayout();
         getActivity().runOnUiThread(updateViews);
@@ -509,6 +570,15 @@ public class MissionFragment extends Fragment implements Dronelink.Listener, Dro
         previousEstimateContext = null;
         executor.addListener(this);
         estimateMission();
+
+        if (executor.userInterfaceSettings != null && executor.userInterfaceSettings.missionDetailsExpanded != null && executor.userInterfaceSettings.missionDetailsExpanded != expanded) {
+            getActivity().runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    toggleMissionExpanded(executor.userInterfaceSettings.missionDetailsExpanded);
+                }
+            });
+        }
 
         getActivity().runOnUiThread(updateViews);
     }

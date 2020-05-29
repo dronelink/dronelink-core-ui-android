@@ -6,7 +6,9 @@
 //
 package com.dronelink.core.ui;
 
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.os.Bundle;
 
 import androidx.annotation.Nullable;
@@ -33,6 +35,7 @@ import com.dronelink.core.DroneSessionManager;
 import com.dronelink.core.Dronelink;
 import com.dronelink.core.FuncExecutor;
 import com.dronelink.core.MissionExecutor;
+import com.dronelink.core.adapters.DroneStateAdapter;
 import com.dronelink.core.mission.core.FuncInput;
 import com.dronelink.core.mission.core.enums.VariableValueType;
 import com.squareup.picasso.Picasso;
@@ -41,6 +44,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class FuncFragment extends Fragment implements Dronelink.Listener, DroneSessionManager.Listener, FuncExecutor.Listener {
+    private static FuncExecutor mostRecentExecuted;
+
     private DroneSession session;
     private FuncExecutor funcExecutor;
     private Button backButton;
@@ -64,7 +69,7 @@ public class FuncFragment extends Fragment implements Dronelink.Listener, DroneS
     private boolean intro = true;
     private int inputIndex = 0;
     private boolean isLast() { return funcExecutor != null && inputIndex == funcExecutor.getInputCount(); }
-    private boolean hasInputs() { return funcExecutor != null && funcExecutor.getInputCount() > 0; }
+    private boolean hasInputs() { return funcExecutor != null && (funcExecutor.getInputCount() > 0 || funcExecutor.getDynamicInputs() != null); }
     private FuncInput getInput() { return funcExecutor == null ? null : funcExecutor.getInput(inputIndex); }
     private String getValueNumberMeasurementTypeDisplay(final int index) { return funcExecutor == null ? null : funcExecutor.readValueNumberMeasurementTypeDisplay(index); }
     private boolean executing = false;
@@ -90,9 +95,30 @@ public class FuncFragment extends Fragment implements Dronelink.Listener, DroneS
             }
 
             if (intro && hasInputs()) {
-                intro = false;
-                readValue();
-                getActivity().runOnUiThread(updateViews);
+                if (mostRecentExecuted != null && mostRecentExecuted.funcID.equals(funcExecutor.funcID)) {
+                    final AlertDialog.Builder alertDialog = new AlertDialog.Builder(getActivity());
+                    alertDialog.setTitle(R.string.Func_cachedInputs_title);
+                    alertDialog.setMessage(R.string.Func_cachedInputs_message);
+                    alertDialog.setPositiveButton(getString(R.string.Func_cachedInputs_action_new), new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(final DialogInterface d, int i) {
+                            d.dismiss();
+                            finishIntro();
+                        }
+                    });
+                    alertDialog.setNegativeButton(getString(R.string.Func_cachedInputs_action_previous), new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(final DialogInterface d, int i) {
+                            d.dismiss();
+                            funcExecutor.addCachedInputs(mostRecentExecuted);
+                            finishIntro();
+                        }
+                    });
+                    alertDialog.show();
+                }
+                else {
+                    finishIntro();
+                }
                 return;
             }
 
@@ -110,6 +136,15 @@ public class FuncFragment extends Fragment implements Dronelink.Listener, DroneS
             }
         }
     };
+
+    private void finishIntro() {
+        intro = false;
+        if (funcExecutor.getInputCount() == 0) {
+            addNextDynamicInput();
+        }
+        readValue();
+        getActivity().runOnUiThread(updateViews);
+    }
 
     @Override
     public void onViewCreated(final View view, @Nullable final Bundle savedInstanceState) {
@@ -148,6 +183,14 @@ public class FuncFragment extends Fragment implements Dronelink.Listener, DroneS
                 if (session == null) {
                     showToast(getString(R.string.Func_input_drone_unavailable));
                     return;
+                }
+
+                final FuncInput input = getInput();
+                if (input != null && input.extensions != null && input.extensions.droneOffsetsCoordinateReference && session != null) {
+                    final DroneStateAdapter state = session.getState().value;
+                    if (state != null) {
+                        Dronelink.getInstance().droneOffsets.droneCoordinateReference = state.getLocation();
+                    }
                 }
 
                 writeValue(false);
@@ -197,22 +240,7 @@ public class FuncFragment extends Fragment implements Dronelink.Listener, DroneS
                     return;
                 }
 
-                if (funcExecutor != null) {
-                    funcExecutor.addNextDynamicInput(session, new FuncExecutor.FuncExecuteError() {
-                        @Override
-                        public void error(final String value) {
-                            inputIndex -= 1;
-                            showToast(value);
-                            getActivity().runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    readValue();
-                                    getActivity().runOnUiThread(updateViews);
-                                }
-                            });
-                        }
-                    });
-                }
+                addNextDynamicInput();
 
                 inputIndex += 1;
                 readValue();
@@ -220,6 +248,34 @@ public class FuncFragment extends Fragment implements Dronelink.Listener, DroneS
             }
         });
         getActivity().runOnUiThread(updateViews);
+    }
+
+    private void addNextDynamicInput() {
+        if (funcExecutor == null) {
+            return;
+        }
+
+        funcExecutor.addNextDynamicInput(session, new FuncExecutor.FuncExecuteError() {
+            @Override
+            public void error(final String value) {
+                showToast(value);
+                inputIndex -= 1;
+                if (inputIndex < 0) {
+                    inputIndex = 0;
+                    intro = true;
+                }
+                else {
+                    readValue();
+                }
+
+                getActivity().runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        getActivity().runOnUiThread(updateViews);
+                    }
+                });
+            }
+        });
     }
 
     private boolean writeValue(final boolean next) {
@@ -236,7 +292,7 @@ public class FuncFragment extends Fragment implements Dronelink.Listener, DroneS
                     value = null;
                 }
                 else {
-                    value = getString(R.string.Func_yes) == value;
+                    value = getString(R.string.yes) == value;
                 }
                 break;
 
@@ -301,8 +357,8 @@ public class FuncFragment extends Fragment implements Dronelink.Listener, DroneS
         enumValues.add(getString(R.string.Func_input_choose));
         switch (input.variable.valueType) {
             case BOOLEAN:
-                enumValues.add(getString(R.string.Func_yes));
-                enumValues.add(getString(R.string.Func_no));
+                enumValues.add(getString(R.string.yes));
+                enumValues.add(getString(R.string.no));
                 break;
 
             case STRING:
@@ -556,16 +612,6 @@ public class FuncFragment extends Fragment implements Dronelink.Listener, DroneS
         funcExecutor = executor;
         executor.addListener(this);
         inputIndex = 0;
-        if (!hasInputs()) {
-            executor.addNextDynamicInput(Dronelink.getInstance().getSessionManager().getSession(), new FuncExecutor.FuncExecuteError() {
-                @Override
-                public void error(final String value) {
-                    Dronelink.getInstance().unloadFunc();
-                    showToast(value);
-                }
-            });
-        }
-
         intro = true;
         getActivity().runOnUiThread(updateViews);
     }
@@ -579,6 +625,7 @@ public class FuncFragment extends Fragment implements Dronelink.Listener, DroneS
 
     @Override
     public void onFuncExecuted(final FuncExecutor executor) {
+        mostRecentExecuted = executor;
     }
 
     private void showToast(final String message) {

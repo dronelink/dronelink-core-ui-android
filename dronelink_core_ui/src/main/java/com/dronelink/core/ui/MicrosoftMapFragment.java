@@ -450,7 +450,7 @@ public class MicrosoftMapFragment extends Fragment implements Dronelink.Listener
             final MapPolygon polygon = new MapPolygon();
             polygon.setStrokeColor(Color.argb((int)(255 * 0.5), 255, 171, 64));
             polygon.setStrokeWidth(1);
-            polygon.setFillColor(Color.argb((int)(255 * 0.3), 255, 145, 0));
+            polygon.setFillColor(Color.argb((int)(255 * 0.25), 255, 145, 0));
             final List<Geocircle> shapes = new ArrayList<>();
             shapes.add(new Geocircle(position(requiredTakeoffArea.coordinate.getLocation()), requiredTakeoffArea.distanceTolerance.horizontal));
             polygon.setShapes(shapes);

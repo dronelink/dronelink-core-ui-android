@@ -17,7 +17,6 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.PopupMenu;
-import android.widget.RelativeLayout;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -240,7 +239,7 @@ public class MapboxMapFragment extends Fragment implements Dronelink.Listener, D
                         final Location location = Convert.locationWithBearing(takeoffLocation, (double)i / 100.0 * Math.PI * 2.0, requiredTakeoffArea.distanceTolerance.horizontal);
                         takeoffAreaPoints.add(new LatLng(location.getLatitude(), location.getLongitude()));
                     }
-                    missionRequiredTakeoffAreaAnnotation = map.addPolygon(new PolygonOptions().addAll(takeoffAreaPoints).alpha((float)0.75).fillColor(Color.parseColor("#ffa726")));
+                    missionRequiredTakeoffAreaAnnotation = map.addPolygon(new PolygonOptions().addAll(takeoffAreaPoints).alpha((float)0.25).fillColor(Color.parseColor("#ffa726")));
                 }
             }
         }

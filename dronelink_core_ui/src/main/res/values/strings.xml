@@ -1,6 +1,13 @@
 <resources>
-    <string name="Func_yes">Yes</string>
-    <string name="Func_no">No</string>
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
+    <string name="cancel">Cancel</string>
+    <string name="resume">Resume</string>
+    <string name="learnMore">Learn More</string>
+    <string name="Func_cachedInputs_title">Previous Inputs Available</string>
+    <string name="Func_cachedInputs_message">Do you want to load the previous inputs or start over?</string>
+    <string name="Func_cachedInputs_action_new">Start Over</string>
+    <string name="Func_cachedInputs_action_previous">Load Previous</string>
     <string name="Func_primary_intro">Get Started</string>
     <string name="Func_primary_execute">Generate Mission</string>
     <string name="Func_primary_executing">Generating...</string>
