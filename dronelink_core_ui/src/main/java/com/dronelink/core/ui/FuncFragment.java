@@ -600,7 +600,6 @@ public class FuncFragment extends Fragment implements Dronelink.Listener, DroneS
 
     @Override
     public void onMissionLoaded(final MissionExecutor executor) {
-        Dronelink.getInstance().unloadFunc();
     }
 
     @Override
