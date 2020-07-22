@@ -62,7 +62,7 @@
     <TextView
         android:id="@+id/variableDescriptionTextView"
         android:textColor="#FFFFFF"
-        android:textSize="12sp"
+        android:textSize="11sp"
         android:textStyle="bold"
         android:scrollHorizontally="false"
         android:ellipsize="end"
@@ -71,7 +71,7 @@
         android:layout_height="32dp"
         android:layout_marginLeft="12dp"
         android:layout_marginRight="12dp"
-        android:layout_marginTop="4dp"
+        android:layout_marginTop="2dp"
         android:scrollbars="vertical"
         custom:layout_constraintTop_toBottomOf="@+id/variableNameTextView"
         custom:layout_constraintStart_toStartOf="parent"
@@ -79,13 +79,13 @@
 
     <Spinner
         android:id="@+id/variableSpinner"
-        android:background="@color/gray_transparent"
+        android:background="@color/darkGray"
         android:layout_width="0dp"
         android:layout_height="32dp"
         android:layout_marginLeft="12dp"
         android:layout_marginRight="12dp"
-        android:layout_marginTop="4dp"
-        custom:layout_constraintTop_toBottomOf="@+id/variableDescriptionTextView"
+        android:layout_marginBottom="60dp"
+        custom:layout_constraintBottom_toBottomOf="parent"
         custom:layout_constraintStart_toStartOf="parent"
         custom:layout_constraintEnd_toEndOf="parent" />
 
@@ -97,23 +97,23 @@
         android:layout_height="wrap_content"
         android:layout_marginLeft="12dp"
         android:layout_marginRight="12dp"
-        android:layout_marginBottom="4dp"
-        custom:layout_constraintTop_toBottomOf="@+id/variableDescriptionTextView"
+        android:layout_marginBottom="60dp"
+        custom:layout_constraintBottom_toBottomOf="parent"
         custom:layout_constraintStart_toStartOf="parent"
         custom:layout_constraintEnd_toEndOf="parent" />
 
     <Button
         android:id="@+id/variableDroneMarkButton"
         android:text="@string/Func_input_drone"
-        android:layout_height="40dp"
+        android:layout_height="35dp"
         android:layout_width="95dp"
-        android:layout_marginBottom="12dp"
+        android:layout_marginBottom="60dp"
         android:layout_marginLeft="12dp"
         android:drawableLeft="@drawable/baseline_navigation_white_24"
         android:gravity="left|center_vertical"
-        custom:layout_constraintTop_toBottomOf="@+id/variableDescriptionTextView"
+        custom:layout_constraintBottom_toBottomOf="parent"
         custom:layout_constraintStart_toStartOf="parent"
-        android:background="@android:color/transparent"
+        android:background="@color/darkGray"
         android:textColor="@android:color/white" />
 
     <ImageButton
@@ -122,8 +122,8 @@
         android:layout_width="24dp"
         android:layout_height="24dp"
         android:layout_marginRight="8dp"
-        android:layout_marginTop="4dp"
-        custom:layout_constraintTop_toBottomOf="@+id/variableDescriptionTextView"
+        android:layout_marginTop="0dp"
+        custom:layout_constraintTop_toTopOf="@+id/variableDroneMarkButton"
         custom:layout_constraintEnd_toEndOf="parent" />
 
     <TextView
@@ -132,10 +132,11 @@
         android:textSize="10sp"
         android:textStyle="bold"
         android:layout_width="0dp"
-        android:layout_height="40dp"
-        android:layout_marginTop="4dp"
+        android:layout_height="45dp"
+        android:layout_marginLeft="8dp"
+        android:layout_marginTop="0dp"
         android:scrollbars="vertical"
-        custom:layout_constraintTop_toBottomOf="@+id/variableDescriptionTextView"
+        custom:layout_constraintTop_toTopOf="@+id/variableDroneMarkButton"
         custom:layout_constraintStart_toEndOf="@+id/variableDroneMarkButton"
         custom:layout_constraintEnd_toStartOf="@+id/variableDroneClearButton" />
 
@@ -145,11 +146,11 @@
         android:layout_height="0dp"
         android:layout_marginLeft="8dp"
         android:layout_marginRight="8dp"
-        android:layout_marginTop="32dp"
+        android:layout_marginTop="2dp"
         android:layout_marginBottom="8dp"
         android:scrollbars="vertical"
-        custom:layout_constraintTop_toBottomOf="@+id/variableDescriptionTextView"
-        custom:layout_constraintBottom_toTopOf="@+id/nextButton"
+        custom:layout_constraintTop_toBottomOf="@+id/variableNameTextView"
+        custom:layout_constraintBottom_toTopOf="@+id/variableDroneMarkButton"
         custom:layout_constraintStart_toStartOf="parent"
         custom:layout_constraintEnd_toEndOf="parent" />
 

@@ -9,6 +9,8 @@ package com.dronelink.core.ui;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.graphics.drawable.Drawable;
+import android.location.Location;
 import android.os.Bundle;
 
 import androidx.annotation.Nullable;
@@ -37,10 +39,14 @@ import com.dronelink.core.FuncExecutor;
 import com.dronelink.core.MissionExecutor;
 import com.dronelink.core.adapters.DroneStateAdapter;
 import com.dronelink.core.mission.core.FuncInput;
+import com.dronelink.core.mission.core.GeoSpatial;
 import com.dronelink.core.mission.core.enums.VariableValueType;
 import com.squareup.picasso.Picasso;
+import com.stfalcon.imageviewer.StfalconImageViewer;
+import com.stfalcon.imageviewer.loader.ImageLoader;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class FuncFragment extends Fragment implements Dronelink.Listener, DroneSessionManager.Listener, FuncExecutor.Listener {
@@ -65,7 +71,6 @@ public class FuncFragment extends Fragment implements Dronelink.Listener, DroneS
     private TextView progressTextView;
     private ImageButton dismissButton;
 
-    private boolean expanded = false;
     private boolean intro = true;
     private int inputIndex = 0;
     private boolean isLast() { return funcExecutor != null && inputIndex == funcExecutor.getInputCount(); }
@@ -177,6 +182,18 @@ public class FuncFragment extends Fragment implements Dronelink.Listener, DroneS
             }
         });
 
+        variableImageView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                new StfalconImageViewer.Builder<>(getContext(), Collections.singletonList(variableImageView.getDrawable()), new ImageLoader<Drawable>() {
+                    @Override
+                    public void loadImage(final ImageView imageView, final Drawable image) {
+                        imageView.setImageDrawable(image);
+                    }
+                }).show();
+            }
+        });
+
         variableDroneMarkButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(final View v) {
@@ -185,12 +202,20 @@ public class FuncFragment extends Fragment implements Dronelink.Listener, DroneS
                     return;
                 }
 
+                final DroneStateAdapter state = session.getState().value;
+                Location location = null;
+                if (state != null) {
+                    location = state.getLocation();
+                }
+
+                if (location == null) {
+                    showToast(getString(R.string.Func_input_location_unavailable));
+                    return;
+                }
+
                 final FuncInput input = getInput();
-                if (input != null && input.extensions != null && input.extensions.droneOffsetsCoordinateReference && session != null) {
-                    final DroneStateAdapter state = session.getState().value;
-                    if (state != null) {
-                        Dronelink.getInstance().droneOffsets.droneCoordinateReference = state.getLocation();
-                    }
+                if (input != null && input.extensions != null && input.extensions.droneOffsetsCoordinateReference) {
+                    Dronelink.getInstance().droneOffsets.droneCoordinateReference = location;
                 }
 
                 writeValue(false);
@@ -205,7 +230,7 @@ public class FuncFragment extends Fragment implements Dronelink.Listener, DroneS
                     return;
                 }
 
-                funcExecutor.clearValue(inputIndex, false);
+                funcExecutor.clearValue(inputIndex);
                 readValue();
             }
         });
@@ -320,7 +345,7 @@ public class FuncFragment extends Fragment implements Dronelink.Listener, DroneS
 
             case DRONE:
                 if (next) {
-                    if (funcExecutor.readValue(inputIndex, false) == null && !input.optional) {
+                    if (funcExecutor.readValue(inputIndex) == null && !input.optional) {
                         showToast(getString(R.string.Func_input_required));
                         return false;
                     }
@@ -347,11 +372,8 @@ public class FuncFragment extends Fragment implements Dronelink.Listener, DroneS
         if (input == null) {
             value = null;
             updateViews.run();
-            updateExpanded(false);
             return;
         }
-
-        updateExpanded(input.imageUrl != null && !input.imageUrl.isEmpty());
 
         final List<String> enumValues = new ArrayList<>();
         enumValues.add(getString(R.string.Func_input_choose));
@@ -374,7 +396,7 @@ public class FuncFragment extends Fragment implements Dronelink.Listener, DroneS
             variableSpinner.setAdapter(new ArrayAdapter<>(getContext(), android.R.layout.simple_spinner_dropdown_item, enumValues.toArray(new String[0])));
         }
 
-        final Object value = funcExecutor.readValue(inputIndex, false);
+        final Object value = funcExecutor.readValue(inputIndex);
         if (value == null) {
             this.value = null;
             updateViews.run();
@@ -385,15 +407,15 @@ public class FuncFragment extends Fragment implements Dronelink.Listener, DroneS
         updateViews.run();
 
         if (input.variable.valueType == VariableValueType.DRONE) {
-            if (value instanceof String) {
-                variableDroneTextView.setText((String)value);
+            if (value instanceof GeoSpatial) {
+                variableDroneTextView.setText((String)funcExecutor.readValue(inputIndex, null, true));
             }
 
-            if (value instanceof Object[]) {
+            if (value instanceof GeoSpatial[]) {
                 final StringBuilder valueString = new StringBuilder();
                 final Object[] valueArray = ((Object[])value);
                 for (int i = valueArray.length - 1; i >= 0; i--) {
-                    valueString.append(i + 1).append(". ").append(valueArray[i]);
+                    valueString.append(i + 1).append(". ").append((String)funcExecutor.readValue(inputIndex, i, true));
                     if (i > 0) {
                         valueString.append("\n");
                     }
@@ -419,12 +441,9 @@ public class FuncFragment extends Fragment implements Dronelink.Listener, DroneS
         }
     }
 
-    private void updateExpanded(final boolean value) {
-        if (expanded != value) {
-            expanded = value;
-            getView().getLayoutParams().height = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, (float) (expanded ? 330 : 165), getResources().getDisplayMetrics());
-            getView().requestLayout();
-        }
+    private void updateHeight(float height) {
+        getView().getLayoutParams().height = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, height, getResources().getDisplayMetrics());
+        getView().requestLayout();
     }
 
     @Override
@@ -466,6 +485,7 @@ public class FuncFragment extends Fragment implements Dronelink.Listener, DroneS
             variableSummaryTextView.setVisibility(View.INVISIBLE);
 
             if (intro) {
+                updateHeight(135);
                 titleImageView.setVisibility(View.VISIBLE);
                 titleTextView.setVisibility(View.VISIBLE);
                 variableDescriptionTextView.setVisibility(View.VISIBLE);
@@ -490,6 +510,16 @@ public class FuncFragment extends Fragment implements Dronelink.Listener, DroneS
 
             final FuncInput input = getInput();
             if (input != null) {
+                if (input.imageUrl != null && !input.imageUrl.isEmpty()) {
+                    updateHeight(330);
+                }
+                else if (input.descriptors.description != null && !input.descriptors.description.isEmpty()) {
+                    updateHeight(165);
+                }
+                else {
+                    updateHeight(135);
+                }
+
                 variableNameTextView.setVisibility(View.VISIBLE);
                 String name = input.descriptors.name == null ? "" : input.descriptors.name;
                 String valueNumberMeasurementTypeDisplay = getValueNumberMeasurementTypeDisplay(inputIndex);
@@ -545,6 +575,7 @@ public class FuncFragment extends Fragment implements Dronelink.Listener, DroneS
             }
 
             if (isLast()) {
+                updateHeight(330);
                 variableNameTextView.setVisibility(View.VISIBLE);
                 variableNameTextView.setText(getString(R.string.Func_input_summary));
                 variableSummaryTextView.setVisibility(View.VISIBLE);
@@ -563,7 +594,7 @@ public class FuncFragment extends Fragment implements Dronelink.Listener, DroneS
         for (int i = 0; i < inputCount; i++) {
             final FuncInput input = funcExecutor.getInput(i);
             String details = getString(R.string.Func_input_none);
-            final Object value = funcExecutor.readValue(i, true);
+            final Object value = funcExecutor.readValue(i, null, true);
             if (value instanceof String) {
                 details = (String)value;
             }
@@ -620,6 +651,11 @@ public class FuncFragment extends Fragment implements Dronelink.Listener, DroneS
         funcExecutor = null;
         executor.removeListener(this);
         getActivity().runOnUiThread(updateViews);
+    }
+
+    @Override
+    public void onFuncInputsChanged(FuncExecutor executor) {
+
     }
 
     @Override

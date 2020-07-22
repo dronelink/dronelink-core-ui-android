@@ -34,10 +34,12 @@ import com.dronelink.core.adapters.DroneStateAdapter;
 import com.dronelink.core.adapters.GimbalStateAdapter;
 import com.dronelink.core.command.CommandError;
 import com.dronelink.core.mission.command.Command;
+import com.dronelink.core.mission.core.FuncInput;
 import com.dronelink.core.mission.core.GeoCoordinate;
 import com.dronelink.core.mission.core.GeoSpatial;
 import com.dronelink.core.mission.core.Message;
 import com.dronelink.core.mission.core.PlanRestrictionZone;
+import com.dronelink.core.mission.core.enums.VariableValueType;
 import com.microsoft.maps.AltitudeReferenceSystem;
 import com.microsoft.maps.GeoboundingBox;
 import com.microsoft.maps.Geocircle;
@@ -50,6 +52,7 @@ import com.microsoft.maps.MapCameraChangeReason;
 import com.microsoft.maps.MapCameraChangedEventArgs;
 import com.microsoft.maps.MapElementCollisionBehavior;
 import com.microsoft.maps.MapElementLayer;
+import com.microsoft.maps.MapFlyout;
 import com.microsoft.maps.MapIcon;
 import com.microsoft.maps.MapImage;
 import com.microsoft.maps.MapPolygon;
@@ -64,7 +67,7 @@ import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
-public class MicrosoftMapFragment extends Fragment implements Dronelink.Listener, DroneSessionManager.Listener, DroneSession.Listener, MissionExecutor.Listener {
+public class MicrosoftMapFragment extends Fragment implements Dronelink.Listener, DroneSessionManager.Listener, DroneSession.Listener, MissionExecutor.Listener, FuncExecutor.Listener {
     private enum Tracking {
         NONE,
         THIRD_PERSON_NADIR, //follow
@@ -85,6 +88,7 @@ public class MicrosoftMapFragment extends Fragment implements Dronelink.Listener
 
     private DroneSession session;
     private MissionExecutor missionExecutor;
+    private FuncExecutor funcExecutor;
     private com.microsoft.maps.MapView mapView;
     private MapElementLayer droneLayer = new MapElementLayer();
     private MapIcon droneIcon = new MapIcon();
@@ -94,6 +98,8 @@ public class MicrosoftMapFragment extends Fragment implements Dronelink.Listener
     private MapPolyline droneMissionExecutedPolyline;
     private List<Geoposition> droneMissionExecutedPositions = new ArrayList<>();
     private MapElementLayer missionLayer = new MapElementLayer();
+    private MapElementLayer funcLayer = new MapElementLayer();
+    private List<MapIcon> funcInputDroneIcons = new ArrayList<>();
     private final long updateDroneElementsMillis = 100;
     private Timer updateDroneElementsTimer;
     private double droneTakeoffAltitude = 0;
@@ -176,6 +182,9 @@ public class MicrosoftMapFragment extends Fragment implements Dronelink.Listener
         missionLayer.setZIndex(1);
         mapView.getLayers().add(missionLayer);
 
+        funcLayer.setZIndex(1);
+        mapView.getLayers().add(funcLayer);
+
         updateDroneElementsTimer = new Timer();
         updateDroneElementsTimer.schedule(new TimerTask() {
             @Override
@@ -215,8 +224,13 @@ public class MicrosoftMapFragment extends Fragment implements Dronelink.Listener
         if (session != null) {
             session.removeListener(this);
         }
+
         if (missionExecutor != null) {
             missionExecutor.removeListener(this);
+        }
+
+        if (funcExecutor != null) {
+            funcExecutor.removeListener(this);
         }
     }
 
@@ -512,18 +526,94 @@ public class MicrosoftMapFragment extends Fragment implements Dronelink.Listener
             missionLayer.getElements().add(polyline);
         }
 
+        if (missionExecutor.isEngaged()) {
+            positions = new ArrayList<>();
+            for (final GeoSpatial spatial : estimate.reengagementSpatials) {
+                addPositionAboveDroneTakeoffLocation(positions, spatial.coordinate.getLocation(), spatial.altitude.value, 0.1);
+            }
 
-        positions = new ArrayList<>();
-        for (final GeoSpatial spatial : estimate.reengagementSpatials) {
-            addPositionAboveDroneTakeoffLocation(positions, spatial.coordinate.getLocation(), spatial.altitude.value, 0.1);
+            if (positions.size() > 0) {
+                final MapIcon reengagementIcon = new MapIcon();
+                reengagementIcon.setImage(new MapImage(BitmapFactory.decodeResource(MicrosoftMapFragment.this.getResources(), R.drawable.reengagement)));
+                reengagementIcon.setFlat(true);
+                reengagementIcon.setDesiredCollisionBehavior(MapElementCollisionBehavior.REMAIN_VISIBLE);
+                reengagementIcon.setLocation(new Geopoint(positions.get(positions.size() - 1), droneTakeoffAltitudeReferenceSystem));
+                missionLayer.getElements().add(reengagementIcon);
+
+                final MapPolyline polyline = new MapPolyline();
+                polyline.setStrokeColor(Color.argb((int) (255 * 1.0), 224, 64, 251));
+                polyline.setStrokeWidth(1);
+                polyline.setPath(new Geopath(positions, droneTakeoffAltitudeReferenceSystem));
+                missionLayer.getElements().add(polyline);
+            }
+        }
+    }
+
+    private void updateFuncElements() {
+        int iconIndex = 0;
+        int inputIndex = 0;
+        FuncExecutor funcExecutor = this.funcExecutor;
+        if (funcExecutor != null) {
+            while (true) {
+                final FuncInput input = funcExecutor.getInput(inputIndex);
+                if (input == null) {
+                    break;
+                }
+
+                if (input.variable.valueType == VariableValueType.DRONE) {
+                    Object value = funcExecutor.readValue(inputIndex);
+                    if (value != null) {
+                        GeoSpatial[] spatials = new GeoSpatial[]{};
+                        if (value instanceof GeoSpatial[]) {
+                            spatials = (GeoSpatial[])value;
+                        }
+                        else if (value instanceof GeoSpatial) {
+                            spatials = new GeoSpatial[] { (GeoSpatial)value };
+                        }
+
+                        for (int variableValueIndex = 0; variableValueIndex < spatials.length; variableValueIndex++) {
+                            MapIcon inputIcon;
+                            if (funcInputDroneIcons.size() < iconIndex) {
+                                inputIcon = funcInputDroneIcons.get(iconIndex);
+                            }
+                            else {
+                                inputIcon = new MapIcon();
+                                inputIcon.setImage(new MapImage(BitmapFactory.decodeResource(MicrosoftMapFragment.this.getResources(), R.drawable.func_input_drone)));
+                                inputIcon.setFlat(true);
+                                inputIcon.setDesiredCollisionBehavior(MapElementCollisionBehavior.REMAIN_VISIBLE);
+                                inputIcon.setFlyout(new MapFlyout());
+                                funcInputDroneIcons.add(inputIcon);
+                            }
+
+                            final GeoSpatial spatial = spatials[variableValueIndex];
+                            inputIcon.setLocation(new Geopoint(positionAboveDroneTakeoffLocation(spatial.coordinate.getLocation(), spatial.altitude.value), droneTakeoffAltitudeReferenceSystem));
+                            inputIcon.getFlyout().setTitle((inputIndex + 1) + ". " + (input.descriptors.name == null ? " " : input.descriptors.name));
+                            final Object valueFormatted = funcExecutor.readValue(inputIndex, variableValueIndex, true);
+                            if (valueFormatted instanceof String) {
+                                inputIcon.getFlyout().setDescription(valueFormatted + (value instanceof GeoSpatial[] ? (((GeoSpatial[])value).length > 1 ? " (" + (variableValueIndex + 1) + ")" : "") : ""));
+                            }
+                            else {
+                                inputIcon.getFlyout().setDescription("");
+                            }
+
+                            iconIndex++;
+                        }
+                    }
+                }
+                inputIndex++;
+            }
         }
 
-        if (positions.size() > 0) {
-            final MapPolyline polyline = new MapPolyline();
-            polyline.setStrokeColor(Color.argb((int)(255 * 1.0), 224, 64, 251));
-            polyline.setStrokeWidth(1);
-            polyline.setPath(new Geopath(positions, droneTakeoffAltitudeReferenceSystem));
-            missionLayer.getElements().add(polyline);
+        while (iconIndex < funcInputDroneIcons.size()) {
+            funcInputDroneIcons.remove(funcInputDroneIcons.size() - 1);
+        }
+
+        while (funcLayer.getElements().size() > funcInputDroneIcons.size()) {
+            funcLayer.getElements().remove(funcLayer.getElements().size() - 1);
+        }
+
+        while (funcLayer.getElements().size() < funcInputDroneIcons.size()) {
+            funcLayer.getElements().add(funcInputDroneIcons.get(funcLayer.getElements().size()));
         }
     }
 
@@ -707,10 +797,29 @@ public class MicrosoftMapFragment extends Fragment implements Dronelink.Listener
     }
 
     @Override
-    public void onFuncLoaded(final FuncExecutor executor) {}
+    public void onFuncLoaded(final FuncExecutor executor) {
+        funcExecutor = executor;
+        executor.addListener(this);
+        getActivity().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                updateFuncElements();
+            }
+        });
+    }
 
     @Override
-    public void onFuncUnloaded(final FuncExecutor executor) {}
+    public void onFuncUnloaded(final FuncExecutor executor) {
+        funcExecutor = null;
+        executor.removeListener(this);
+
+        getActivity().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                updateFuncElements();
+            }
+        });
+    }
 
     @Override
     public void onOpened(final DroneSession session) {
@@ -791,5 +900,24 @@ public class MicrosoftMapFragment extends Fragment implements Dronelink.Listener
     @Override
     public void onMissionDisengaged(final MissionExecutor executor, final MissionExecutor.Engagement engagement, final Message reason) {
         droneMissionExecutedPositions.clear();
+        getActivity().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                updateMissionElements();
+            }
+        });
     }
+
+    @Override
+    public void onFuncInputsChanged(final FuncExecutor executor) {
+        getActivity().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                updateFuncElements();
+            }
+        });
+    }
+
+    @Override
+    public void onFuncExecuted(final FuncExecutor executor) {}
 }

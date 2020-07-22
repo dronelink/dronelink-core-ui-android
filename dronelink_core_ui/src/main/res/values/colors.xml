@@ -4,4 +4,5 @@
     <color name="darkBlack_transparent">#cc000000</color>
     <color name="gray_transparent">#cccccccc</color>
     <color name="primary">#FF311b92</color>
+    <color name="darkGray">#555555</color>
 </resources>
