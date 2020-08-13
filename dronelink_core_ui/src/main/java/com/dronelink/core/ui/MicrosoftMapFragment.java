@@ -242,10 +242,11 @@ public class MicrosoftMapFragment extends Fragment implements Dronelink.Listener
 
     @Override
     public void onDestroy() {
-        super.onDestroy();
         if (updateDroneElementsTimer != null) {
             updateDroneElementsTimer.cancel();
         }
+
+        super.onDestroy();
 
         mapView.onDestroy();
     }

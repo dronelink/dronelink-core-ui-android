@@ -39,13 +39,9 @@ public class TelemetryFragment extends Fragment implements DroneSessionManager.L
     private final String largeFormat = "%s %.0f %s";
     private final String smallFormat = "%s %.1f %s";
     private String distancePrefix;
-    private String distanceSuffix;
     private String altitudePrefix;
-    private String altitudeSuffix;
     private String horizontalSpeedPrefix;
-    private String horizontalSpeedSuffix;
     private String verticalSpeedPrefix;
-    private String verticalSpeedSuffix;
 
     private DroneStateAdapter getDroneState() {
         if (session == null || session.getState() == null) {
@@ -76,13 +72,9 @@ public class TelemetryFragment extends Fragment implements DroneSessionManager.L
         verticalSpeedTextView = getView().findViewById(R.id.verticalSpeedTextView);
 
         distancePrefix = getString(R.string.Telemetry_distance_prefix);
-        distanceSuffix = getString(Dronelink.UNIT_SYSTEM == UnitSystem.IMPERIAL ? R.string.Telemetry_distance_suffix_imperial : R.string.Telemetry_distance_suffix_metric);
         altitudePrefix = getString(R.string.Telemetry_altitude_prefix);
-        altitudeSuffix = getString(Dronelink.UNIT_SYSTEM == UnitSystem.IMPERIAL ? R.string.Telemetry_distance_suffix_imperial : R.string.Telemetry_distance_suffix_metric);
         horizontalSpeedPrefix = getString(R.string.Telemetry_horizontalSpeed_prefix);
-        horizontalSpeedSuffix = getString(Dronelink.UNIT_SYSTEM == UnitSystem.IMPERIAL ? R.string.Telemetry_horizontalSpeed_suffix_imperial : R.string.Telemetry_horizontalSpeed_suffix_metric);
         verticalSpeedPrefix = getString(R.string.Telemetry_verticalSpeed_prefix);
-        verticalSpeedSuffix = getString(Dronelink.UNIT_SYSTEM == UnitSystem.IMPERIAL ? R.string.Telemetry_verticalSpeed_suffix_imperial : R.string.Telemetry_verticalSpeed_suffix_metric);
 
         updateTimer = new Timer();
         updateTimer.schedule(new TimerTask() {
@@ -107,10 +99,10 @@ public class TelemetryFragment extends Fragment implements DroneSessionManager.L
 
     @Override
     public void onDestroy() {
-        super.onDestroy();
         if (updateTimer != null) {
             updateTimer.cancel();
         }
+        super.onDestroy();
     }
 
     private void updateTimer() {
@@ -140,7 +132,7 @@ public class TelemetryFragment extends Fragment implements DroneSessionManager.L
                 verticalSpeed = state.getVerticalSpeed();
             }
 
-            switch (Dronelink.UNIT_SYSTEM) {
+            switch (Dronelink.getInstance().getUnitSystem()) {
                 case IMPERIAL:
                     distance = Convert.MetersToFeet(distance);
                     altitude = Convert.MetersToFeet(altitude);
@@ -153,6 +145,10 @@ public class TelemetryFragment extends Fragment implements DroneSessionManager.L
                     break;
             }
 
+            final String distanceSuffix = getString(Dronelink.getInstance().getUnitSystem() == UnitSystem.IMPERIAL ? R.string.Telemetry_distance_suffix_imperial : R.string.Telemetry_distance_suffix_metric);
+            final String altitudeSuffix = getString(Dronelink.getInstance().getUnitSystem() == UnitSystem.IMPERIAL ? R.string.Telemetry_distance_suffix_imperial : R.string.Telemetry_distance_suffix_metric);
+            final String horizontalSpeedSuffix = getString(Dronelink.getInstance().getUnitSystem() == UnitSystem.IMPERIAL ? R.string.Telemetry_horizontalSpeed_suffix_imperial : R.string.Telemetry_horizontalSpeed_suffix_metric);
+            final String verticalSpeedSuffix = getString(Dronelink.getInstance().getUnitSystem() == UnitSystem.IMPERIAL ? R.string.Telemetry_verticalSpeed_suffix_imperial : R.string.Telemetry_verticalSpeed_suffix_metric);
             distanceTextView.setText(String.format(distance > 10 ? largeFormat : smallFormat, distancePrefix, distance, distanceSuffix));
             altitudeTextView.setText(String.format(altitude > 10 ? largeFormat : smallFormat, altitudePrefix, altitude, altitudeSuffix));
             horizontalSpeedTextView.setText(String.format(horizontalSpeed > 10 ? largeFormat : smallFormat, horizontalSpeedPrefix, horizontalSpeed, horizontalSpeedSuffix));

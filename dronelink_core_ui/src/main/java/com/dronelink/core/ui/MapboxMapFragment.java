@@ -137,10 +137,11 @@ public class MapboxMapFragment extends Fragment implements Dronelink.Listener, D
 
     @Override
     public void onDestroy() {
-        super.onDestroy();
         if (updateTimer != null) {
             updateTimer.cancel();
         }
+
+        super.onDestroy();
 
         mapView.onDestroy();
     }

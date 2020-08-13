@@ -18,6 +18,7 @@ import androidx.fragment.app.Fragment;
 
 import android.text.InputType;
 import android.text.method.ScrollingMovementMethod;
+import android.util.DisplayMetrics;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -442,7 +443,9 @@ public class FuncFragment extends Fragment implements Dronelink.Listener, DroneS
     }
 
     private void updateHeight(float height) {
-        getView().getLayoutParams().height = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, height, getResources().getDisplayMetrics());
+        DisplayMetrics displayMetrics = getResources().getDisplayMetrics();
+        float maxHeight = Math.max(135, (displayMetrics.heightPixels / displayMetrics.density) - 200.0f);
+        getView().getLayoutParams().height = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, Math.min(height, maxHeight), displayMetrics);
         getView().requestLayout();
     }
 
