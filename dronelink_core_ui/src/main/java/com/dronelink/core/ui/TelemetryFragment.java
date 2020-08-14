@@ -39,9 +39,17 @@ public class TelemetryFragment extends Fragment implements DroneSessionManager.L
     private final String largeFormat = "%s %.0f %s";
     private final String smallFormat = "%s %.1f %s";
     private String distancePrefix;
+    private String distanceSuffixMetric;
+    private String distanceSuffixImperial;
     private String altitudePrefix;
+    private String altitudeSuffixMetric;
+    private String altitudeSuffixImperial;
     private String horizontalSpeedPrefix;
+    private String horizontalSpeedSuffixMetric;
+    private String horizontalSpeedSuffixImperial;
     private String verticalSpeedPrefix;
+    private String verticalSpeedSuffixMetric;
+    private String verticalSpeedSuffixImperial;
 
     private DroneStateAdapter getDroneState() {
         if (session == null || session.getState() == null) {
@@ -72,9 +80,17 @@ public class TelemetryFragment extends Fragment implements DroneSessionManager.L
         verticalSpeedTextView = getView().findViewById(R.id.verticalSpeedTextView);
 
         distancePrefix = getString(R.string.Telemetry_distance_prefix);
+        distanceSuffixMetric = getString(R.string.Telemetry_distance_suffix_metric);
+        distanceSuffixImperial = getString(R.string.Telemetry_distance_suffix_imperial);
         altitudePrefix = getString(R.string.Telemetry_altitude_prefix);
+        altitudeSuffixMetric = getString(R.string.Telemetry_distance_suffix_metric);
+        altitudeSuffixImperial = getString(R.string.Telemetry_distance_suffix_imperial);
         horizontalSpeedPrefix = getString(R.string.Telemetry_horizontalSpeed_prefix);
+        horizontalSpeedSuffixMetric = getString(R.string.Telemetry_horizontalSpeed_suffix_metric);
+        horizontalSpeedSuffixImperial = getString(R.string.Telemetry_horizontalSpeed_suffix_imperial);
         verticalSpeedPrefix = getString(R.string.Telemetry_verticalSpeed_prefix);
+        verticalSpeedSuffixMetric = getString(R.string.Telemetry_verticalSpeed_suffix_metric);
+        verticalSpeedSuffixImperial = getString(R.string.Telemetry_verticalSpeed_suffix_imperial);
 
         updateTimer = new Timer();
         updateTimer.schedule(new TimerTask() {
@@ -145,14 +161,10 @@ public class TelemetryFragment extends Fragment implements DroneSessionManager.L
                     break;
             }
 
-            final String distanceSuffix = getString(Dronelink.getInstance().getUnitSystem() == UnitSystem.IMPERIAL ? R.string.Telemetry_distance_suffix_imperial : R.string.Telemetry_distance_suffix_metric);
-            final String altitudeSuffix = getString(Dronelink.getInstance().getUnitSystem() == UnitSystem.IMPERIAL ? R.string.Telemetry_distance_suffix_imperial : R.string.Telemetry_distance_suffix_metric);
-            final String horizontalSpeedSuffix = getString(Dronelink.getInstance().getUnitSystem() == UnitSystem.IMPERIAL ? R.string.Telemetry_horizontalSpeed_suffix_imperial : R.string.Telemetry_horizontalSpeed_suffix_metric);
-            final String verticalSpeedSuffix = getString(Dronelink.getInstance().getUnitSystem() == UnitSystem.IMPERIAL ? R.string.Telemetry_verticalSpeed_suffix_imperial : R.string.Telemetry_verticalSpeed_suffix_metric);
-            distanceTextView.setText(String.format(distance > 10 ? largeFormat : smallFormat, distancePrefix, distance, distanceSuffix));
-            altitudeTextView.setText(String.format(altitude > 10 ? largeFormat : smallFormat, altitudePrefix, altitude, altitudeSuffix));
-            horizontalSpeedTextView.setText(String.format(horizontalSpeed > 10 ? largeFormat : smallFormat, horizontalSpeedPrefix, horizontalSpeed, horizontalSpeedSuffix));
-            verticalSpeedTextView.setText(String.format(verticalSpeed > 10 ? largeFormat : smallFormat, verticalSpeedPrefix, verticalSpeed, verticalSpeedSuffix));
+            distanceTextView.setText(String.format(distance > 10 ? largeFormat : smallFormat, distancePrefix, distance, Dronelink.getInstance().getUnitSystem() == UnitSystem.IMPERIAL ? distanceSuffixImperial : distanceSuffixMetric));
+            altitudeTextView.setText(String.format(altitude > 10 ? largeFormat : smallFormat, altitudePrefix, altitude, Dronelink.getInstance().getUnitSystem() == UnitSystem.IMPERIAL ? altitudeSuffixImperial : altitudeSuffixMetric));
+            horizontalSpeedTextView.setText(String.format(horizontalSpeed > 10 ? largeFormat : smallFormat, horizontalSpeedPrefix, horizontalSpeed, Dronelink.getInstance().getUnitSystem() == UnitSystem.IMPERIAL ? horizontalSpeedSuffixImperial : horizontalSpeedSuffixMetric));
+            verticalSpeedTextView.setText(String.format(verticalSpeed > 10 ? largeFormat : smallFormat, verticalSpeedPrefix, verticalSpeed, Dronelink.getInstance().getUnitSystem() == UnitSystem.IMPERIAL ? verticalSpeedSuffixImperial : verticalSpeedSuffixMetric));
         }
     };
 
