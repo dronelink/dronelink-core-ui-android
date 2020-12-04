@@ -30,16 +30,17 @@ import com.dronelink.core.DroneSessionManager;
 import com.dronelink.core.Dronelink;
 import com.dronelink.core.FuncExecutor;
 import com.dronelink.core.MissionExecutor;
+import com.dronelink.core.ModeExecutor;
 import com.dronelink.core.adapters.DroneStateAdapter;
 import com.dronelink.core.adapters.GimbalStateAdapter;
 import com.dronelink.core.command.CommandError;
-import com.dronelink.core.mission.command.Command;
-import com.dronelink.core.mission.core.FuncInput;
-import com.dronelink.core.mission.core.GeoCoordinate;
-import com.dronelink.core.mission.core.GeoSpatial;
-import com.dronelink.core.mission.core.Message;
-import com.dronelink.core.mission.core.PlanRestrictionZone;
-import com.dronelink.core.mission.core.enums.VariableValueType;
+import com.dronelink.core.kernel.command.Command;
+import com.dronelink.core.kernel.core.FuncInput;
+import com.dronelink.core.kernel.core.GeoCoordinate;
+import com.dronelink.core.kernel.core.GeoSpatial;
+import com.dronelink.core.kernel.core.Message;
+import com.dronelink.core.kernel.core.PlanRestrictionZone;
+import com.dronelink.core.kernel.core.enums.VariableValueType;
 import com.microsoft.maps.AltitudeReferenceSystem;
 import com.microsoft.maps.GeoboundingBox;
 import com.microsoft.maps.Geocircle;
@@ -63,11 +64,12 @@ import com.microsoft.maps.MapStyleSheets;
 import com.microsoft.maps.OnMapCameraChangedListener;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
-public class MicrosoftMapFragment extends Fragment implements Dronelink.Listener, DroneSessionManager.Listener, DroneSession.Listener, MissionExecutor.Listener, FuncExecutor.Listener {
+public class MicrosoftMapFragment extends Fragment implements Dronelink.Listener, DroneSessionManager.Listener, DroneSession.Listener, MissionExecutor.Listener, FuncExecutor.Listener, ModeExecutor.Listener {
     private enum Tracking {
         NONE,
         THIRD_PERSON_NADIR, //follow
@@ -89,6 +91,7 @@ public class MicrosoftMapFragment extends Fragment implements Dronelink.Listener
     private DroneSession session;
     private MissionExecutor missionExecutor;
     private FuncExecutor funcExecutor;
+    private ModeExecutor modeExecutor;
     private com.microsoft.maps.MapView mapView;
     private MapElementLayer droneLayer = new MapElementLayer();
     private MapIcon droneIcon = new MapIcon();
@@ -100,6 +103,8 @@ public class MicrosoftMapFragment extends Fragment implements Dronelink.Listener
     private MapElementLayer missionLayer = new MapElementLayer();
     private MapElementLayer funcLayer = new MapElementLayer();
     private List<MapIcon> funcInputDroneIcons = new ArrayList<>();
+    private MapElementLayer modeLayer = new MapElementLayer();
+    private MapIcon modeTargetIcon = new MapIcon();
     private final long updateDroneElementsMillis = 100;
     private Timer updateDroneElementsTimer;
     private double droneTakeoffAltitude = 0;
@@ -185,6 +190,14 @@ public class MicrosoftMapFragment extends Fragment implements Dronelink.Listener
         funcLayer.setZIndex(1);
         mapView.getLayers().add(funcLayer);
 
+        modeLayer.setZIndex(1);
+        modeTargetIcon.setImage(new MapImage(BitmapFactory.decodeResource(MicrosoftMapFragment.this.getResources(), R.drawable.drone)));
+        modeTargetIcon.setFlat(true);
+        modeTargetIcon.setOpacity(0.5f);
+        modeTargetIcon.setDesiredCollisionBehavior(MapElementCollisionBehavior.REMAIN_VISIBLE);
+        modeLayer.getElements().add(modeTargetIcon);
+        mapView.getLayers().add(modeLayer);
+
         updateDroneElementsTimer = new Timer();
         updateDroneElementsTimer.schedule(new TimerTask() {
             @Override
@@ -225,12 +238,19 @@ public class MicrosoftMapFragment extends Fragment implements Dronelink.Listener
             session.removeListener(this);
         }
 
+        final MissionExecutor missionExecutor = this.missionExecutor;
         if (missionExecutor != null) {
             missionExecutor.removeListener(this);
         }
 
+        final FuncExecutor funcExecutor = this.funcExecutor;
         if (funcExecutor != null) {
             funcExecutor.removeListener(this);
+        }
+
+        final ModeExecutor modeExecutor = this.modeExecutor;
+        if (modeExecutor != null) {
+            modeExecutor.removeListener(this);
         }
     }
 
@@ -366,7 +386,7 @@ public class MicrosoftMapFragment extends Fragment implements Dronelink.Listener
 
         final Location droneLocation = state.getLocation();
         if (session.isLocated() && droneLocation != null) {
-            int rotation = (int)(-Convert.RadiansToDegrees(state.getMissionOrientation().getYaw())) % 360;
+            int rotation = (int)(-Convert.RadiansToDegrees(state.getOrientation().getYaw())) % 360;
             if (rotation < 0) {
                 rotation += 360;
             }
@@ -428,9 +448,9 @@ public class MicrosoftMapFragment extends Fragment implements Dronelink.Listener
                 case THIRD_PERSON_OBLIQUE:
                     trackingScene = MapScene.createFromCamera(
                             new MapCamera(
-                                new Geopoint(positionAboveDroneTakeoffLocation(Convert.locationWithBearing(droneLocation, state.getMissionOrientation().getYaw() + Math.PI, 15), state.getAltitude() + 14),
+                                new Geopoint(positionAboveDroneTakeoffLocation(Convert.locationWithBearing(droneLocation, state.getOrientation().getYaw() + Math.PI, 15), state.getAltitude() + 14),
                                         droneTakeoffAltitudeReferenceSystem),
-                                    Convert.RadiansToDegrees(state.getMissionOrientation().getYaw()), 45));
+                                    Convert.RadiansToDegrees(state.getOrientation().getYaw()), 45));
                     break;
 
                 case FIRST_PERSON:
@@ -438,7 +458,7 @@ public class MicrosoftMapFragment extends Fragment implements Dronelink.Listener
                     trackingScene = MapScene.createFromCamera(
                             new MapCamera(
                                     new Geopoint(positionAboveDroneTakeoffLocation(droneLocation, state.getAltitude()), droneTakeoffAltitudeReferenceSystem),
-                                    Convert.RadiansToDegrees(state.getMissionOrientation().getYaw()), Math.min((gimbalState == null ? 0 : Convert.RadiansToDegrees(gimbalState.value.getMissionOrientation().getPitch())) + 90, 90)));
+                                    Convert.RadiansToDegrees(state.getOrientation().getYaw()), Math.min((gimbalState == null ? 0 : Convert.RadiansToDegrees(gimbalState.value.getOrientation().getPitch())) + 90, 90)));
                     break;
             }
 
@@ -618,6 +638,46 @@ public class MicrosoftMapFragment extends Fragment implements Dronelink.Listener
         }
     }
 
+    private void updateModeElements() {
+        final ModeExecutor modeExecutorLocal = modeExecutor;
+        if (modeExecutorLocal == null || !modeExecutorLocal.isEngaged()) {
+            return;
+        }
+
+        final GeoSpatial modeTarget = modeExecutorLocal.getTarget();
+        if (modeTarget != null) {
+            int rotation = (int)(-Convert.RadiansToDegrees(modeTarget.orientation.getYaw())) % 360;
+            if (rotation < 0) {
+                rotation += 360;
+            }
+            modeTargetIcon.setRotation(rotation);
+            modeTargetIcon.setLocation(new Geopoint(positionAboveDroneTakeoffLocation(location(modeTarget.coordinate), modeTarget.altitude.value), droneTakeoffAltitudeReferenceSystem));
+            modeTargetIcon.setVisible(true);
+        }
+        else {
+            modeTargetIcon.setVisible(false);
+        }
+
+        final List<Geoposition> visibleCoordinates = new LinkedList<>();
+        final GeoCoordinate[] modeVisibleCoordinates = modeExecutorLocal.getVisibleCoordinates();
+        if (modeVisibleCoordinates != null) {
+            for (final GeoCoordinate coordinate : modeVisibleCoordinates) {
+                visibleCoordinates.add(new Geoposition(coordinate.latitude, coordinate.longitude));
+            }
+        }
+
+        if (visibleCoordinates.size() > 0) {
+            tracking = Tracking.NONE;
+            final GeoboundingBox boundingBox = new GeoboundingBox(visibleCoordinates);
+            final Location northwest = location(boundingBox.getNorthwestCorner());
+            final Location southeast = location(boundingBox.getSoutheastCorner());
+            double radius = northwest.distanceTo(southeast) * 0.5;
+            final Location center = Convert.locationWithBearing(northwest, Convert.DegreesToRadians(northwest.bearingTo(southeast)), radius);
+            //using the bounding box directly isn't great
+            mapView.setScene(MapScene.createFromLocationAndRadius(new Geopoint(position(center)), radius * 2.0, 0.0, 0.0), MapAnimationKind.NONE);
+        }
+    }
+
     private void updateDroneTakeoffAltitude() {
         Geopoint point = null;
         final DroneStateAdapter state = getDroneState();
@@ -759,6 +819,13 @@ public class MicrosoftMapFragment extends Fragment implements Dronelink.Listener
         return location;
     }
 
+    private Location location(final GeoCoordinate coordinate) {
+        final Location location = new Location("");
+        location.setLatitude(coordinate.latitude);
+        location.setLongitude(coordinate.longitude);
+        return location;
+    }
+
     private Geoposition position(final Location location) {
         return new Geoposition(location.getLatitude(), location.getLongitude());
     }
@@ -820,6 +887,18 @@ public class MicrosoftMapFragment extends Fragment implements Dronelink.Listener
                 updateFuncElements();
             }
         });
+    }
+
+    @Override
+    public void onModeLoaded(final ModeExecutor executor) {
+        modeExecutor = executor;
+        executor.addListener(this);
+    }
+
+    @Override
+    public void onModeUnloaded(final ModeExecutor executor) {
+        modeExecutor = null;
+        executor.removeListener(this);
     }
 
     @Override
@@ -921,4 +1000,30 @@ public class MicrosoftMapFragment extends Fragment implements Dronelink.Listener
 
     @Override
     public void onFuncExecuted(final FuncExecutor executor) {}
+
+    @Override
+    public void onModeEngaging(final ModeExecutor executor) {}
+
+    @Override
+    public void onModeEngaged(final ModeExecutor executor, final ModeExecutor.Engagement engagement) {}
+
+    @Override
+    public void onModeExecuted(final ModeExecutor executor, final ModeExecutor.Engagement engagement) {
+        getActivity().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                updateModeElements();
+            }
+        });
+    }
+
+    @Override
+    public void onModeDisengaged(final ModeExecutor executor, final ModeExecutor.Engagement engagement, final Message reason) {
+        getActivity().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                updateModeElements();
+            }
+        });
+    }
 }

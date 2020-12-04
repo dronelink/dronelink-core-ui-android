@@ -38,10 +38,11 @@ import com.dronelink.core.DroneSessionManager;
 import com.dronelink.core.Dronelink;
 import com.dronelink.core.FuncExecutor;
 import com.dronelink.core.MissionExecutor;
+import com.dronelink.core.ModeExecutor;
 import com.dronelink.core.adapters.DroneStateAdapter;
-import com.dronelink.core.mission.core.FuncInput;
-import com.dronelink.core.mission.core.GeoSpatial;
-import com.dronelink.core.mission.core.enums.VariableValueType;
+import com.dronelink.core.kernel.core.FuncInput;
+import com.dronelink.core.kernel.core.GeoSpatial;
+import com.dronelink.core.kernel.core.enums.VariableValueType;
 import com.squareup.picasso.Picasso;
 import com.stfalcon.imageviewer.StfalconImageViewer;
 import com.stfalcon.imageviewer.loader.ImageLoader;
@@ -101,7 +102,7 @@ public class FuncFragment extends Fragment implements Dronelink.Listener, DroneS
             }
 
             if (intro && hasInputs()) {
-                if (mostRecentExecuted != null && mostRecentExecuted.funcID.equals(funcExecutor.funcID)) {
+                if (mostRecentExecuted != null && mostRecentExecuted.id.equals(funcExecutor.id)) {
                     final AlertDialog.Builder alertDialog = new AlertDialog.Builder(getActivity());
                     alertDialog.setTitle(R.string.Func_cachedInputs_title);
                     alertDialog.setMessage(R.string.Func_cachedInputs_message);
@@ -266,9 +267,8 @@ public class FuncFragment extends Fragment implements Dronelink.Listener, DroneS
                     return;
                 }
 
-                addNextDynamicInput();
-
                 inputIndex += 1;
+                addNextDynamicInput();
                 readValue();
                 getActivity().runOnUiThread(updateViews);
             }
@@ -655,6 +655,12 @@ public class FuncFragment extends Fragment implements Dronelink.Listener, DroneS
         executor.removeListener(this);
         getActivity().runOnUiThread(updateViews);
     }
+
+    @Override
+    public void onModeLoaded(final ModeExecutor executor) {}
+
+    @Override
+    public void onModeUnloaded(final ModeExecutor executor) {}
 
     @Override
     public void onFuncInputsChanged(FuncExecutor executor) {

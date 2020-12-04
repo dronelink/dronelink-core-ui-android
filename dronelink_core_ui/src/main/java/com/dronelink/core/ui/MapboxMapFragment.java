@@ -28,9 +28,11 @@ import com.dronelink.core.DroneSessionManager;
 import com.dronelink.core.Dronelink;
 import com.dronelink.core.FuncExecutor;
 import com.dronelink.core.MissionExecutor;
+import com.dronelink.core.ModeExecutor;
 import com.dronelink.core.adapters.DroneStateAdapter;
-import com.dronelink.core.mission.core.GeoSpatial;
-import com.dronelink.core.mission.core.Message;
+import com.dronelink.core.kernel.core.GeoCoordinate;
+import com.dronelink.core.kernel.core.GeoSpatial;
+import com.dronelink.core.kernel.core.Message;
 import com.mapbox.android.core.location.LocationEngineCallback;
 import com.mapbox.android.core.location.LocationEngineResult;
 import com.mapbox.android.core.permissions.PermissionsManager;
@@ -57,9 +59,10 @@ import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
-public class MapboxMapFragment extends Fragment implements Dronelink.Listener, DroneSessionManager.Listener, MissionExecutor.Listener, OnMapReadyCallback {
+public class MapboxMapFragment extends Fragment implements Dronelink.Listener, DroneSessionManager.Listener, MissionExecutor.Listener, ModeExecutor.Listener, OnMapReadyCallback {
     private DroneSession session;
     private MissionExecutor missionExecutor;
+    private ModeExecutor modeExecutor;
     private com.mapbox.mapboxsdk.maps.MapView mapView;
     private MapboxMap map;
     private Annotation missionRequiredTakeoffAreaAnnotation;
@@ -72,6 +75,7 @@ public class MapboxMapFragment extends Fragment implements Dronelink.Listener, D
     private boolean missionCentered = false;
 
     private DroneStateAdapter getDroneState() {
+        final DroneSession session = this.session;
         if (session == null || session.getState() == null) {
             return null;
         }
@@ -88,7 +92,7 @@ public class MapboxMapFragment extends Fragment implements Dronelink.Listener, D
     @Override
     public View onCreateView(final LayoutInflater inflater, final ViewGroup container, final Bundle savedInstanceState) {
         final View view = inflater.inflate(R.layout.fragment_mapbox_map, container, false);
-        view.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.FILL_PARENT, ViewGroup.LayoutParams.FILL_PARENT));
+        view.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
         return view;
     }
 
@@ -124,8 +128,14 @@ public class MapboxMapFragment extends Fragment implements Dronelink.Listener, D
         mapView.onStop();
         Dronelink.getInstance().getSessionManager().removeListener(this);
         Dronelink.getInstance().removeListener(this);
+        final MissionExecutor missionExecutor = this.missionExecutor;
         if (missionExecutor != null) {
             missionExecutor.removeListener(this);
+        }
+
+        final ModeExecutor modeExecutor = this.modeExecutor;
+        if (modeExecutor != null) {
+            modeExecutor.removeListener(this);
         }
     }
 
@@ -207,11 +217,10 @@ public class MapboxMapFragment extends Fragment implements Dronelink.Listener, D
             if (droneLocation != null) {
                 final GeoJsonSource droneSource = style.getSourceAs("drone");
                 droneSource.setGeoJson(Feature.fromGeometry(Point.fromLngLat(droneLocation.getLongitude(), droneLocation.getLatitude())));
-                style.getLayerAs("drone").setProperties(PropertyFactory.iconRotate((float)(Convert.RadiansToDegrees(state.getMissionOrientation().getYaw()) - map.getCameraPosition().bearing)));
+                style.getLayerAs("drone").setProperties(PropertyFactory.iconRotate((float)(Convert.RadiansToDegrees(state.getOrientation().getYaw()) - map.getCameraPosition().bearing)));
             }
         }
     };
-
 
     @SuppressWarnings({"MissingPermission"})
     private Runnable updateMissionRequiredTakeoffArea = new Runnable() {
@@ -231,8 +240,9 @@ public class MapboxMapFragment extends Fragment implements Dronelink.Listener, D
             }
 
 
-            if (missionExecutor != null) {
-                final MissionExecutor.TakeoffArea requiredTakeoffArea = missionExecutor.requiredTakeoffArea;
+            final MissionExecutor missionExecutorLocal = missionExecutor;
+            if (missionExecutorLocal != null) {
+                final MissionExecutor.TakeoffArea requiredTakeoffArea = missionExecutorLocal.requiredTakeoffArea;
                 if (requiredTakeoffArea != null) {
                     final Location takeoffLocation = requiredTakeoffArea.coordinate.getLocation();
                     final List<LatLng> takeoffAreaPoints = new LinkedList<>();
@@ -275,11 +285,12 @@ public class MapboxMapFragment extends Fragment implements Dronelink.Listener, D
                 map.removeAnnotation(missionReengagementEstimateForegroundAnnotation);
             }
 
-            if (missionExecutor == null) {
+            final MissionExecutor missionExecutorLocal = missionExecutor;
+            if (missionExecutorLocal == null) {
                 return;
             }
 
-            final MissionExecutor.Estimate estimate = missionExecutor.getEstimate();
+            final MissionExecutor.Estimate estimate = missionExecutorLocal.getEstimate();
             if (estimate == null) {
                 return;
             }
@@ -325,6 +336,41 @@ public class MapboxMapFragment extends Fragment implements Dronelink.Listener, D
         }
     };
 
+    private Runnable updateModeElements = new Runnable() {
+        public void run() {
+            final ModeExecutor modeExecutorLocal = modeExecutor;
+            if (modeExecutorLocal == null || !modeExecutorLocal.isEngaged()) {
+                return;
+            }
+
+            final Style style = map.getStyle();
+            if (style == null) {
+                return;
+            }
+
+            final GeoSpatial modeTarget = modeExecutorLocal.getTarget();
+            if (modeTarget != null) {
+                final GeoJsonSource modeTargetSource = style.getSourceAs("mode-target");
+                modeTargetSource.setGeoJson(Feature.fromGeometry(Point.fromLngLat(modeTarget.coordinate.longitude, modeTarget.coordinate.latitude)));
+                style.getLayerAs("mode-target").setProperties(PropertyFactory.iconRotate((float)(Convert.RadiansToDegrees(modeTarget.orientation.getYaw()) - map.getCameraPosition().bearing)));
+            }
+
+            final List<LatLng> visibleCoordinates = new LinkedList<>();
+            final GeoCoordinate[] modeVisibleCoordinates = modeExecutorLocal.getVisibleCoordinates();
+            if (modeVisibleCoordinates != null) {
+                for (final GeoCoordinate coordinate : modeVisibleCoordinates) {
+                    visibleCoordinates.add(new LatLng(coordinate.latitude, coordinate.longitude));
+                }
+            }
+
+            if (visibleCoordinates.size() > 0) {
+                final LatLngBounds.Builder bounds = new LatLngBounds.Builder();
+                bounds.includes(visibleCoordinates);
+                map.animateCamera(CameraUpdateFactory.newLatLngBounds(bounds.build(), (int)(Math.max(mapView.getHeight(), mapView.getWidth()) * 0.2)));
+            }
+        }
+    };
+
     @Override
     public void onOpened(final DroneSession session) {
         this.session = session;
@@ -366,6 +412,18 @@ public class MapboxMapFragment extends Fragment implements Dronelink.Listener, D
     public void onFuncUnloaded(final FuncExecutor executor) {}
 
     @Override
+    public void onModeLoaded(final ModeExecutor executor) {
+        modeExecutor = executor;
+        executor.addListener(this);
+    }
+
+    @Override
+    public void onModeUnloaded(final ModeExecutor executor) {
+        modeExecutor = null;
+        executor.removeListener(this);
+    }
+
+    @Override
     public void onMissionEstimating(final MissionExecutor executor) {}
 
     @Override
@@ -386,6 +444,22 @@ public class MapboxMapFragment extends Fragment implements Dronelink.Listener, D
     public void onMissionDisengaged(final MissionExecutor executor, final MissionExecutor.Engagement engagement, final Message reason) {}
 
     @Override
+    public void onModeEngaging(final ModeExecutor executor) {}
+
+    @Override
+    public void onModeEngaged(final ModeExecutor executor, final ModeExecutor.Engagement engagement) {
+        getActivity().runOnUiThread(updateModeElements);
+    }
+
+    @Override
+    public void onModeExecuted(final ModeExecutor executor, final ModeExecutor.Engagement engagement) {
+        getActivity().runOnUiThread(updateModeElements);
+    }
+
+    @Override
+    public void onModeDisengaged(final ModeExecutor executor, final ModeExecutor.Engagement engagement, final Message reason) {}
+
+    @Override
     public void onMapReady(@NonNull final MapboxMap mapboxMap) {
         map = mapboxMap;
         final MapboxMapFragment self = this;
@@ -400,7 +474,7 @@ public class MapboxMapFragment extends Fragment implements Dronelink.Listener, D
 
                 final SymbolLayer droneHomeLayer;
                 droneHomeLayer = new SymbolLayer("drone-home", "drone-home");
-                droneHomeLayer.withProperties(PropertyFactory.iconImage("drone-home"));
+                droneHomeLayer.withProperties(PropertyFactory.iconImage("drone-home"), PropertyFactory.iconAllowOverlap(true));
                 style.addLayer(droneHomeLayer);
 
                 style.addImage("drone", BitmapFactory.decodeResource(MapboxMapFragment.this.getResources(), R.drawable.drone));
@@ -409,8 +483,17 @@ public class MapboxMapFragment extends Fragment implements Dronelink.Listener, D
 
                 final SymbolLayer droneLayer;
                 droneLayer = new SymbolLayer("drone", "drone");
-                droneLayer.withProperties(PropertyFactory.iconImage("drone"));
+                droneLayer.withProperties(PropertyFactory.iconImage("drone"), PropertyFactory.iconAllowOverlap(true));
                 style.addLayer(droneLayer);
+
+                style.addImage("mode-target", BitmapFactory.decodeResource(MapboxMapFragment.this.getResources(), R.drawable.drone));
+                final GeoJsonSource modeTargetSource = new GeoJsonSource("mode-target", Feature.fromGeometry(Point.fromLngLat(0, 0)));
+                style.addSource(modeTargetSource);
+
+                final SymbolLayer modeTargetLayer;
+                modeTargetLayer = new SymbolLayer("mode-target", "mode-target");
+                modeTargetLayer.withProperties(PropertyFactory.iconImage("mode-target"), PropertyFactory.iconAllowOverlap(true), PropertyFactory.iconOpacity((float) 0.5));
+                style.addLayer(modeTargetLayer);
 
                 updateTimer = new Timer();
                 updateTimer.schedule(new TimerTask() {

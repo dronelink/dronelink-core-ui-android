@@ -32,15 +32,17 @@ import com.dronelink.core.Convert;
 import com.dronelink.core.DroneSession;
 import com.dronelink.core.DroneSessionManager;
 import com.dronelink.core.Dronelink;
+import com.dronelink.core.Executor;
 import com.dronelink.core.FuncExecutor;
 import com.dronelink.core.MissionExecutor;
+import com.dronelink.core.ModeExecutor;
 import com.dronelink.core.adapters.DroneStateAdapter;
 import com.dronelink.core.command.CommandError;
-import com.dronelink.core.mission.command.Command;
-import com.dronelink.core.mission.component.Component;
-import com.dronelink.core.mission.core.GeoCoordinate;
-import com.dronelink.core.mission.core.Message;
-import com.dronelink.core.mission.core.MessageGroup;
+import com.dronelink.core.kernel.command.Command;
+import com.dronelink.core.kernel.component.Component;
+import com.dronelink.core.kernel.core.GeoCoordinate;
+import com.dronelink.core.kernel.core.Message;
+import com.dronelink.core.kernel.core.MessageGroup;
 import com.squareup.picasso.Picasso;
 import com.stfalcon.imageviewer.StfalconImageViewer;
 import com.stfalcon.imageviewer.loader.ImageLoader;
@@ -126,7 +128,7 @@ public class MissionFragment extends Fragment implements Dronelink.Listener, Dro
                     if (engageDisallowedReasons[0].details != null) {
                         alertDialog.setMessage(engageDisallowedReasons[0].details);
                     }
-                    alertDialog.setPositiveButton(getString(R.string.Mission_dismiss), new DialogInterface.OnClickListener() {
+                    alertDialog.setPositiveButton(getString(R.string.Executable_dismiss), new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(final DialogInterface d, int i) {
                             d.dismiss();
@@ -317,7 +319,7 @@ public class MissionFragment extends Fragment implements Dronelink.Listener, Dro
             countdownTimer = null;
             getActivity().runOnUiThread(updateViews);
             if (aborted) {
-                Dronelink.getInstance().announce(getString(R.string.Mission_start_cancelled));
+                Dronelink.getInstance().announce(getString(R.string.Executable_start_cancelled));
             }
         }
     }
@@ -332,7 +334,7 @@ public class MissionFragment extends Fragment implements Dronelink.Listener, Dro
                 }
 
                 try {
-                    missionExecutor.engage(session, new MissionExecutor.EngageDisallowed() {
+                    missionExecutor.engage(session, new Executor.EngageDisallowed() {
                         @Override
                         public void disallowed(final Message reason) {
                             Handler handler = new Handler(Looper.getMainLooper());
@@ -344,7 +346,7 @@ public class MissionFragment extends Fragment implements Dronelink.Listener, Dro
                                     if (reason.details != null) {
                                         alertDialog.setMessage(reason.details);
                                     }
-                                    alertDialog.setPositiveButton(getString(R.string.Mission_dismiss), new DialogInterface.OnClickListener() {
+                                    alertDialog.setPositiveButton(getString(R.string.Executable_dismiss), new DialogInterface.OnClickListener() {
                                         @Override
                                         public void onClick(final DialogInterface d, int i) {
                                             d.dismiss();
@@ -363,9 +365,9 @@ public class MissionFragment extends Fragment implements Dronelink.Listener, Dro
                         @Override
                         public void run() {
                             final AlertDialog.Builder alertDialog = new AlertDialog.Builder(getActivity());
-                            alertDialog.setTitle(getString(R.string.Mission_start_engage_droneSerialNumberUnavailable_title));
-                            alertDialog.setMessage(getString(R.string.Mission_start_engage_droneSerialNumberUnavailable_message));
-                            alertDialog.setPositiveButton(getString(R.string.Mission_dismiss), new DialogInterface.OnClickListener() {
+                            alertDialog.setTitle(getString(R.string.Executable_start_engage_droneSerialNumberUnavailable_title));
+                            alertDialog.setMessage(getString(R.string.Executable_start_engage_droneSerialNumberUnavailable_message));
+                            alertDialog.setPositiveButton(getString(R.string.Executable_dismiss), new DialogInterface.OnClickListener() {
                                 @Override
                                 public void onClick(final DialogInterface d, int i) {
                                     d.dismiss();
@@ -393,15 +395,21 @@ public class MissionFragment extends Fragment implements Dronelink.Listener, Dro
 
     private Runnable updateViews = new Runnable() {
         public void run() {
-            if (missionExecutor == null) {
-                getView().setVisibility(View.GONE);
+            final View view = getView();
+            if (view == null) {
                 return;
             }
-            getView().setVisibility(View.VISIBLE);
 
-            titleTextView.setText(missionExecutor.descriptors.toString());
+            final MissionExecutor missionExecutorLocal = missionExecutor;
+            if (missionExecutorLocal == null) {
+                view.setVisibility(View.GONE);
+                return;
+            }
+            view.setVisibility(View.VISIBLE);
 
-            if (missionExecutor.isEstimating()) {
+            titleTextView.setText(missionExecutorLocal.descriptors.toString());
+
+            if (missionExecutorLocal.isEstimating()) {
                 activityIndicator.setVisibility(View.VISIBLE);
                 primaryButton.setVisibility(View.INVISIBLE);
                 subtitleTextView.setVisibility(View.VISIBLE);
@@ -428,11 +436,11 @@ public class MissionFragment extends Fragment implements Dronelink.Listener, Dro
                 primaryButton.setEnabled(true);
                 primaryButton.setBackgroundTintList(primaryEngagedColor);
                 primaryButton.setImageResource(R.drawable.baseline_close_white_48);
-                subtitleTextView.setText(getString(R.string.Mission_start_countdown) + " " + (countdownRemaining + 1));
+                subtitleTextView.setText(getString(R.string.Executable_start_countdown) + " " + (countdownRemaining + 1));
                 return;
             }
 
-            if (missionExecutor.isEngaging()) {
+            if (missionExecutorLocal.isEngaging()) {
                 activityIndicator.setVisibility(View.VISIBLE);
                 primaryButton.setVisibility(View.INVISIBLE);
                 subtitleTextView.setVisibility(View.VISIBLE);
@@ -442,7 +450,7 @@ public class MissionFragment extends Fragment implements Dronelink.Listener, Dro
                 dismissButton.setVisibility(View.INVISIBLE);
                 messagesTextView.setVisibility(View.INVISIBLE);
 
-                subtitleTextView.setText(getString(R.string.Mission_start_engaging));
+                subtitleTextView.setText(getString(R.string.Executable_start_engaging));
                 return;
             }
 
@@ -458,24 +466,24 @@ public class MissionFragment extends Fragment implements Dronelink.Listener, Dro
 
             primaryButton.setEnabled(session != null);
 
-            final MissionExecutor.Estimate estimate = missionExecutor.getEstimate();
+            final MissionExecutor.Estimate estimate = missionExecutorLocal.getEstimate();
             double totalTime = 0;
             double executionDuration = 0;
             if (estimate != null) {
                 totalTime = estimate.time;
-                executionDuration = missionExecutor.getExecutionDuration();
+                executionDuration = missionExecutorLocal.getExecutionDuration();
             }
             final double timeRemaining = Math.max(totalTime - executionDuration, 0);
             executionDurationTextView.setText(Dronelink.getInstance().format("timeElapsed", executionDuration, "00:00"));
             timeRemainingTextView.setText(Dronelink.getInstance().format("timeElapsed", timeRemaining, "00:00"));
             progressBar.setProgress((int)(Math.min(totalTime == 0 ? 0.0 : executionDuration / totalTime, 1.0) * 100));
 
-            if (missionExecutor.isEngaged()) {
+            if (missionExecutorLocal.isEngaged()) {
                 progressBar.setProgressTintList(progressEngagedColor);
 
                 if (expanded) {
                     final StringBuilder messages = new StringBuilder();
-                    for (final MessageGroup messageGroup : missionExecutor.getExecutingMessageGroups()) {
+                    for (final MessageGroup messageGroup : missionExecutorLocal.getExecutingMessageGroups()) {
                         if (messages.length() > 0) {
                             messages.append("\n\n");
                         }
@@ -499,6 +507,7 @@ public class MissionFragment extends Fragment implements Dronelink.Listener, Dro
     };
 
     private boolean estimateMission() {
+        final MissionExecutor missionExecutor = this.missionExecutor;
         if (missionExecutor == null || missionExecutor.isEstimating()) {
             return false;
         }
@@ -591,12 +600,16 @@ public class MissionFragment extends Fragment implements Dronelink.Listener, Dro
     }
 
     @Override
-    public void onFuncLoaded(final FuncExecutor executor) {
-    }
+    public void onFuncLoaded(final FuncExecutor executor) {}
 
     @Override
-    public void onFuncUnloaded(final FuncExecutor executor) {
-    }
+    public void onFuncUnloaded(final FuncExecutor executor) {}
+
+    @Override
+    public void onModeLoaded(final ModeExecutor executor) {}
+
+    @Override
+    public void onModeUnloaded(final ModeExecutor executor) {}
 
     @Override
     public void onMissionEstimating(final MissionExecutor executor) {
@@ -644,7 +657,7 @@ public class MissionFragment extends Fragment implements Dronelink.Listener, Dro
                     if (reason.details != null) {
                         alertDialog.setMessage(reason.details);
                     }
-                    alertDialog.setPositiveButton(getString(R.string.Mission_dismiss), new DialogInterface.OnClickListener() {
+                    alertDialog.setPositiveButton(getString(R.string.Executable_dismiss), new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(final DialogInterface d, int i) {
                             d.dismiss();

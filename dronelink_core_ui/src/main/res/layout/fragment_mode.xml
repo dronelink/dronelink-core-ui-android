@@ -19,14 +19,6 @@
         custom:layout_constraintTop_toTopOf="parent"
         custom:layout_constraintStart_toStartOf="parent" />
 
-    <ProgressBar
-        android:id="@+id/activityIndicator"
-        android:layout_width="54dp"
-        android:layout_height="54dp"
-        custom:layout_constraintTop_toTopOf="@+id/primaryButton"
-        custom:layout_constraintStart_toStartOf="@+id/primaryButton"
-        android:indeterminateOnly="true" />
-
     <ImageButton
         android:id="@+id/dismissButton"
         android:background="@drawable/baseline_close_white_24"
@@ -51,7 +43,7 @@
         android:layout_marginTop="4dp"
         custom:layout_constraintTop_toTopOf="@+id/primaryButton"
         custom:layout_constraintStart_toEndOf="@+id/primaryButton"
-        custom:layout_constraintEnd_toStartOf="@+id/dismissButton" />
+        custom:layout_constraintEnd_toStartOf="@+id/executionDurationTextView" />
 
     <TextView
         android:id="@+id/subtitleTextView"
@@ -64,7 +56,7 @@
         android:layout_height="30dp"
         custom:layout_constraintTop_toBottomOf="@+id/titleTextView"
         custom:layout_constraintStart_toStartOf="@+id/titleTextView"
-        custom:layout_constraintEnd_toEndOf="@+id/titleTextView" />
+        custom:layout_constraintEnd_toEndOf="@+id/dismissButton" />
 
     <TextView
         android:id="@+id/executionDurationTextView"
@@ -73,33 +65,10 @@
         android:textStyle="bold"
         android:layout_width="50dp"
         android:layout_height="30dp"
-        custom:layout_constraintTop_toBottomOf="@+id/titleTextView"
-        custom:layout_constraintStart_toStartOf="@+id/titleTextView" />
-
-    <TextView
-        android:id="@+id/timeRemainingTextView"
-        android:textColor="#FFFFFF"
-        android:textSize="12sp"
-        android:textStyle="bold"
-        android:textAlignment="textEnd"
-        android:scrollHorizontally="true"
-        android:ellipsize="end"
-        android:maxLines="1"
-        android:gravity="end"
-        android:layout_width="50dp"
-        android:layout_height="30dp"
-        custom:layout_constraintTop_toBottomOf="@+id/titleTextView"
-        custom:layout_constraintEnd_toEndOf="@+id/dismissButton" />
-
-    <ProgressBar
-        android:id="@+id/progressBar"
-        style="@android:style/Widget.ProgressBar.Horizontal"
-        android:layout_width="0dp"
-        android:layout_height="4dp"
-        android:layout_marginTop="7dp"
-        custom:layout_constraintTop_toTopOf="@+id/executionDurationTextView"
-        custom:layout_constraintStart_toEndOf="@+id/executionDurationTextView"
-        custom:layout_constraintEnd_toStartOf="@+id/timeRemainingTextView"/>
+        android:layout_marginLeft="8dp"
+        android:layout_marginRight="8dp"
+        custom:layout_constraintTop_toTopOf="@+id/titleTextView"
+        custom:layout_constraintEnd_toEndOf="parent" />
 
     <TextView
         android:id="@+id/detailsTextView"

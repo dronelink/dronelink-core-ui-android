@@ -22,7 +22,7 @@ import com.dronelink.core.DroneSession;
 import com.dronelink.core.DroneSessionManager;
 import com.dronelink.core.Dronelink;
 import com.dronelink.core.adapters.DroneStateAdapter;
-import com.dronelink.core.mission.core.enums.UnitSystem;
+import com.dronelink.core.kernel.core.enums.UnitSystem;
 
 import java.util.Timer;
 import java.util.TimerTask;
