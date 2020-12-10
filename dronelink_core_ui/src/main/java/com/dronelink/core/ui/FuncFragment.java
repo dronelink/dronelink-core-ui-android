@@ -14,6 +14,7 @@ import android.location.Location;
 import android.os.Bundle;
 
 import androidx.annotation.Nullable;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.Fragment;
 
 import android.text.InputType;
@@ -535,14 +536,16 @@ public class FuncFragment extends Fragment implements Dronelink.Listener, DroneS
                 }
                 variableNameTextView.setText(name);
 
-                if (!(input.descriptors.description == null || input.descriptors.description.isEmpty())) {
-                    variableDescriptionTextView.setVisibility(View.VISIBLE);
-                    variableDescriptionTextView.setText(input.descriptors.description);
-                }
-
                 if (input.imageUrl != null && !input.imageUrl.isEmpty()) {
                     Picasso.get().load(input.imageUrl).into(variableImageView);
                     variableImageView.setVisibility(View.VISIBLE);
+                    final ConstraintLayout.LayoutParams lp = (ConstraintLayout.LayoutParams) variableImageView.getLayoutParams();
+                    lp.bottomToTop = input.variable.valueType == VariableValueType.NULL ? R.id.nextButton : R.id.variableDroneMarkButton;
+                    variableImageView.setLayoutParams(lp);
+                }
+                else if (!(input.descriptors.description == null || input.descriptors.description.isEmpty())) {
+                    variableDescriptionTextView.setVisibility(View.VISIBLE);
+                    variableDescriptionTextView.setText(input.descriptors.description);
                 }
 
                 switch (input.variable.valueType) {
