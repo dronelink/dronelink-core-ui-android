@@ -104,13 +104,13 @@ public class TelemetryFragment extends Fragment implements DroneSessionManager.L
     @Override
     public void onStart() {
         super.onStart();
-        Dronelink.getInstance().getSessionManager().addListener(this);
+        Dronelink.getInstance().getTargetDroneSessionManager().addListener(this);
     }
 
     @Override
     public void onStop() {
         super.onStop();
-        Dronelink.getInstance().getSessionManager().removeListener(this);
+        Dronelink.getInstance().getTargetDroneSessionManager().removeListener(this);
     }
 
     @Override

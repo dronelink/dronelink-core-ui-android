@@ -196,7 +196,7 @@ public class MicrosoftMapFragment extends Fragment implements Dronelink.Listener
         modeTargetIcon.setOpacity(0.5f);
         modeTargetIcon.setDesiredCollisionBehavior(MapElementCollisionBehavior.REMAIN_VISIBLE);
         modeLayer.getElements().add(modeTargetIcon);
-        mapView.getLayers().add(modeLayer);
+
 
         updateDroneElementsTimer = new Timer();
         updateDroneElementsTimer.schedule(new TimerTask() {
@@ -206,7 +206,7 @@ public class MicrosoftMapFragment extends Fragment implements Dronelink.Listener
             }
         }, 0, updateDroneElementsMillis);
 
-        Dronelink.getInstance().getSessionManager().addListener(this);
+        Dronelink.getInstance().getTargetDroneSessionManager().addListener(this);
         Dronelink.getInstance().addListener(this);
     }
 
@@ -232,7 +232,7 @@ public class MicrosoftMapFragment extends Fragment implements Dronelink.Listener
     public void onStop() {
         super.onStop();
         mapView.onStop();
-        Dronelink.getInstance().getSessionManager().removeListener(this);
+        Dronelink.getInstance().getTargetDroneSessionManager().removeListener(this);
         Dronelink.getInstance().removeListener(this);
         if (session != null) {
             session.removeListener(this);
@@ -832,6 +832,9 @@ public class MicrosoftMapFragment extends Fragment implements Dronelink.Listener
 
     @Override
     public void onRegistered(final String error) {}
+
+    @Override
+    public void onDroneSessionManagerAdded(final DroneSessionManager manager) {}
 
     @Override
     public void onMissionLoaded(final MissionExecutor executor) {
