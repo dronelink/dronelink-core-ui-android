@@ -2,6 +2,7 @@ package com.dronelink.core.ui.widget
 
 import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
+import android.text.TextUtils
 import android.util.Log
 import android.view.Gravity
 import android.view.LayoutInflater
@@ -104,8 +105,10 @@ class StatusLabelWidget: StatusWidget() {
         textView.layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.MATCH_PARENT)
         textView.id = View.generateViewId()
         textView.setTextColor(ContextCompat.getColor(requireContext(), R.color.white))
-        textView.textSize = 20.0f
+        textView.textSize = 16.0f
         textView.gravity = Gravity.CENTER_VERTICAL
+        textView.ellipsize = TextUtils.TruncateAt.MARQUEE
+        textView.setSingleLine()
 
         containerView.addView(textView)
 
@@ -113,7 +116,8 @@ class StatusLabelWidget: StatusWidget() {
         set.clone(containerView)
         set.connect(textView.id, ConstraintSet.TOP, containerView.id, ConstraintSet.TOP)
         set.connect(textView.id, ConstraintSet.BOTTOM, containerView.id, ConstraintSet.BOTTOM)
-        set.connect(textView.id, ConstraintSet.START, containerView.id, ConstraintSet.START)
+        set.connect(textView.id, ConstraintSet.START, containerView.id, ConstraintSet.START, 16)
+
         set.applyTo(containerView)
 
         return containerView
