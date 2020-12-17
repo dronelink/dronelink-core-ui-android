@@ -56,4 +56,10 @@
     <string name="Mode_ready">Ready to start</string>
     <string name="Mode_engaging">Starting Mode</string>
     <string name="Mode_disengaged">Mode Stopped</string>
+    
+    <!-- Status -->
+    <string name="StatusWidget_Disconnected">Disconnected</string>
+    <string name="StatusWidget_Ready">All Systems Go</string>
+    <string name="StatusWidget_Manual">Manual Flight</string>
+    
 </resources>

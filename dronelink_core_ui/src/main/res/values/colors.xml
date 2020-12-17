@@ -5,4 +5,11 @@
     <color name="gray_transparent">#cccccccc</color>
     <color name="primary">#FF311b92</color>
     <color name="darkGray">#555555</color>
+    <color name="overlay">#99000000</color>
+
+    <color name="green">#66BB6A</color>
+    <color name="amber">#FFCA28</color>
+    <color name="red">#EF5350</color>
+    <color name="deep_purple">#7E57C2</color>
+    <color name="white">#FFFFFF</color>
 </resources>
