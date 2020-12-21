@@ -34,12 +34,12 @@ open class ListenerWidget: Widget(), Dronelink.Listener, DroneSessionManager.Lis
     override fun onStop() {
         super.onStop()
         Dronelink.getInstance().removeListener(this)
-        Dronelink.getInstance().missionExecutor.removeListener(this)
-        Dronelink.getInstance().modeExecutor.removeListener(this)
-        Dronelink.getInstance().funcExecutor.removeListener(this)
-        Dronelink.getInstance().droneSessionManagers.forEach {
+        Dronelink.getInstance().missionExecutor?.removeListener(this)
+        Dronelink.getInstance().modeExecutor?.removeListener(this)
+        Dronelink.getInstance().funcExecutor?.removeListener(this)
+        Dronelink.getInstance().droneSessionManagers?.forEach {
             it.removeListener(this)
-            it.session.removeListener(this)
+            it.session?.removeListener(this)
         }
     }
 

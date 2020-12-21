@@ -61,5 +61,12 @@
     <string name="StatusWidget_Disconnected">Disconnected</string>
     <string name="StatusWidget_Ready">All Systems Go</string>
     <string name="StatusWidget_Manual">Manual Flight</string>
+
+    <!-- Flying Mode -->
+    <string name="FlyingMode_NA">NA</string>
+
+    <!-- Battery -->
+    <string name="Battery_NA">NA</string>
+    <string name="Battery_Percent">%d%%</string>
     
 </resources>

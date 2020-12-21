@@ -6,6 +6,8 @@
     <color name="primary">#FF311b92</color>
     <color name="darkGray">#555555</color>
     <color name="overlay">#99000000</color>
+    <color name="overlay_20">#32000000</color>
+    <color name="black">#000000</color>
 
     <color name="green">#66BB6A</color>
     <color name="amber">#FFCA28</color>

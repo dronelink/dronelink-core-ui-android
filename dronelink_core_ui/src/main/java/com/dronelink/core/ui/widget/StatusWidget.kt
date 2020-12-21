@@ -9,6 +9,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
+import android.widget.ImageView
 import android.widget.TextView
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.constraintlayout.widget.ConstraintSet
@@ -63,6 +64,7 @@ open class StatusWidget: UpdatableWidget() {
             Message.Level.INFO -> R.color.green
             Message.Level.WARNING -> R.color.amber
             Message.Level.DANGER, Message.Level.ERROR -> R.color.red
+            else -> R.color.overlay
         }
     }
 
@@ -72,17 +74,27 @@ open class StatusWidget: UpdatableWidget() {
 
 class StatusGradientWidget: StatusWidget() {
 
+    private var _gradient: GradientDrawable? = null
+    val gradient get() = _gradient!!
+
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         val containerView = FrameLayout(requireContext())
         containerView.layoutParams = FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT)
-        val gradientDrawable = GradientDrawable(
+        _gradient = GradientDrawable(
             GradientDrawable.Orientation.LEFT_RIGHT,
             intArrayOf(ContextCompat.getColor(requireContext(), R.color.overlay),
-                ContextCompat.getColor(requireContext(), android.R.color.transparent))
+                ContextCompat.getColor(requireContext(), R.color.overlay_20))
         );
-        gradientDrawable.cornerRadius = 0f;
-        containerView.background = gradientDrawable
+        gradient.cornerRadius = 0f;
+        containerView.background = gradient
         return containerView
+    }
+
+    override fun update() {
+        super.update()
+
+        gradient.colors = intArrayOf(status.color,
+            ContextCompat.getColor(requireContext(), R.color.overlay_20))
     }
 
 }
@@ -102,13 +114,15 @@ class StatusLabelWidget: StatusWidget() {
         containerView.layoutParams = ConstraintLayout.LayoutParams(ConstraintLayout.LayoutParams.MATCH_PARENT, ConstraintLayout.LayoutParams.MATCH_PARENT)
 
         _textView = TextView(requireContext())
-        textView.layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.MATCH_PARENT)
+        textView.layoutParams = ViewGroup.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT)
         textView.id = View.generateViewId()
         textView.setTextColor(ContextCompat.getColor(requireContext(), R.color.white))
         textView.textSize = 16.0f
         textView.gravity = Gravity.CENTER_VERTICAL
         textView.ellipsize = TextUtils.TruncateAt.MARQUEE
-        textView.setSingleLine()
+        textView.marqueeRepeatLimit = -1
+        textView.setHorizontallyScrolling(true)
+        textView.isSelected = true
 
         containerView.addView(textView)
 
@@ -116,7 +130,8 @@ class StatusLabelWidget: StatusWidget() {
         set.clone(containerView)
         set.connect(textView.id, ConstraintSet.TOP, containerView.id, ConstraintSet.TOP)
         set.connect(textView.id, ConstraintSet.BOTTOM, containerView.id, ConstraintSet.BOTTOM)
-        set.connect(textView.id, ConstraintSet.START, containerView.id, ConstraintSet.START, 16)
+        set.connect(textView.id, ConstraintSet.START, containerView.id, ConstraintSet.START)
+        set.connect(textView.id, ConstraintSet.END, containerView.id, ConstraintSet.END)
 
         set.applyTo(containerView)
 
@@ -125,7 +140,7 @@ class StatusLabelWidget: StatusWidget() {
 
     override fun update() {
         super.update()
-        textView.text = this.status.message
+        textView.text = status.message
         if (colorEnabled) {
             containerView.setBackgroundColor(ContextCompat.getColor(requireContext(), status.color))
         }
