@@ -12,7 +12,7 @@ import androidx.core.content.ContextCompat
 import com.dronelink.core.ui.R
 import com.dronelink.core.ui.util.dpToPx
 
-class FlyingModeWidget: UpdatableWidget() {
+class FlightModeWidget: UpdatableWidget() {
 
     override var updateInterval: Long = 500
 

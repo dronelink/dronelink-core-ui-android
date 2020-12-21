@@ -14,13 +14,13 @@ open class Widget : Fragment() {
 
     var droneSessionManager: DroneSessionManager? = null
 
-    val targetDroneSessionManager: DroneSessionManager = droneSessionManager ?: Dronelink.getInstance().targetDroneSessionManager
+    val targetDroneSessionManager: DroneSessionManager? = droneSessionManager ?: Dronelink.getInstance().targetDroneSessionManager
 
-    var session: DroneSession? = targetDroneSessionManager.session
-    var missionExecutor: MissionExecutor? = Dronelink.getInstance().missionExecutor
-    var modeExecutor: ModeExecutor? = Dronelink.getInstance().modeExecutor
-    var funcExecutor: FuncExecutor? = Dronelink.getInstance().funcExecutor
-    var widgetFactory: WidgetFactory? = (targetDroneSessionManager as? WidgetFactoryProvider)?.widgetFactory ?: WidgetFactory.shared
+    val session: DroneSession? = targetDroneSessionManager?.session
+    val missionExecutor: MissionExecutor? = Dronelink.getInstance().missionExecutor
+    val modeExecutor: ModeExecutor? = Dronelink.getInstance().modeExecutor
+    val funcExecutor: FuncExecutor? = Dronelink.getInstance().funcExecutor
+    val widgetFactory: WidgetFactory? = (targetDroneSessionManager as? WidgetFactoryProvider)?.widgetFactory ?: WidgetFactory.shared
 
 }
 
@@ -60,11 +60,11 @@ open class ListenerWidget: Widget(), Dronelink.Listener, DroneSessionManager.Lis
     override fun onModeUnloaded(executor: ModeExecutor?) { }
 
     override fun onOpened(session: DroneSession?) {
-        this.session = session
+        this.session?.addListener(this)
     }
 
     override fun onClosed(session: DroneSession?) {
-        this.session = null
+        this.session?.removeListener(this)
     }
 
     override fun onInitialized(session: DroneSession?) { }

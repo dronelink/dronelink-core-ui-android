@@ -13,17 +13,17 @@ import com.dronelink.core.ui.util.dpToPx
 
 class DashboardWidget : Widget() {
 
-    var appLogo: Button? = null
+    private var appLogo: Button? = null
 
-    var statusLabelWidget: StatusLabelWidget? = null
-    var statusGradientWidget: StatusGradientWidget? = null
-    var flyingModeWidget: FlyingModeWidget? = null
-    var batteryWidget: BatteryWidget? = null
-    var gpsSignalWidget: GPSSignalWidget? = null
-    var downlinkWidget: DownlinkWidget? = null
-    var uplinkWidget: UplinkWidget? = null
+    private var statusLabelWidget: StatusLabelWidget? = null
+    private var statusGradientWidget: StatusGradientWidget? = null
+    private var flightModeWidget: FlightModeWidget? = null
+    private var batteryWidget: BatteryWidget? = null
+    private var gpsSignalWidget: GPSSignalWidget? = null
+    private var downlinkWidget: DownlinkWidget? = null
+    private var uplinkWidget: UplinkWidget? = null
 
-    var cameraFeedWidget: Widget? = null
+    private var cameraFeedWidget: Widget? = null
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.fragment_dashboard_widget, container, false)
@@ -34,7 +34,7 @@ class DashboardWidget : Widget() {
 
         statusGradientWidget = refreshWidget(StatusGradientWidget(), R.id.statusGradientWidgetContainer) as? StatusGradientWidget
         addViews(view)
-        flyingModeWidget = refreshWidget(FlyingModeWidget(), R.id.flyingModeWidgetContainer) as? FlyingModeWidget
+        flightModeWidget = refreshWidget(FlightModeWidget(), R.id.flightModeWidgetContainer) as? FlightModeWidget
         statusLabelWidget = refreshWidget(StatusLabelWidget(), R.id.statusLabelWidgetContainer) as? StatusLabelWidget
         arrangeStatusLabelWidget(view)
         cameraFeedWidget = refreshWidget(widgetFactory?.createCameraFeedWidget(true), R.id.cameraFeedWidgetContainer)
@@ -54,7 +54,7 @@ class DashboardWidget : Widget() {
         val constraintLayout = view.findViewById<ConstraintLayout>(R.id.containerView)
         appLogo = Button(requireContext())
         appLogo?.id = View.generateViewId()
-        appLogo?.layoutParams = ConstraintLayout.LayoutParams(requireContext().dpToPx(17), requireContext().dpToPx(20))
+        appLogo?.layoutParams = ConstraintLayout.LayoutParams(requireContext().dpToPx(22), requireContext().dpToPx(20))
         appLogo?.background = ContextCompat.getDrawable(requireContext(), R.drawable.dronelink_logo)
 
         constraintLayout.addView(appLogo)
@@ -74,7 +74,7 @@ class DashboardWidget : Widget() {
         set.clone(constraintLayout)
         set.clear(statusLabelWidget?.id ?: 0, ConstraintSet.START)
         set.connect(statusLabelWidget?.id ?: 0, ConstraintSet.START, appLogo?.id ?: 0, ConstraintSet.END, requireContext().dpToPx(16))
-        set.connect(statusLabelWidget?.id ?: 0, ConstraintSet.END, flyingModeWidget?.id ?: 0, ConstraintSet.START, requireContext().dpToPx(16))
+        set.connect(statusLabelWidget?.id ?: 0, ConstraintSet.END, flightModeWidget?.id ?: 0, ConstraintSet.START, requireContext().dpToPx(16))
         set.applyTo(constraintLayout)
     }
 
