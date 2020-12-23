@@ -33,9 +33,14 @@ open class StatusWidget: UpdatableWidget() {
 
             val state = session?.state?.value ?: return getDisconnectedStatus()
 
-            targetDroneSessionManager?.statusMessages?.filter { it.level != Message.Level.INFO }?.sortedWith(Comparator { m1, m2 ->
-                return@Comparator m1.level.compare(m2.level)
-            })?.first {
+            var comparator: Comparator<Message> = (Comparator { m1, m2 ->
+                m1.level.compare(m2.level)
+            })
+            comparator = comparator.thenByDescending {
+                it.level
+            }
+
+            targetDroneSessionManager?.statusMessages?.filter { it.level != Message.Level.INFO }?.sortedWith(comparator)?.first {
                 return it.getStatus()
             }
 
