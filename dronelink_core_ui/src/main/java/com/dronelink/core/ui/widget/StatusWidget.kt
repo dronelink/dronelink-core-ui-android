@@ -61,10 +61,10 @@ open class StatusWidget: UpdatableWidget() {
 
     fun Message.getStatusColor(): Int {
         return when (level) {
-            Message.Level.INFO -> R.color.green
-            Message.Level.WARNING -> R.color.amber
-            Message.Level.DANGER, Message.Level.ERROR -> R.color.red
-            else -> R.color.overlay
+            Message.Level.INFO -> ContextCompat.getColor(requireContext(), R.color.green)
+            Message.Level.WARNING -> ContextCompat.getColor(requireContext(), R.color.amber)
+            Message.Level.DANGER, Message.Level.ERROR ->ContextCompat.getColor(requireContext(), R.color.red)
+            else -> ContextCompat.getColor(requireContext(), R.color.overlay)
         }
     }
 
@@ -92,7 +92,6 @@ class StatusGradientWidget: StatusWidget() {
 
     override fun update() {
         super.update()
-
         gradient.colors = intArrayOf(status.color,
             ContextCompat.getColor(requireContext(), R.color.overlay_20))
     }
