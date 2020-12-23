@@ -39,7 +39,7 @@ open class StatusWidget: UpdatableWidget() {
                 return it.getStatus()
             }
 
-            dronelinkStatusMessages.first {
+            dronelinkStatusMessages?.first {
                 return it.getStatus()
             }
 
