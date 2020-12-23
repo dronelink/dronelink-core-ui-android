@@ -4,18 +4,18 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Button
+import android.widget.ImageButton
+import android.widget.ImageView
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.constraintlayout.widget.ConstraintSet
 import androidx.core.content.ContextCompat
-import androidx.core.view.setPadding
 import androidx.fragment.app.FragmentContainerView
 import com.dronelink.core.ui.R
 import com.dronelink.core.ui.util.dpToPx
 
 class DashboardWidget : Widget() {
 
-    private var appLogo: Button? = null
+    private var appLogo: ImageView? = null
 
     private var statusLabelWidget: StatusLabelWidget? = null
     private var statusGradientWidget: StatusGradientWidget? = null
@@ -60,17 +60,17 @@ class DashboardWidget : Widget() {
 
     private fun createLogoButtonView(view: View) {
         val constraintLayout = view.findViewById<ConstraintLayout>(R.id.containerView)
-        appLogo = Button(requireContext())
+        appLogo = ImageView(requireContext())
         appLogo?.id = View.generateViewId()
-        appLogo?.layoutParams = ConstraintLayout.LayoutParams(requireContext().dpToPx(22), requireContext().dpToPx(20))
-        appLogo?.background = ContextCompat.getDrawable(requireContext(), R.drawable.dronelink_logo)
+        appLogo?.layoutParams = ConstraintLayout.LayoutParams(ConstraintLayout.LayoutParams.WRAP_CONTENT, 0)
+        appLogo?.setImageResource(R.drawable.dronelink_logo)
 
         constraintLayout.addView(appLogo)
 
         val set = ConstraintSet()
         set.clone(constraintLayout)
-        set.connect(appLogo?.id ?: 0, ConstraintSet.TOP, statusGradientWidget?.id ?: 0, ConstraintSet.TOP)
-        set.connect(appLogo?.id ?: 0, ConstraintSet.BOTTOM, statusGradientWidget?.id ?: 0, ConstraintSet.BOTTOM)
+        set.connect(appLogo?.id ?: 0, ConstraintSet.TOP, statusGradientWidget?.id ?: 0, ConstraintSet.TOP, requireContext().dpToPx(4))
+        set.connect(appLogo?.id ?: 0, ConstraintSet.BOTTOM, statusGradientWidget?.id ?: 0, ConstraintSet.BOTTOM, requireContext().dpToPx(4))
         set.connect(appLogo?.id ?: 0, ConstraintSet.START, statusGradientWidget?.id ?: 0, ConstraintSet.START, requireContext().dpToPx(16))
         set.applyTo(constraintLayout)
     }

@@ -38,8 +38,9 @@ class FlightModeWidget: UpdatableWidget() {
         textView.isAllCaps = true
 
         imageView.id = View.generateViewId()
-        imageView.layoutParams = ConstraintLayout.LayoutParams(requireContext().dpToPx(15), requireContext().dpToPx(15))
+        imageView.layoutParams = ConstraintLayout.LayoutParams(ConstraintLayout.LayoutParams.WRAP_CONTENT, 0)
         imageView.setImageResource(R.drawable.flight_mode)
+        imageView.adjustViewBounds = true
 
         val set = ConstraintSet()
         set.clone(constraintLayout)
@@ -47,8 +48,8 @@ class FlightModeWidget: UpdatableWidget() {
         set.connect(textView.id, ConstraintSet.TOP, constraintLayout.id, ConstraintSet.TOP)
         set.connect(textView.id, ConstraintSet.BOTTOM, constraintLayout.id, ConstraintSet.BOTTOM)
 
-        set.connect(imageView.id, ConstraintSet.TOP, constraintLayout.id, ConstraintSet.TOP)
-        set.connect(imageView.id, ConstraintSet.BOTTOM, constraintLayout.id, ConstraintSet.BOTTOM)
+        set.connect(imageView.id, ConstraintSet.TOP, constraintLayout.id, ConstraintSet.TOP, requireContext().dpToPx(6))
+        set.connect(imageView.id, ConstraintSet.BOTTOM, constraintLayout.id, ConstraintSet.BOTTOM, requireContext().dpToPx(6))
 
         set.connect(imageView.id, ConstraintSet.START, constraintLayout.id, ConstraintSet.START)
         set.connect(imageView.id, ConstraintSet.END, textView.id, ConstraintSet.START, requireContext().dpToPx(2))

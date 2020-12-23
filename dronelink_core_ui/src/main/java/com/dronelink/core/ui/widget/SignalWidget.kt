@@ -10,7 +10,7 @@ import androidx.constraintlayout.widget.ConstraintSet
 import com.dronelink.core.ui.R
 import com.dronelink.core.ui.util.dpToPx
 
-open class GenericSignalWidget: UpdatableWidget() {
+open class SignalWidget: UpdatableWidget() {
 
     private var _iconImageView: ImageView? = null
     val iconImageView get() = _iconImageView!!
@@ -32,18 +32,21 @@ open class GenericSignalWidget: UpdatableWidget() {
         constraintLayout.addView(iconImageView)
         constraintLayout.addView(signalLevelImageView)
 
-        iconImageView.layoutParams = ConstraintLayout.LayoutParams(requireContext().dpToPx(15), requireContext().dpToPx(15))
+        iconImageView.adjustViewBounds = true
+        signalLevelImageView.adjustViewBounds = true
 
-        signalLevelImageView.layoutParams = ConstraintLayout.LayoutParams(requireContext().dpToPx(17), requireContext().dpToPx(15))
+        iconImageView.layoutParams = ConstraintLayout.LayoutParams(ConstraintLayout.LayoutParams.WRAP_CONTENT, 0)
+
+        signalLevelImageView.layoutParams = ConstraintLayout.LayoutParams(ConstraintLayout.LayoutParams.WRAP_CONTENT, 0)
 
         val set = ConstraintSet()
         set.clone(constraintLayout)
 
-        set.connect(iconImageView.id, ConstraintSet.TOP, constraintLayout.id, ConstraintSet.TOP)
-        set.connect(iconImageView.id, ConstraintSet.BOTTOM, constraintLayout.id, ConstraintSet.BOTTOM)
+        set.connect(iconImageView.id, ConstraintSet.TOP, constraintLayout.id, ConstraintSet.TOP, requireContext().dpToPx(6))
+        set.connect(iconImageView.id, ConstraintSet.BOTTOM, constraintLayout.id, ConstraintSet.BOTTOM, requireContext().dpToPx(6))
 
-        set.connect(signalLevelImageView.id, ConstraintSet.TOP, constraintLayout.id, ConstraintSet.TOP)
-        set.connect(signalLevelImageView.id, ConstraintSet.BOTTOM, constraintLayout.id, ConstraintSet.BOTTOM)
+        set.connect(signalLevelImageView.id, ConstraintSet.TOP, constraintLayout.id, ConstraintSet.TOP, requireContext().dpToPx(6))
+        set.connect(signalLevelImageView.id, ConstraintSet.BOTTOM, constraintLayout.id, ConstraintSet.BOTTOM, requireContext().dpToPx(6))
 
         set.connect(iconImageView.id, ConstraintSet.START, constraintLayout.id, ConstraintSet.START)
         set.connect(iconImageView.id, ConstraintSet.END, signalLevelImageView.id, ConstraintSet.START, requireContext().dpToPx(2))

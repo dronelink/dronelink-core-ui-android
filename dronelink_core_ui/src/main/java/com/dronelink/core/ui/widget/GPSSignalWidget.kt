@@ -37,18 +37,20 @@ class GPSSignalWidget: UpdatableWidget() {
         constraintLayout.addView(_gpsSignalLevelImageView)
 
         gpsImageView.setImageResource(R.drawable.gps_icon)
-        gpsImageView.layoutParams = ConstraintLayout.LayoutParams(requireContext().dpToPx(15), requireContext().dpToPx(15))
+        gpsImageView.layoutParams = ConstraintLayout.LayoutParams(ConstraintLayout.LayoutParams.WRAP_CONTENT, 0)
+        gpsImageView.adjustViewBounds = true
 
-        gpsSignalLevelImageView.layoutParams = ConstraintLayout.LayoutParams(requireContext().dpToPx(17), requireContext().dpToPx(15))
+        gpsSignalLevelImageView.layoutParams = ConstraintLayout.LayoutParams(ConstraintLayout.LayoutParams.WRAP_CONTENT, 0)
+        gpsSignalLevelImageView.adjustViewBounds = true
 
         val set = ConstraintSet()
         set.clone(constraintLayout)
 
-        set.connect(gpsSignalLevelImageView.id, ConstraintSet.TOP, constraintLayout.id, ConstraintSet.TOP)
-        set.connect(gpsSignalLevelImageView.id, ConstraintSet.BOTTOM, constraintLayout.id, ConstraintSet.BOTTOM)
+        set.connect(gpsSignalLevelImageView.id, ConstraintSet.TOP, constraintLayout.id, ConstraintSet.TOP, requireContext().dpToPx(6))
+        set.connect(gpsSignalLevelImageView.id, ConstraintSet.BOTTOM, constraintLayout.id, ConstraintSet.BOTTOM, requireContext().dpToPx(6))
 
-        set.connect(gpsImageView.id, ConstraintSet.TOP, constraintLayout.id, ConstraintSet.TOP)
-        set.connect(gpsImageView.id, ConstraintSet.BOTTOM, constraintLayout.id, ConstraintSet.BOTTOM)
+        set.connect(gpsImageView.id, ConstraintSet.TOP, constraintLayout.id, ConstraintSet.TOP, requireContext().dpToPx(6))
+        set.connect(gpsImageView.id, ConstraintSet.BOTTOM, constraintLayout.id, ConstraintSet.BOTTOM, requireContext().dpToPx(6))
 
         set.connect(gpsImageView.id, ConstraintSet.START, constraintLayout.id, ConstraintSet.START)
         set.connect(gpsImageView.id, ConstraintSet.END, gpsSignalLevelImageView.id, ConstraintSet.START, requireContext().dpToPx(2))

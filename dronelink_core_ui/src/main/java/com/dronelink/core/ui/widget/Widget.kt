@@ -51,65 +51,77 @@ open class ListenerWidget: Widget(), Dronelink.Listener, DroneSessionManager.Lis
 
     override fun onRegistered(error: String?) { }
 
-    override fun onDroneSessionManagerAdded(manager: DroneSessionManager?) {
-        manager?.addListener(this)
+    override fun onDroneSessionManagerAdded(manager: DroneSessionManager) {
+        manager.addListener(this)
     }
 
-    override fun onMissionLoaded(executor: MissionExecutor?) { }
+    override fun onMissionLoaded(executor: MissionExecutor) {
+        executor.addListener(this)
+    }
 
-    override fun onMissionUnloaded(executor: MissionExecutor?) { }
+    override fun onMissionUnloaded(executor: MissionExecutor) {
+        executor.removeListener(this)
+    }
 
-    override fun onFuncLoaded(executor: FuncExecutor?) { }
+    override fun onFuncLoaded(executor: FuncExecutor) {
+        executor.addListener(this)
+    }
 
-    override fun onFuncUnloaded(executor: FuncExecutor?) { }
+    override fun onFuncUnloaded(executor: FuncExecutor) {
+        executor.removeListener(this)
+    }
 
-    override fun onModeLoaded(executor: ModeExecutor?) { }
+    override fun onModeLoaded(executor: ModeExecutor) {
+        executor.addListener(this)
+    }
 
-    override fun onModeUnloaded(executor: ModeExecutor?) { }
+    override fun onModeUnloaded(executor: ModeExecutor) {
+        executor.removeListener(this)
+    }
 
-    override fun onOpened(session: DroneSession?) {
+    override fun onOpened(session: DroneSession) {
         this.session?.addListener(this)
     }
 
-    override fun onClosed(session: DroneSession?) {
+    override fun onClosed(session: DroneSession) {
         this.session?.removeListener(this)
     }
 
-    override fun onInitialized(session: DroneSession?) { }
+    override fun onInitialized(session: DroneSession) { }
 
-    override fun onLocated(session: DroneSession?) { }
+    override fun onLocated(session: DroneSession) { }
 
-    override fun onMotorsChanged(session: DroneSession?, value: Boolean) { }
+    override fun onMotorsChanged(session: DroneSession, value: Boolean) { }
 
-    override fun onCommandExecuted(session: DroneSession?, command: Command?) { }
+    override fun onCommandExecuted(session: DroneSession, command: Command) { }
 
-    override fun onCommandFinished(session: DroneSession?, command: Command?, error: CommandError?) { }
+    override fun onCommandFinished(session: DroneSession, command: Command, error: CommandError?) { }
 
-    override fun onCameraFileGenerated(session: DroneSession?, file: CameraFile?) { }
+    override fun onCameraFileGenerated(session: DroneSession, file: CameraFile) { }
 
-    override fun onMissionEstimating(executor: MissionExecutor?) { }
+    override fun onMissionEstimating(executor: MissionExecutor) { }
 
-    override fun onMissionEstimated(executor: MissionExecutor?, estimate: MissionExecutor.Estimate?) { }
+    override fun onMissionEstimated(executor: MissionExecutor, estimate: MissionExecutor.Estimate) { }
 
-    override fun onMissionEngaging(executor: MissionExecutor?) { }
+    override fun onMissionEngaging(executor: MissionExecutor) { }
 
-    override fun onMissionEngaged(executor: MissionExecutor?, engagement: Executor.Engagement?) { }
+    override fun onMissionEngaged(executor: MissionExecutor, engagement: Executor.Engagement) { }
 
-    override fun onMissionExecuted(executor: MissionExecutor?, engagement: Executor.Engagement?) { }
+    override fun onMissionExecuted(executor: MissionExecutor, engagement: Executor.Engagement) { }
 
-    override fun onMissionDisengaged(executor: MissionExecutor?, engagement: Executor.Engagement?, reason: Message?) { }
+    override fun onMissionDisengaged(executor: MissionExecutor, engagement: Executor.Engagement, reason: Message) { }
 
-    override fun onModeEngaging(executor: ModeExecutor?) { }
+    override fun onModeEngaging(executor: ModeExecutor) { }
 
-    override fun onModeEngaged(executor: ModeExecutor?, engagement: Executor.Engagement?) { }
+    override fun onModeEngaged(executor: ModeExecutor, engagement: Executor.Engagement) { }
 
-    override fun onModeExecuted(executor: ModeExecutor?, engagement: Executor.Engagement?) { }
+    override fun onModeExecuted(executor: ModeExecutor, engagement: Executor.Engagement) { }
 
-    override fun onModeDisengaged(executor: ModeExecutor?, engagement: Executor.Engagement?, reason: Message?) { }
+    override fun onModeDisengaged(executor: ModeExecutor, engagement: Executor.Engagement, reason: Message) { }
 
-    override fun onFuncInputsChanged(executor: FuncExecutor?) { }
+    override fun onFuncInputsChanged(executor: FuncExecutor) { }
 
-    override fun onFuncExecuted(executor: FuncExecutor?) { }
+    override fun onFuncExecuted(executor: FuncExecutor) { }
 
 }
 

@@ -79,17 +79,17 @@ class CameraModeWidget: UpdatableWidget() {
         button.isEnabled = session != null && pendingCommand == null
     }
 
-    override fun onClosed(session: DroneSession?) {
+    override fun onClosed(session: DroneSession) {
         super.onClosed(session)
         pendingCommand = null
     }
 
-    override fun onCommandFinished(session: DroneSession?, command: Command?, error: CommandError?) {
+    override fun onCommandFinished(session: DroneSession, command: Command, error: CommandError?) {
         super.onCommandFinished(session, command, error)
-        if (pendingCommand?.id == command?.id) {
+        if (pendingCommand?.id == command.id) {
             pendingCommand = null
             error?.let {
-                Toast.makeText(requireContext(), error.description, Toast.LENGTH_LONG).show()
+                Toast.makeText(requireContext(), it.description, Toast.LENGTH_LONG).show()
             }
             activity?.runOnUiThread { update() }
         }
