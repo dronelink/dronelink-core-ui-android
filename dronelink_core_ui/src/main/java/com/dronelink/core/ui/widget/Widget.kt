@@ -14,13 +14,19 @@ open class Widget : Fragment() {
 
     var droneSessionManager: DroneSessionManager? = null
 
-    val targetDroneSessionManager: DroneSessionManager? = droneSessionManager ?: Dronelink.getInstance().targetDroneSessionManager
+    val targetDroneSessionManager: DroneSessionManager?
+        get() = droneSessionManager ?: Dronelink.getInstance().targetDroneSessionManager
 
-    val session: DroneSession? = targetDroneSessionManager?.session
-    val missionExecutor: MissionExecutor? = Dronelink.getInstance().missionExecutor
-    val modeExecutor: ModeExecutor? = Dronelink.getInstance().modeExecutor
-    val funcExecutor: FuncExecutor? = Dronelink.getInstance().funcExecutor
-    val widgetFactory: WidgetFactory? = (targetDroneSessionManager as? WidgetFactoryProvider)?.widgetFactory ?: WidgetFactory.shared
+    val session: DroneSession?
+        get() = targetDroneSessionManager?.session
+    val missionExecutor: MissionExecutor?
+        get() = Dronelink.getInstance().missionExecutor
+    val modeExecutor: ModeExecutor?
+        get() = Dronelink.getInstance().modeExecutor
+    val funcExecutor: FuncExecutor?
+        get() = Dronelink.getInstance().funcExecutor
+    val widgetFactory: WidgetFactory?
+        get() = (targetDroneSessionManager as? WidgetFactoryProvider)?.widgetFactory ?: WidgetFactory.shared
 
 }
 
@@ -45,7 +51,9 @@ open class ListenerWidget: Widget(), Dronelink.Listener, DroneSessionManager.Lis
 
     override fun onRegistered(error: String?) { }
 
-    override fun onDroneSessionManagerAdded(manager: DroneSessionManager?) { }
+    override fun onDroneSessionManagerAdded(manager: DroneSessionManager?) {
+        manager?.addListener(this)
+    }
 
     override fun onMissionLoaded(executor: MissionExecutor?) { }
 

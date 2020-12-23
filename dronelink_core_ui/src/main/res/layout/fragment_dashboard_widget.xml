@@ -73,5 +73,4 @@
         app:layout_constraintBottom_toBottomOf="@id/statusGradientWidgetContainer"
         app:layout_constraintEnd_toStartOf="@id/uplinkWidgetContainer"/>
 
-
 </androidx.constraintlayout.widget.ConstraintLayout>

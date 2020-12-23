@@ -39,7 +39,7 @@ class FlightModeWidget: UpdatableWidget() {
 
         imageView.id = View.generateViewId()
         imageView.layoutParams = ConstraintLayout.LayoutParams(requireContext().dpToPx(15), requireContext().dpToPx(15))
-        imageView.setImageResource(R.drawable.flying_mode)
+        imageView.setImageResource(R.drawable.flight_mode)
 
         val set = ConstraintSet()
         set.clone(constraintLayout)

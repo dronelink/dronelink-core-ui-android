@@ -8,6 +8,8 @@ import android.widget.Button
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.constraintlayout.widget.ConstraintSet
 import androidx.core.content.ContextCompat
+import androidx.core.view.setPadding
+import androidx.fragment.app.FragmentContainerView
 import com.dronelink.core.ui.R
 import com.dronelink.core.ui.util.dpToPx
 
@@ -22,8 +24,11 @@ class DashboardWidget : Widget() {
     private var gpsSignalWidget: GPSSignalWidget? = null
     private var downlinkWidget: DownlinkWidget? = null
     private var uplinkWidget: UplinkWidget? = null
-
     private var cameraFeedWidget: Widget? = null
+    private var cameraCaptureWidget: CameraCaptureWidget? = null
+    private var cameraModeWidget: CameraModeWidget? = null
+
+    private var cameraControlsView: ConstraintLayout? = null
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.fragment_dashboard_widget, container, false)
@@ -34,9 +39,12 @@ class DashboardWidget : Widget() {
 
         statusGradientWidget = refreshWidget(StatusGradientWidget(), R.id.statusGradientWidgetContainer) as? StatusGradientWidget
         addViews(view)
+
         flightModeWidget = refreshWidget(FlightModeWidget(), R.id.flightModeWidgetContainer) as? FlightModeWidget
+
         statusLabelWidget = refreshWidget(StatusLabelWidget(), R.id.statusLabelWidgetContainer) as? StatusLabelWidget
         arrangeStatusLabelWidget(view)
+
         cameraFeedWidget = refreshWidget(widgetFactory?.createCameraFeedWidget(true), R.id.cameraFeedWidgetContainer)
         batteryWidget = refreshWidget(BatteryWidget(), R.id.batteryWidgetContainer) as? BatteryWidget
         gpsSignalWidget = refreshWidget(GPSSignalWidget(), R.id.gpsSignalWidgetContainer) as? GPSSignalWidget
@@ -46,8 +54,8 @@ class DashboardWidget : Widget() {
     }
 
     private fun addViews(view: View) {
-        // add logo button
         createLogoButtonView(view)
+        createCameraControlsView(view)
     }
 
     private fun createLogoButtonView(view: View) {
@@ -65,6 +73,52 @@ class DashboardWidget : Widget() {
         set.connect(appLogo?.id ?: 0, ConstraintSet.BOTTOM, statusGradientWidget?.id ?: 0, ConstraintSet.BOTTOM)
         set.connect(appLogo?.id ?: 0, ConstraintSet.START, statusGradientWidget?.id ?: 0, ConstraintSet.START, requireContext().dpToPx(16))
         set.applyTo(constraintLayout)
+    }
+
+    private fun createCameraControlsView(view: View) {
+        val constraintLayout = view.findViewById<ConstraintLayout>(R.id.containerView)
+        cameraControlsView = ConstraintLayout(requireContext())
+        cameraControlsView?.id = View.generateViewId()
+        constraintLayout.addView(cameraControlsView)
+
+        cameraControlsView?.setBackgroundResource(R.drawable.bg_camera_controls)
+        val padding = requireContext().dpToPx(10)
+        cameraControlsView?.setPadding(padding, padding, padding, padding )
+
+        val parentSet = ConstraintSet()
+        parentSet.clone(constraintLayout)
+        parentSet.connect(cameraControlsView?.id ?: 0, ConstraintSet.TOP, constraintLayout?.id ?: 0, ConstraintSet.TOP)
+        parentSet.connect(cameraControlsView?.id ?: 0, ConstraintSet.BOTTOM, constraintLayout?.id ?: 0, ConstraintSet.BOTTOM)
+        parentSet.connect(cameraControlsView?.id ?: 0, ConstraintSet.END, constraintLayout?.id ?: 0, ConstraintSet.END, requireContext().dpToPx(16))
+        parentSet.applyTo(constraintLayout)
+
+        val cameraCaptureContainerView = FragmentContainerView(requireContext())
+        cameraCaptureContainerView.id = View.generateViewId()
+        cameraControlsView?.addView(cameraCaptureContainerView)
+
+        val cameraModeContainerView = FragmentContainerView(requireContext())
+        cameraModeContainerView.id = View.generateViewId()
+        cameraControlsView?.addView(cameraModeContainerView)
+
+        val cameraCaptureSet = ConstraintSet()
+        cameraCaptureSet.clone(cameraControlsView)
+        cameraCaptureSet.connect(cameraCaptureContainerView.id, ConstraintSet.TOP, cameraModeContainerView.id, ConstraintSet.BOTTOM)
+        cameraCaptureSet.connect(cameraCaptureContainerView.id, ConstraintSet.BOTTOM, cameraControlsView?.id ?: 0, ConstraintSet.BOTTOM)
+        cameraCaptureSet.connect(cameraCaptureContainerView.id , ConstraintSet.START, cameraControlsView?.id ?: 0, ConstraintSet.START)
+        cameraCaptureSet.connect(cameraCaptureContainerView.id , ConstraintSet.END, cameraControlsView?.id ?: 0, ConstraintSet.END)
+        cameraCaptureSet.applyTo(cameraControlsView)
+
+        cameraCaptureWidget = refreshWidget(CameraCaptureWidget(), cameraCaptureContainerView.id) as? CameraCaptureWidget
+
+        val cameraModeSet = ConstraintSet()
+        cameraModeSet.clone(cameraControlsView)
+        cameraModeSet.connect(cameraModeContainerView.id, ConstraintSet.TOP, cameraControlsView?.id ?: 0, ConstraintSet.TOP)
+        cameraModeSet.connect(cameraModeContainerView.id, ConstraintSet.BOTTOM, cameraCaptureContainerView.id, ConstraintSet.TOP, requireContext().dpToPx(4))
+        cameraModeSet.connect(cameraModeContainerView.id , ConstraintSet.START, cameraControlsView?.id ?: 0, ConstraintSet.START)
+        cameraModeSet.connect(cameraModeContainerView.id , ConstraintSet.END, cameraControlsView?.id ?: 0, ConstraintSet.END)
+        cameraModeSet.applyTo(cameraControlsView)
+
+        cameraModeWidget = refreshWidget(CameraModeWidget(), cameraModeContainerView.id) as? CameraModeWidget
     }
 
     private fun arrangeStatusLabelWidget(view: View) {
