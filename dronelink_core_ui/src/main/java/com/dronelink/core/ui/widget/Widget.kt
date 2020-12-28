@@ -1,7 +1,6 @@
 package com.dronelink.core.ui.widget
 
 import android.os.Handler
-import android.util.Log
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
@@ -185,7 +184,6 @@ open class UpdatableWidget: ListenerWidget() {
     }
 
     open fun update() { }
-
 }
 
 interface WidgetFactoryProvider {
@@ -199,6 +197,4 @@ open class WidgetFactory(open val session: DroneSession? = null) {
     }
 
     open fun createCameraFeedWidget(primary: Boolean = true): Widget? = null
-
 }
-

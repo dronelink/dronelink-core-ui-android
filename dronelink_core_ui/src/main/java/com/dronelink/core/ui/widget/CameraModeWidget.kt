@@ -94,5 +94,4 @@ class CameraModeWidget: UpdatableWidget() {
             activity?.runOnUiThread { update() }
         }
     }
-
 }

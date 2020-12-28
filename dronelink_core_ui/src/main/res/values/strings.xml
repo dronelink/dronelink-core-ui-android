@@ -4,6 +4,7 @@
     <string name="cancel">Cancel</string>
     <string name="resume">Resume</string>
     <string name="learnMore">Learn More</string>
+    <string name="na">N/A</string>
     <string name="Func_cachedInputs_title">Previous Inputs Available</string>
     <string name="Func_cachedInputs_message">Do you want to load the previous inputs or start over?</string>
     <string name="Func_cachedInputs_action_new">Start Over</string>
@@ -56,17 +57,8 @@
     <string name="Mode_ready">Ready to start</string>
     <string name="Mode_engaging">Starting Mode</string>
     <string name="Mode_disengaged">Mode Stopped</string>
-    
     <!-- Status -->
     <string name="StatusWidget_Disconnected">Disconnected</string>
     <string name="StatusWidget_Ready">All Systems Go</string>
     <string name="StatusWidget_Manual">Manual Flight</string>
-
-    <!-- Flying Mode -->
-    <string name="FlyingMode_NA">NA</string>
-
-    <!-- Battery -->
-    <string name="Battery_NA">NA</string>
-    <string name="Battery_Percent">%d%%</string>
-    
 </resources>

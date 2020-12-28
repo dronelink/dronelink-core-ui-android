@@ -1,15 +1,14 @@
 package com.dronelink.core.ui.widget
 
+import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
 import android.text.TextUtils
-import android.util.Log
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
-import android.widget.ImageView
 import android.widget.TextView
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.constraintlayout.widget.ConstraintSet
@@ -36,11 +35,8 @@ open class StatusWidget: UpdatableWidget() {
             var comparator: Comparator<Message> = (Comparator { m1, m2 ->
                 m1.level.compare(m2.level)
             })
-            comparator = comparator.thenByDescending {
-                it.level
-            }
 
-            targetDroneSessionManager?.statusMessages?.filter { it.level != Message.Level.INFO }?.sortedWith(comparator)?.first {
+            targetDroneSessionManager?.statusMessages?.filter { it.level != Message.Level.INFO }?.sortedWith(comparator)?.last {
                 return it.getStatus()
             }
 
@@ -74,7 +70,6 @@ open class StatusWidget: UpdatableWidget() {
     }
 
     fun Message.getStatus(): Status = Status(this.toString(), this.getStatusColor())
-
 }
 
 class StatusGradientWidget: StatusWidget() {
@@ -100,7 +95,6 @@ class StatusGradientWidget: StatusWidget() {
         gradient.colors = intArrayOf(status.color,
             ContextCompat.getColor(requireContext(), R.color.overlay_20))
     }
-
 }
 
 class StatusLabelWidget: StatusWidget() {
@@ -121,6 +115,7 @@ class StatusLabelWidget: StatusWidget() {
         textView.layoutParams = ViewGroup.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT)
         textView.id = View.generateViewId()
         textView.setTextColor(ContextCompat.getColor(requireContext(), R.color.white))
+        textView.setTypeface(textView.typeface, Typeface.BOLD)
         textView.textSize = 16.0f
         textView.gravity = Gravity.CENTER_VERTICAL
         textView.ellipsize = TextUtils.TruncateAt.MARQUEE
@@ -144,10 +139,12 @@ class StatusLabelWidget: StatusWidget() {
 
     override fun update() {
         super.update()
-        textView.text = status.message
+        if (!status.message.equals(textView.text)) {
+            textView.text = status.message
+        }
+
         if (colorEnabled) {
             containerView.setBackgroundColor(ContextCompat.getColor(requireContext(), status.color))
         }
     }
-
 }

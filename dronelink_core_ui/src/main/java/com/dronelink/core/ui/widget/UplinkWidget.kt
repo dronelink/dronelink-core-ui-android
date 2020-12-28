@@ -13,5 +13,4 @@ class UplinkWidget: SignalWidget() {
         super.update()
         updateSignal(session?.state?.value?.uplinkSignalStrength ?: 0.0)
     }
-
 }

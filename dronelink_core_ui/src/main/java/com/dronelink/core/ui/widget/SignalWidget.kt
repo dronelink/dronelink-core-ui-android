@@ -11,12 +11,10 @@ import com.dronelink.core.ui.R
 import com.dronelink.core.ui.util.dpToPx
 
 open class SignalWidget: UpdatableWidget() {
-
     private var _iconImageView: ImageView? = null
     val iconImageView get() = _iconImageView!!
-    private var _signalLevelImageView: ImageView? = null
-    val signalLevelImageView get() = _signalLevelImageView!!
-
+    private var _levelImageView: ImageView? = null
+    val levelImageView get() = _levelImageView!!
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         val constraintLayout = ConstraintLayout(requireContext())
@@ -24,20 +22,20 @@ open class SignalWidget: UpdatableWidget() {
         constraintLayout.layoutParams = ConstraintLayout.LayoutParams(ConstraintLayout.LayoutParams.MATCH_PARENT, ConstraintLayout.LayoutParams.MATCH_PARENT)
 
         _iconImageView = ImageView(requireContext())
-        _signalLevelImageView = ImageView(requireContext())
+        _levelImageView = ImageView(requireContext())
 
         iconImageView.id = View.generateViewId()
-        signalLevelImageView.id = View.generateViewId()
+        levelImageView.id = View.generateViewId()
 
         constraintLayout.addView(iconImageView)
-        constraintLayout.addView(signalLevelImageView)
+        constraintLayout.addView(levelImageView)
 
         iconImageView.adjustViewBounds = true
-        signalLevelImageView.adjustViewBounds = true
+        levelImageView.adjustViewBounds = true
 
         iconImageView.layoutParams = ConstraintLayout.LayoutParams(ConstraintLayout.LayoutParams.WRAP_CONTENT, 0)
 
-        signalLevelImageView.layoutParams = ConstraintLayout.LayoutParams(ConstraintLayout.LayoutParams.WRAP_CONTENT, 0)
+        levelImageView.layoutParams = ConstraintLayout.LayoutParams(ConstraintLayout.LayoutParams.WRAP_CONTENT, 0)
 
         val set = ConstraintSet()
         set.clone(constraintLayout)
@@ -45,13 +43,13 @@ open class SignalWidget: UpdatableWidget() {
         set.connect(iconImageView.id, ConstraintSet.TOP, constraintLayout.id, ConstraintSet.TOP, requireContext().dpToPx(6))
         set.connect(iconImageView.id, ConstraintSet.BOTTOM, constraintLayout.id, ConstraintSet.BOTTOM, requireContext().dpToPx(6))
 
-        set.connect(signalLevelImageView.id, ConstraintSet.TOP, constraintLayout.id, ConstraintSet.TOP, requireContext().dpToPx(6))
-        set.connect(signalLevelImageView.id, ConstraintSet.BOTTOM, constraintLayout.id, ConstraintSet.BOTTOM, requireContext().dpToPx(6))
+        set.connect(levelImageView.id, ConstraintSet.TOP, constraintLayout.id, ConstraintSet.TOP, requireContext().dpToPx(6))
+        set.connect(levelImageView.id, ConstraintSet.BOTTOM, constraintLayout.id, ConstraintSet.BOTTOM, requireContext().dpToPx(6))
 
         set.connect(iconImageView.id, ConstraintSet.START, constraintLayout.id, ConstraintSet.START)
-        set.connect(iconImageView.id, ConstraintSet.END, signalLevelImageView.id, ConstraintSet.START, requireContext().dpToPx(2))
-        set.connect(signalLevelImageView.id, ConstraintSet.START, iconImageView.id, ConstraintSet.END, requireContext().dpToPx(2))
-        set.connect(signalLevelImageView.id, ConstraintSet.END, signalLevelImageView.id, ConstraintSet.END)
+        set.connect(iconImageView.id, ConstraintSet.END, levelImageView.id, ConstraintSet.START, requireContext().dpToPx(2))
+        set.connect(levelImageView.id, ConstraintSet.START, iconImageView.id, ConstraintSet.END, requireContext().dpToPx(2))
+        set.connect(levelImageView.id, ConstraintSet.END, levelImageView.id, ConstraintSet.END)
         set.applyTo(constraintLayout)
 
         onCreateView(constraintLayout)
@@ -59,21 +57,16 @@ open class SignalWidget: UpdatableWidget() {
         return constraintLayout
     }
 
-
     fun updateSignal(signalValue: Double) {
         when {
-            signalValue == 0.0 -> signalLevelImageView.setImageResource(R.drawable.signal_level_0_icon)
-            isLessThan(signalValue, 0.2) -> signalLevelImageView.setImageResource(R.drawable.signal_level_1_icon)
-            isLessThan(signalValue, 0.4) -> signalLevelImageView.setImageResource(R.drawable.signal_level_2_icon)
-            isLessThan(signalValue, 0.6) -> signalLevelImageView.setImageResource(R.drawable.signal_level_3_icon)
-            isLessThan(signalValue, 0.8) -> signalLevelImageView.setImageResource(R.drawable.signal_level_4_icon)
-            isLessThan(signalValue, 1.0) -> signalLevelImageView.setImageResource(R.drawable.signal_level_5_icon)
-            else -> signalLevelImageView.setImageResource(R.drawable.signal_level_0_icon)
+            signalValue == 0.0 -> levelImageView.setImageResource(R.drawable.signal_level_0_icon)
+            signalValue <= 0.2 -> levelImageView.setImageResource(R.drawable.signal_level_1_icon)
+            signalValue <= 0.4 -> levelImageView.setImageResource(R.drawable.signal_level_2_icon)
+            signalValue <= 0.6 -> levelImageView.setImageResource(R.drawable.signal_level_3_icon)
+            signalValue <= 0.8 -> levelImageView.setImageResource(R.drawable.signal_level_4_icon)
+            else -> levelImageView.setImageResource(R.drawable.signal_level_5_icon)
         }
     }
 
-    private fun isLessThan(v1: Double, v2: Double) = v1 <= v2
-
-    open fun onCreateView(constraintLayout: ConstraintLayout) { }
-
+    open fun onCreateView(constraintLayout: ConstraintLayout) {}
 }

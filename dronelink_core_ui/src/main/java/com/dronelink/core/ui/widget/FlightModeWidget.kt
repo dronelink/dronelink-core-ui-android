@@ -1,5 +1,6 @@
 package com.dronelink.core.ui.widget
 
+import android.graphics.Typeface
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -34,8 +35,8 @@ class FlightModeWidget: UpdatableWidget() {
 
         textView.id = View.generateViewId()
         textView.setTextColor(ContextCompat.getColor(requireContext(), R.color.white))
+        textView.setTypeface(textView.typeface, Typeface.BOLD)
         textView.textSize = 16.0f
-        textView.isAllCaps = true
 
         imageView.id = View.generateViewId()
         imageView.layoutParams = ConstraintLayout.LayoutParams(ConstraintLayout.LayoutParams.WRAP_CONTENT, 0)
@@ -62,7 +63,6 @@ class FlightModeWidget: UpdatableWidget() {
 
     override fun update() {
         super.update()
-        textView.text = session?.state?.value?.mode ?: requireContext().getString(R.string.FlyingMode_NA)
+        textView.text = session?.state?.value?.mode ?: requireContext().getString(R.string.na)
     }
-
 }

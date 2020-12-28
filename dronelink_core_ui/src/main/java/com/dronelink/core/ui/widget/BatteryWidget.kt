@@ -1,5 +1,7 @@
 package com.dronelink.core.ui.widget
 
+import android.content.res.ColorStateList
+import android.graphics.Color
 import android.graphics.Typeface
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -15,14 +17,13 @@ import com.dronelink.core.ui.R
 import com.dronelink.core.ui.util.dpToPx
 
 class BatteryWidget: UpdatableWidget() {
-
-    var normalColor: Int = R.color.green
-    var lowColor: Int = R.color.red
-
     private var _imageView: ImageView? = null
     val imageView get() = _imageView!!
     private var _textView: TextView? = null
     val textView get() = _textView!!
+    private var defaultColor: ColorStateList = ColorStateList.valueOf(Color.parseColor("#ffffff"))
+    var normalColor: ColorStateList = ColorStateList.valueOf(Color.parseColor("#00e676"))
+    var lowColor: ColorStateList = ColorStateList.valueOf(Color.parseColor("#ff1744"))
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         val constraintLayout = ConstraintLayout(requireContext())
@@ -41,7 +42,7 @@ class BatteryWidget: UpdatableWidget() {
         imageView.adjustViewBounds = true
 
         textView.id = View.generateViewId()
-        textView.setTextColor(ContextCompat.getColor(requireContext(), normalColor))
+        textView.setTextColor(defaultColor)
         textView.setTypeface(textView.typeface, Typeface.BOLD)
         textView.textSize = 16.0f
 
@@ -70,18 +71,15 @@ class BatteryWidget: UpdatableWidget() {
         val batteryPercent = session?.state?.value?.batteryPercent
 
         if (batteryPercent == null) {
-            textView.text = getString(R.string.Battery_NA)
-            textView.setTextColor(ContextCompat.getColor(requireContext(), R.color.white))
+            textView.text = getString(R.string.na)
+            imageView.imageTintList = defaultColor
             return
         }
 
-        textView.text = Dronelink.getInstance().format("percent", batteryPercent, getString(R.string.Battery_NA))
+        textView.text = Dronelink.getInstance().format("percent", batteryPercent, "")
 
         val lowBatteryThreshold = session?.state?.value?.lowBatteryThreshold
-        val textColor = if (batteryPercent < (lowBatteryThreshold ?: 0.0)) lowColor else normalColor
-        textView.setTextColor(textColor ?: ContextCompat.getColor(requireContext(), normalColor))
-
+        imageView.imageTintList = if (batteryPercent < (lowBatteryThreshold
+                        ?: 0.0)) lowColor else normalColor
     }
-
-
 }

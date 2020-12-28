@@ -4,11 +4,9 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ImageButton
 import android.widget.ImageView
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.constraintlayout.widget.ConstraintSet
-import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentContainerView
 import com.dronelink.core.ui.R
 import com.dronelink.core.ui.util.dpToPx
@@ -21,7 +19,7 @@ class DashboardWidget : Widget() {
     private var statusGradientWidget: StatusGradientWidget? = null
     private var flightModeWidget: FlightModeWidget? = null
     private var batteryWidget: BatteryWidget? = null
-    private var gpsSignalWidget: GPSSignalWidget? = null
+    private var gpsWidget: GPSWidget? = null
     private var downlinkWidget: DownlinkWidget? = null
     private var uplinkWidget: UplinkWidget? = null
     private var cameraFeedWidget: Widget? = null
@@ -47,7 +45,7 @@ class DashboardWidget : Widget() {
 
         cameraFeedWidget = refreshWidget(widgetFactory?.createCameraFeedWidget(true), R.id.cameraFeedWidgetContainer)
         batteryWidget = refreshWidget(BatteryWidget(), R.id.batteryWidgetContainer) as? BatteryWidget
-        gpsSignalWidget = refreshWidget(GPSSignalWidget(), R.id.gpsSignalWidgetContainer) as? GPSSignalWidget
+        gpsWidget = refreshWidget(GPSWidget(), R.id.gpsWidgetContainer) as? GPSWidget
         downlinkWidget = refreshWidget(DownlinkWidget(), R.id.downlinkWidgetContainer) as? DownlinkWidget
         uplinkWidget = refreshWidget(UplinkWidget(), R.id.uplinkWidgetContainer) as? UplinkWidget
 
