@@ -102,6 +102,31 @@
         custom:layout_constraintStart_toStartOf="parent"
         custom:layout_constraintEnd_toEndOf="parent" />
 
+    <RadioGroup
+        android:id="@+id/variableRadioGroup"
+        android:layout_width="match_parent"
+        android:layout_height="32dp"
+        android:orientation="horizontal"
+        android:layout_marginLeft="12dp"
+        android:layout_marginRight="12dp"
+        android:layout_marginBottom="60dp"
+        custom:layout_constraintBottom_toBottomOf="parent"
+        custom:layout_constraintStart_toStartOf="parent"
+        custom:layout_constraintEnd_toEndOf="parent">
+        <RadioButton android:id="@+id/variableRadioButton1"
+            android:layout_width="match_parent"
+            android:layout_weight=".5"
+            android:layout_height="32dp"
+            android:buttonTint="@color/secondary"
+            android:textColor="@android:color/white" />
+        <RadioButton android:id="@+id/variableRadioButton2"
+            android:layout_width="match_parent"
+            android:layout_weight=".5"
+            android:layout_height="32dp"
+            android:buttonTint="@color/secondary"
+            android:textColor="@android:color/white" />
+    </RadioGroup>
+
     <EditText
         android:id="@+id/variableEditText"
         android:textColor="#FFFFFF"

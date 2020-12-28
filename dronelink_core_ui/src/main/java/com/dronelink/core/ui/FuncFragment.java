@@ -30,6 +30,8 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.RadioButton;
+import android.widget.RadioGroup;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -66,6 +68,9 @@ public class FuncFragment extends Fragment implements Dronelink.Listener, DroneS
     private TextView variableDescriptionTextView;
     private ImageView variableImageView;
     private Spinner variableSpinner;
+    private RadioGroup variableRadioGroup;
+    private RadioButton variableRadioButton1;
+    private RadioButton variableRadioButton2;
     private EditText variableEditText;
     private Button variableDroneMarkButton;
     private ImageButton variableDroneClearButton;
@@ -163,6 +168,9 @@ public class FuncFragment extends Fragment implements Dronelink.Listener, DroneS
         variableDescriptionTextView.setMovementMethod(new ScrollingMovementMethod());
         variableImageView = getView().findViewById(R.id.variableImageView);
         variableSpinner = getView().findViewById(R.id.variableSpinner);
+        variableRadioGroup = getView().findViewById(R.id.variableRadioGroup);
+        variableRadioButton1 = getView().findViewById(R.id.variableRadioButton1);
+        variableRadioButton2 = getView().findViewById(R.id.variableRadioButton2);
         variableEditText = getView().findViewById(R.id.variableEditText);
         variableDroneMarkButton = getView().findViewById(R.id.variableDroneMarkButton);
         variableDroneClearButton = getView().findViewById(R.id.variableDroneClearButton);
@@ -314,12 +322,11 @@ public class FuncFragment extends Fragment implements Dronelink.Listener, DroneS
         Object value = null;
         switch (input.variable.valueType) {
             case BOOLEAN:
-                value = variableSpinner.getSelectedItem();
-                if (value == getString(R.string.Func_input_choose)) {
-                    value = null;
+                if (variableRadioButton1.isChecked()) {
+                    value = true;
                 }
-                else {
-                    value = getString(R.string.yes) == value;
+                else if (variableRadioButton2.isChecked()) {
+                    value = false;
                 }
                 break;
 
@@ -338,9 +345,19 @@ public class FuncFragment extends Fragment implements Dronelink.Listener, DroneS
                     }
                 }
                 else {
-                    value = variableSpinner.getSelectedItem();
-                    if (value == getString(R.string.Func_input_choose)) {
-                        value = null;
+                    if (input.enumValues.length == 2) {
+                        if (variableRadioButton1.isChecked()) {
+                            value = input.enumValues[0];
+                        }
+                        else if (variableRadioButton2.isChecked()) {
+                            value = input.enumValues[1];
+                        }
+                    }
+                    else {
+                        value = variableSpinner.getSelectedItem();
+                        if (value == getString(R.string.Func_input_choose)) {
+                            value = null;
+                        }
                     }
                 }
                 break;
@@ -381,8 +398,8 @@ public class FuncFragment extends Fragment implements Dronelink.Listener, DroneS
         enumValues.add(getString(R.string.Func_input_choose));
         switch (input.variable.valueType) {
             case BOOLEAN:
-                enumValues.add(getString(R.string.yes));
-                enumValues.add(getString(R.string.no));
+                variableRadioButton1.setText(getString(R.string.yes));
+                variableRadioButton2.setText(getString(R.string.no));
                 break;
 
             case STRING:
@@ -394,7 +411,11 @@ public class FuncFragment extends Fragment implements Dronelink.Listener, DroneS
                 break;
         }
 
-        if (enumValues.size() > 1) {
+        if (enumValues.size() == 3) {
+            variableRadioButton1.setText(enumValues.get(1));
+            variableRadioButton2.setText(enumValues.get(2));
+        }
+        else {
             variableSpinner.setAdapter(new ArrayAdapter<>(getContext(), android.R.layout.simple_spinner_dropdown_item, enumValues.toArray(new String[0])));
         }
 
@@ -428,7 +449,13 @@ public class FuncFragment extends Fragment implements Dronelink.Listener, DroneS
         }
 
         if (value instanceof Boolean) {
-            variableSpinner.setSelection(((Boolean)value) ? 1 : 2);
+            variableRadioGroup.clearCheck();
+            if ((Boolean)value) {
+                variableRadioButton1.setChecked(true);
+            }
+            else {
+                variableRadioButton2.setChecked(true);
+            }
         }
 
         if (value instanceof Double) {
@@ -438,7 +465,13 @@ public class FuncFragment extends Fragment implements Dronelink.Listener, DroneS
         if (value instanceof String) {
             variableEditText.setText((String)value);
             if (input.enumValues != null) {
-                variableSpinner.setSelection(enumValues.indexOf(value));
+                if (enumValues.size() == 3) {
+                    variableRadioButton1.setChecked(enumValues.get(1).equals(value));
+                    variableRadioButton2.setChecked(enumValues.get(2).equals(value));
+                }
+                else {
+                    variableSpinner.setSelection(enumValues.indexOf(value));
+                }
             }
         }
     }
@@ -482,6 +515,7 @@ public class FuncFragment extends Fragment implements Dronelink.Listener, DroneS
             variableDescriptionTextView.setVisibility(View.INVISIBLE);
             variableImageView.setVisibility(View.INVISIBLE);
             variableSpinner.setVisibility(View.INVISIBLE);
+            variableRadioGroup.setVisibility(View.INVISIBLE);
             variableEditText.setVisibility(View.INVISIBLE);
             variableDroneMarkButton.setVisibility(View.INVISIBLE);
             variableDroneClearButton.setVisibility(View.INVISIBLE);
@@ -489,10 +523,8 @@ public class FuncFragment extends Fragment implements Dronelink.Listener, DroneS
             variableSummaryTextView.setVisibility(View.INVISIBLE);
 
             if (intro) {
-                updateHeight(135);
                 titleImageView.setVisibility(View.VISIBLE);
                 titleTextView.setVisibility(View.VISIBLE);
-                variableDescriptionTextView.setVisibility(View.VISIBLE);
                 backButton.setVisibility(View.INVISIBLE);
                 nextButton.setVisibility(View.INVISIBLE);
                 progressTextView.setVisibility(View.INVISIBLE);
@@ -500,7 +532,20 @@ public class FuncFragment extends Fragment implements Dronelink.Listener, DroneS
 
                 titleTextView.setText(funcExecutor.getDescriptors().name);
                 primaryButton.setText(getString(executing ? R.string.Func_primary_executing : (hasInputs() ? R.string.Func_primary_intro : R.string.Func_primary_execute)));
-                variableDescriptionTextView.setText(funcExecutor.getDescriptors().description);
+
+                if (funcExecutor.getIntroImageUrl() != null && !funcExecutor.getIntroImageUrl().isEmpty()) {
+                    updateHeight(330);
+                    Picasso.get().load(funcExecutor.getIntroImageUrl()).into(variableImageView);
+                    variableImageView.setVisibility(View.VISIBLE);
+                    final ConstraintLayout.LayoutParams lp = (ConstraintLayout.LayoutParams) variableImageView.getLayoutParams();
+                    lp.bottomToTop = R.id.nextButton;
+                    variableImageView.setLayoutParams(lp);
+                }
+                else {
+                    updateHeight(135);
+                    variableDescriptionTextView.setText(funcExecutor.getDescriptors().description);
+                    variableDescriptionTextView.setVisibility(View.VISIBLE);
+                }
                 return;
             }
 
@@ -550,7 +595,7 @@ public class FuncFragment extends Fragment implements Dronelink.Listener, DroneS
 
                 switch (input.variable.valueType) {
                     case BOOLEAN:
-                        variableSpinner.setVisibility(View.VISIBLE);
+                        variableRadioGroup.setVisibility(View.VISIBLE);
                         break;
 
                     case NUMBER:
@@ -566,7 +611,12 @@ public class FuncFragment extends Fragment implements Dronelink.Listener, DroneS
                             variableEditText.requestFocus();
                         }
                         else {
-                            variableSpinner.setVisibility(View.VISIBLE);
+                            if (input.enumValues.length == 2) {
+                                variableRadioGroup.setVisibility(View.VISIBLE);
+                            }
+                            else {
+                                variableSpinner.setVisibility(View.VISIBLE);
+                            }
                         }
                         break;
 
