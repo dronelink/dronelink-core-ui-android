@@ -69,7 +69,7 @@ class GPSWidget: UpdatableWidget() {
 
         if (satellites == null || strength == null) {
             signalLevelTextView.text = ""
-            signalLevelTextView.visibility = View.GONE
+            signalLevelTextView.visibility = View.INVISIBLE
             signalLevelImageView.setImageResource(R.drawable.signal_level_0_icon)
             return
         }
