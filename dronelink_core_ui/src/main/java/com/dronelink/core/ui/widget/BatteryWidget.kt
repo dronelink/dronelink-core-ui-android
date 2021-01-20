@@ -79,7 +79,7 @@ class BatteryWidget: UpdatableWidget() {
         textView.text = Dronelink.getInstance().format("percent", batteryPercent, "")
 
         val lowBatteryThreshold = session?.state?.value?.lowBatteryThreshold
-        imageView.imageTintList = if (batteryPercent < (lowBatteryThreshold
+        imageView.imageTintList = if (batteryPercent <= (lowBatteryThreshold
                         ?: 0.0)) lowColor else normalColor
     }
 }
