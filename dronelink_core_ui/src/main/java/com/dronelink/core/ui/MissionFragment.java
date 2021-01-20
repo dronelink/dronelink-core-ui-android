@@ -461,7 +461,7 @@ public class MissionFragment extends Fragment implements Dronelink.Listener, Dro
             executionDurationTextView.setVisibility(View.VISIBLE);
             timeRemainingTextView.setVisibility(View.VISIBLE);
             progressBar.setVisibility(View.VISIBLE);
-            dismissButton.setVisibility(View.VISIBLE);
+            dismissButton.setVisibility(missionExecutorLocal.isEngaged() ? View.INVISIBLE : View.VISIBLE);
             messagesTextView.setVisibility(expanded ? View.VISIBLE : View.INVISIBLE);
 
             primaryButton.setEnabled(session != null);

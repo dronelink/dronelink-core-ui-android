@@ -478,7 +478,7 @@ public class FuncFragment extends Fragment implements Dronelink.Listener, DroneS
 
     private void updateHeight(float height) {
         DisplayMetrics displayMetrics = getResources().getDisplayMetrics();
-        float maxHeight = Math.max(135, (displayMetrics.heightPixels / displayMetrics.density) - 200.0f);
+        float maxHeight = Math.max(135, (displayMetrics.heightPixels / displayMetrics.density) - 100.0f);
         getView().getLayoutParams().height = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, Math.min(height, maxHeight), displayMetrics);
         getView().requestLayout();
     }
@@ -534,7 +534,7 @@ public class FuncFragment extends Fragment implements Dronelink.Listener, DroneS
                 primaryButton.setText(getString(executing ? R.string.Func_primary_executing : (hasInputs() ? R.string.Func_primary_intro : R.string.Func_primary_execute)));
 
                 if (funcExecutor.getIntroImageUrl() != null && !funcExecutor.getIntroImageUrl().isEmpty()) {
-                    updateHeight(330);
+                    updateHeight(530);
                     Picasso.get().load(funcExecutor.getIntroImageUrl()).into(variableImageView);
                     variableImageView.setVisibility(View.VISIBLE);
                     final ConstraintLayout.LayoutParams lp = (ConstraintLayout.LayoutParams) variableImageView.getLayoutParams();
@@ -560,7 +560,7 @@ public class FuncFragment extends Fragment implements Dronelink.Listener, DroneS
             final FuncInput input = getInput();
             if (input != null) {
                 if (input.imageUrl != null && !input.imageUrl.isEmpty()) {
-                    updateHeight(330);
+                    updateHeight(530);
                 }
                 else if (input.descriptors.description != null && !input.descriptors.description.isEmpty()) {
                     updateHeight(165);
@@ -631,7 +631,7 @@ public class FuncFragment extends Fragment implements Dronelink.Listener, DroneS
             }
 
             if (isLast()) {
-                updateHeight(330);
+                updateHeight(530);
                 variableNameTextView.setVisibility(View.VISIBLE);
                 variableNameTextView.setText(getString(R.string.Func_input_summary));
                 variableSummaryTextView.setVisibility(View.VISIBLE);
@@ -700,6 +700,11 @@ public class FuncFragment extends Fragment implements Dronelink.Listener, DroneS
         inputIndex = 0;
         intro = true;
         getActivity().runOnUiThread(updateViews);
+
+        final String[] urls = executor.getUrls();
+        if (urls != null) {
+            DronelinkUI.getInstance().cacheImages(urls);
+        }
     }
 
     @Override

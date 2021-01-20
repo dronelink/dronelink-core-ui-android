@@ -5,5 +5,11 @@
     <color name="gray_transparent">#cccccccc</color>
     <color name="primary">#FF311b92</color>
     <color name="secondary">#F50057</color>
+    <color name="green_a400">#00e676</color>
+    <color name="purple_a400">#d500f9</color>
+    <color name="lightBlue_a400">#00b0ff</color>
+    <color name="pink_a400">#f50057</color>
     <color name="darkGray">#555555</color>
+    <color name="lightGray">#888888</color>
+    <color name="white">#ffffff</color>
 </resources>

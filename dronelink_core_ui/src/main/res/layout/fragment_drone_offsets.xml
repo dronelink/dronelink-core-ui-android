@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:custom="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:visibility="invisible"
+    android:background="@color/darkBlack_transparent"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:layoutDirection="ltr"
+    tools:context=".DroneOffsetsFragment">
+
+    <Button
+        android:id="@+id/styleButton"
+        android:text="@string/DroneOffsets_style_altYaw"
+        android:layout_height="24dp"
+        android:layout_width="match_parent"
+        android:layout_marginTop="2dp"
+        android:layout_marginLeft="2dp"
+        android:layout_marginRight="2dp"
+        custom:layout_constraintTop_toTopOf="parent"
+        custom:layout_constraintStart_toStartOf="parent"
+        custom:layout_constraintEnd_toEndOf="parent"
+        android:background="@color/darkGray"
+        android:textColor="@android:color/white" />
+
+    <Button
+        android:id="@+id/style0Button"
+        android:text="@string/DroneOffsets_style_altYaw"
+        android:layout_height="24dp"
+        android:layout_width="97dp"
+        android:layout_marginTop="2dp"
+        android:layout_marginLeft="2dp"
+        custom:layout_constraintTop_toTopOf="parent"
+        custom:layout_constraintStart_toStartOf="parent"
+        android:background="@color/darkGray"
+        android:textColor="@android:color/white" />
+
+    <Button
+        android:id="@+id/style1Button"
+        android:text="@string/DroneOffsets_style_position"
+        android:layout_height="24dp"
+        android:layout_width="97dp"
+        android:layout_marginTop="2dp"
+        android:layout_marginRight="2dp"
+        custom:layout_constraintTop_toTopOf="parent"
+        custom:layout_constraintEnd_toEndOf="parent"
+        android:background="@color/darkGray"
+        android:textColor="@android:color/white" />
+
+    <ImageButton
+        android:id="@+id/rcInputsToggleButton"
+        android:layout_width="28dp"
+        android:layout_height="28dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginLeft="8dp"
+        custom:layout_constraintTop_toBottomOf="@+id/style0Button"
+        custom:layout_constraintStart_toStartOf="parent"
+        android:scaleType="fitCenter"
+        android:src="@drawable/rc"
+        android:background="@android:color/transparent" />
+
+    <ImageButton
+        android:id="@+id/moreButton"
+        android:layout_width="28dp"
+        android:layout_height="28dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginLeft="8dp"
+        custom:layout_constraintTop_toBottomOf="@+id/rcInputsToggleButton"
+        custom:layout_constraintStart_toStartOf="parent"
+        android:scaleType="fitCenter"
+        android:src="@drawable/baseline_more_horiz_white_48"
+        android:background="@android:color/transparent" />
+
+    <ImageButton
+        android:id="@+id/clearButton"
+        android:layout_width="28dp"
+        android:layout_height="28dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginRight="8dp"
+        custom:layout_constraintTop_toBottomOf="@+id/style1Button"
+        custom:layout_constraintEnd_toEndOf="parent"
+        android:scaleType="fitCenter"
+        android:src="@drawable/baseline_cancel_white_24"
+        android:background="@android:color/transparent" />
+
+    <TextView
+        android:id="@+id/detailsTextView"
+        android:layout_width="0dp"
+        android:layout_height="34dp"
+        android:layout_marginLeft="8dp"
+        android:layout_marginRight="8dp"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:scrollHorizontally="true"
+        android:textColor="#FFFFFF"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        android:gravity="center"
+        custom:layout_constraintStart_toEndOf="@+id/rcInputsToggleButton"
+        custom:layout_constraintTop_toBottomOf="@+id/style0Button"
+        custom:layout_constraintEnd_toStartOf="@+id/clearButton" />
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/upButton"
+        android:src="@drawable/baseline_arrow_drop_up_white_48"
+        custom:fabSize="mini"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_marginTop="60dp"
+        custom:layout_constraintTop_toTopOf="parent"
+        custom:layout_constraintStart_toStartOf="parent"
+        custom:layout_constraintEnd_toEndOf="parent" />
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/leftButton"
+        android:src="@drawable/baseline_arrow_left_white_48"
+        custom:fabSize="mini"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_marginTop="32dp"
+        android:layout_marginRight="6dp"
+        custom:layout_constraintTop_toTopOf="@+id/upButton"
+        custom:layout_constraintEnd_toStartOf="@+id/upButton" />
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/rightButton"
+        android:src="@drawable/baseline_arrow_right_white_48"
+        custom:fabSize="mini"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_marginTop="32dp"
+        android:layout_marginLeft="6dp"
+        custom:layout_constraintTop_toTopOf="@+id/upButton"
+        custom:layout_constraintStart_toEndOf="@+id/upButton" />
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/downButton"
+        android:src="@drawable/baseline_arrow_drop_down_white_48"
+        custom:fabSize="mini"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_marginTop="20dp"
+        custom:layout_constraintTop_toBottomOf="@+id/upButton"
+        custom:layout_constraintStart_toStartOf="parent"
+        custom:layout_constraintEnd_toEndOf="parent" />
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/c1Button"
+        android:visibility="invisible"
+        android:src="@drawable/baseline_check_white_48"
+        custom:fabSize="mini"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_marginBottom="8dp"
+        android:layout_marginLeft="8dp"
+        custom:layout_constraintBottom_toBottomOf="parent"
+        custom:layout_constraintStart_toStartOf="parent" />
+
+    <TextView
+        android:id="@+id/cLabel"
+        android:layout_width="0dp"
+        android:layout_height="40dp"
+        android:layout_marginLeft="8dp"
+        android:layout_marginRight="8dp"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:scrollHorizontally="true"
+        android:textColor="#FFFFFF"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        android:gravity="center"
+        custom:layout_constraintStart_toEndOf="@+id/c1Button"
+        custom:layout_constraintTop_toTopOf="@+id/c1Button"
+        custom:layout_constraintEnd_toStartOf="@+id/c2Button" />
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/c2Button"
+        android:visibility="invisible"
+        android:src="@drawable/baseline_arrow_upward_white_48"
+        custom:fabSize="mini"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_marginBottom="8dp"
+        android:layout_marginRight="8dp"
+        custom:layout_constraintBottom_toBottomOf="parent"
+        custom:layout_constraintEnd_toEndOf="parent" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
