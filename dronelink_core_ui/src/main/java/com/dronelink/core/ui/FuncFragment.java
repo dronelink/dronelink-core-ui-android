@@ -458,6 +458,10 @@ public class FuncFragment extends Fragment implements Dronelink.Listener, DroneS
             }
         }
 
+        if (value instanceof Integer) {
+            variableEditText.setText(value.toString());
+        }
+
         if (value instanceof Double) {
             variableEditText.setText(value.toString());
         }
@@ -572,7 +576,7 @@ public class FuncFragment extends Fragment implements Dronelink.Listener, DroneS
                 variableNameTextView.setVisibility(View.VISIBLE);
                 String name = input.descriptors.name == null ? "" : input.descriptors.name;
                 String valueNumberMeasurementTypeDisplay = getValueNumberMeasurementTypeDisplay(inputIndex);
-                if (valueNumberMeasurementTypeDisplay != null) {
+                if (valueNumberMeasurementTypeDisplay != null && !valueNumberMeasurementTypeDisplay.isEmpty()) {
                     name = name + " (" + valueNumberMeasurementTypeDisplay + ")";
                 }
 
@@ -657,7 +661,7 @@ public class FuncFragment extends Fragment implements Dronelink.Listener, DroneS
 
             String name = input.descriptors.name;
             final String valueNumberMeasurementTypeDisplay = getValueNumberMeasurementTypeDisplay(i);
-            if (valueNumberMeasurementTypeDisplay != null) {
+            if (valueNumberMeasurementTypeDisplay != null && !valueNumberMeasurementTypeDisplay.isEmpty()) {
                 name = name + " (" + valueNumberMeasurementTypeDisplay + ")";
             }
 

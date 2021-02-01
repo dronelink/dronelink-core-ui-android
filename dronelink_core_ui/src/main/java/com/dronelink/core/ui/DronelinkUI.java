@@ -36,7 +36,12 @@ public class DronelinkUI {
         final Picasso.Builder builder = new Picasso.Builder(context);
         builder.downloader(new OkHttp3Downloader(context, Integer.MAX_VALUE));
         final Picasso built = builder.build();
-        Picasso.setSingletonInstance(built);
+        try {
+            Picasso.setSingletonInstance(built);
+        }
+        catch (final IllegalStateException e) {
+            //this fires if a singleton has already been set
+        }
     }
 
     public void cacheImages(final String[] urls) {

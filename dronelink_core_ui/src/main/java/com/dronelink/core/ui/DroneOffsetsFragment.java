@@ -538,26 +538,44 @@ public class DroneOffsetsFragment extends Fragment implements DroneSessionManage
                     if (remoteControllerState != null && remoteControllerState.value != null) {
                         final double deadband = 0.15;
 
-                        final double yawPercent = remoteControllerState.value.getLeftStick().x;
-                        if (Math.abs(yawPercent) > deadband) {
-                            offsets.droneYaw += Convert.DegreesToRadians(1.0 * yawPercent);
-                        }
+                        switch (style) {
+                            case ALT_YAW:
+                                final double yawPercent = remoteControllerState.value.getLeftStick().x;
+                                if (Math.abs(yawPercent) > deadband) {
+                                    offsets.droneYaw += Convert.DegreesToRadians(1.0 * yawPercent);
+                                }
 
-                        final double altitudePercent = remoteControllerState.value.getLeftStick().y;
-                        if (Math.abs(altitudePercent) > deadband) {
-                            offsets.droneAltitude += Convert.FeetToMeters (0.5 * altitudePercent);
-                        }
+                                final double altitudePercent = remoteControllerState.value.getLeftStick().y;
+                                if (Math.abs(altitudePercent) > deadband) {
+                                    offsets.droneAltitude += Convert.FeetToMeters(0.5 * altitudePercent);
+                                }
+                                break;
 
-                        final double positionPercent = remoteControllerState.value.getRightStick().y;
-                        if (Math.abs(positionPercent) > deadband) {
-                            final DatedValue<DroneStateAdapter> state = sessionLocal.getState();
-                            if (state == null || state.value == null) {
-                                return;
-                            }
+                            case POSITION:
+                                final double positionXPercent = remoteControllerState.value.getRightStick().x;
+                                if (Math.abs(positionXPercent) > deadband) {
+                                    final DatedValue<DroneStateAdapter> state = sessionLocal.getState();
+                                    if (state == null || state.value == null) {
+                                        return;
+                                    }
 
-                            offsets.droneCoordinate = offsets.droneCoordinate.add(new Vector2(
-                                    state.value.getOrientation().getYaw() + (positionPercent >= 0 ? 0 : Math.PI),
-                                    Convert.FeetToMeters (0.4 * Math.abs(positionPercent))));
+                                    offsets.droneCoordinate = offsets.droneCoordinate.add(new Vector2(
+                                            state.value.getOrientation().getYaw() + (positionXPercent >= 0 ? (Math.PI / 2) : -(Math.PI / 2)),
+                                            Convert.FeetToMeters(0.4 * Math.abs(positionXPercent))));
+                                }
+
+                                final double positionYPercent = remoteControllerState.value.getRightStick().y;
+                                if (Math.abs(positionYPercent) > deadband) {
+                                    final DatedValue<DroneStateAdapter> state = sessionLocal.getState();
+                                    if (state == null || state.value == null) {
+                                        return;
+                                    }
+
+                                    offsets.droneCoordinate = offsets.droneCoordinate.add(new Vector2(
+                                            state.value.getOrientation().getYaw() + (positionYPercent >= 0 ? 0 : Math.PI),
+                                            Convert.FeetToMeters(0.4 * Math.abs(positionYPercent))));
+                                }
+                                break;
                         }
                     }
                 }
@@ -613,7 +631,9 @@ public class DroneOffsetsFragment extends Fragment implements DroneSessionManage
     }
 
     private String displayVector(final Vector2 vector) {
-        return Dronelink.getInstance().format("angle", vector.direction, "") + " → " + Dronelink.getInstance().format("distance", vector.magnitude, "");
+        final String angle = Dronelink.getInstance().format("angle", vector.direction, "");
+        final String distance = Dronelink.getInstance().format("distance", vector.magnitude, "");
+        return angle + " → " + distance;
     }
 
     @Override

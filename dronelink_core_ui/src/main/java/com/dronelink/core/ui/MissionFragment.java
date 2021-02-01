@@ -483,11 +483,14 @@ public class MissionFragment extends Fragment implements Dronelink.Listener, Dro
 
                 if (expanded) {
                     final StringBuilder messages = new StringBuilder();
-                    for (final MessageGroup messageGroup : missionExecutorLocal.getExecutingMessageGroups()) {
-                        if (messages.length() > 0) {
-                            messages.append("\n\n");
+                    final MessageGroup[] messageGroups = missionExecutorLocal.getExecutingMessageGroups();
+                    if (messageGroups != null) {
+                        for (final MessageGroup messageGroup : messageGroups) {
+                            if (messages.length() > 0) {
+                                messages.append("\n\n");
+                            }
+                            messages.append(messageGroup.toString());
                         }
-                        messages.append(messageGroup.toString());
                     }
                     messagesTextView.setText(messages.toString());
                 }
@@ -502,6 +505,7 @@ public class MissionFragment extends Fragment implements Dronelink.Listener, Dro
                 progressBar.setProgressTintList(progressDisengagedColor);
                 primaryButton.setBackgroundTintList(session == null ? primaryDisconnectedColor : primaryDisengagedColor);
                 primaryButton.setImageResource(R.drawable.baseline_play_arrow_white_48);
+                messagesTextView.setText("");
             }
         }
     };
