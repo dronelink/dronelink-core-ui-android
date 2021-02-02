@@ -36,6 +36,8 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.dronelink.core.DatedValue;
+import com.dronelink.core.DroneOffsets;
 import com.dronelink.core.DroneSession;
 import com.dronelink.core.DroneSessionManager;
 import com.dronelink.core.Dronelink;
@@ -43,6 +45,7 @@ import com.dronelink.core.FuncExecutor;
 import com.dronelink.core.MissionExecutor;
 import com.dronelink.core.ModeExecutor;
 import com.dronelink.core.adapters.DroneStateAdapter;
+import com.dronelink.core.adapters.RemoteControllerStateAdapter;
 import com.dronelink.core.kernel.core.FuncInput;
 import com.dronelink.core.kernel.core.GeoSpatial;
 import com.dronelink.core.kernel.core.enums.VariableValueType;
@@ -53,6 +56,8 @@ import com.stfalcon.imageviewer.loader.ImageLoader;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class FuncFragment extends Fragment implements Dronelink.Listener, DroneSessionManager.Listener, FuncExecutor.Listener {
     private static FuncExecutor mostRecentExecuted;
@@ -87,6 +92,10 @@ public class FuncFragment extends Fragment implements Dronelink.Listener, DroneS
     private String getValueNumberMeasurementTypeDisplay(final int index) { return funcExecutor == null ? null : funcExecutor.readValueNumberMeasurementTypeDisplay(index); }
     private boolean executing = false;
     private Object value = null;
+    private final long listenRCButtonsMillis = 100;
+    private Timer listenRCButtonsTimer;
+    private boolean c1PressedPrevious = false;
+    private boolean c2PressedPrevious = false;
 
     public FuncFragment() {}
 
@@ -208,29 +217,7 @@ public class FuncFragment extends Fragment implements Dronelink.Listener, DroneS
         variableDroneMarkButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(final View v) {
-                if (session == null) {
-                    showToast(getString(R.string.Func_input_drone_unavailable));
-                    return;
-                }
-
-                final DroneStateAdapter state = session.getState().value;
-                Location location = null;
-                if (state != null) {
-                    location = state.getLocation();
-                }
-
-                if (location == null) {
-                    showToast(getString(R.string.Func_input_location_unavailable));
-                    return;
-                }
-
-                final FuncInput input = getInput();
-                if (input != null && input.extensions != null && input.extensions.droneOffsetsCoordinateReference) {
-                    Dronelink.getInstance().droneOffsets.droneCoordinateReference = location;
-                }
-
-                writeValue(false);
-                readValue();
+                onDroneMark();
             }
         });
 
@@ -283,7 +270,57 @@ public class FuncFragment extends Fragment implements Dronelink.Listener, DroneS
             }
         });
         getActivity().runOnUiThread(updateViews);
+
+        listenRCButtonsTimer = new Timer();
+        listenRCButtonsTimer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                listenRCButtonsTimer();
+            }
+        }, 0, listenRCButtonsMillis);
     }
+
+    @Override
+    public void onDestroy() {
+        if (listenRCButtonsTimer != null) {
+            listenRCButtonsTimer.cancel();
+        }
+        super.onDestroy();
+    }
+
+    private void listenRCButtonsTimer() {
+        getActivity().runOnUiThread(listenRCButtons);
+    }
+
+    private Runnable listenRCButtons = new Runnable() {
+        public void run() {
+            final DroneSession sessionLocal = session;
+            if (getView() == null || getView().getVisibility() != View.VISIBLE || sessionLocal == null) {
+                return;
+            }
+
+            final DatedValue<RemoteControllerStateAdapter> remoteControllerState = sessionLocal.getRemoteControllerState(0);
+            if (remoteControllerState != null && remoteControllerState.value != null) {
+                if (c1PressedPrevious && !remoteControllerState.value.getC1Button().pressed && variableDroneMarkButton.getVisibility() == View.VISIBLE) {
+                    onDroneMark();
+                }
+
+                if (c2PressedPrevious && !remoteControllerState.value.getC2Button().pressed && variableDroneMarkButton.getVisibility() == View.VISIBLE) {
+                    if (funcExecutor != null) {
+                        funcExecutor.clearValue(inputIndex);
+                    }
+                    readValue();
+                }
+
+                c1PressedPrevious = remoteControllerState.value.getC1Button().pressed;
+                c2PressedPrevious = remoteControllerState.value.getC2Button().pressed;
+            }
+            else {
+                c1PressedPrevious = false;
+                c2PressedPrevious = false;
+            }
+        }
+    };
 
     private void addNextDynamicInput() {
         if (funcExecutor == null) {
@@ -671,6 +708,32 @@ public class FuncFragment extends Fragment implements Dronelink.Listener, DroneS
             }
         }
         return summary.toString();
+    }
+
+    private void onDroneMark() {
+        if (session == null) {
+            showToast(getString(R.string.Func_input_drone_unavailable));
+            return;
+        }
+
+        final DroneStateAdapter state = session.getState().value;
+        Location location = null;
+        if (state != null) {
+            location = state.getLocation();
+        }
+
+        if (location == null) {
+            showToast(getString(R.string.Func_input_location_unavailable));
+            return;
+        }
+
+        final FuncInput input = getInput();
+        if (input != null && input.extensions != null && input.extensions.droneOffsetsCoordinateReference) {
+            Dronelink.getInstance().droneOffsets.droneCoordinateReference = location;
+        }
+
+        writeValue(false);
+        readValue();
     }
 
     @Override
