@@ -33,6 +33,7 @@ import com.dronelink.core.adapters.DroneStateAdapter;
 import com.dronelink.core.kernel.core.GeoCoordinate;
 import com.dronelink.core.kernel.core.GeoSpatial;
 import com.dronelink.core.kernel.core.Message;
+import com.dronelink.core.kernel.core.PlanRestrictionZone;
 import com.mapbox.android.core.location.LocationEngineCallback;
 import com.mapbox.android.core.location.LocationEngineResult;
 import com.mapbox.android.core.permissions.PermissionsManager;
@@ -53,7 +54,12 @@ import com.mapbox.mapboxsdk.maps.Style;
 import com.mapbox.mapboxsdk.style.layers.PropertyFactory;
 import com.mapbox.mapboxsdk.style.layers.SymbolLayer;
 import com.mapbox.mapboxsdk.style.sources.GeoJsonSource;
+import com.microsoft.maps.Geocircle;
+import com.microsoft.maps.Geopath;
+import com.microsoft.maps.Geoposition;
+import com.microsoft.maps.MapPolygon;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Timer;
@@ -66,6 +72,7 @@ public class MapboxMapFragment extends Fragment implements Dronelink.Listener, D
     private com.mapbox.mapboxsdk.maps.MapView mapView;
     private MapboxMap map;
     private Annotation missionRequiredTakeoffAreaAnnotation;
+    private List<Annotation> missionRestrictionZoneAnnotations = new ArrayList<>();
     private Annotation missionEstimateBackgroundAnnotation;
     private Annotation missionEstimateForegroundAnnotation;
     private Annotation missionReengagementEstimateBackgroundAnnotation;
@@ -257,6 +264,61 @@ public class MapboxMapFragment extends Fragment implements Dronelink.Listener, D
     };
 
     @SuppressWarnings({"MissingPermission"})
+    private Runnable updateMissionRestrictionZones = new Runnable() {
+        public void run() {
+            if (map == null) {
+                new Handler().postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        getActivity().runOnUiThread(updateMissionRestrictionZones);
+                    }
+                }, 100);
+                return;
+            }
+
+            for (final Annotation missionRestrictionZoneAnnotation : missionRestrictionZoneAnnotations) {
+                map.removeAnnotation(missionRestrictionZoneAnnotation);
+            }
+            missionRestrictionZoneAnnotations.clear();
+
+            final MissionExecutor missionExecutorLocal = missionExecutor;
+            if (missionExecutorLocal != null) {
+                final PlanRestrictionZone[] restrictionZones = missionExecutorLocal.getRestrictionZones();
+                if (restrictionZones != null) {
+                    for (int i = 0; i < restrictionZones.length; i++) {
+                        final PlanRestrictionZone restrictionZone = restrictionZones[i];
+                        final GeoCoordinate[] coordinates = missionExecutorLocal.getRestrictionZoneBoundaryCoordinates(i);
+                        if (coordinates == null) {
+                            continue;
+                        }
+
+                        final List<LatLng> points = new LinkedList<>();
+                        switch (restrictionZone.zone.shape) {
+                            case CIRCLE:
+                                final Location center = coordinates[0].getLocation();
+                                final double radius = center.distanceTo(coordinates[1].getLocation());
+                                for (int p = 0; p < 100; p++) {
+                                    final Location location = Convert.locationWithBearing(center, (double)p / 100.0 * Math.PI * 2.0, radius);
+                                    points.add(new LatLng(location.getLatitude(), location.getLongitude()));
+                                }
+                                break;
+
+                            case POLYGON:
+                                for (int c = 0; c < coordinates.length; c++) {
+                                    points.add(new LatLng(coordinates[c].latitude, coordinates[c].longitude));
+                                }
+                                break;
+                        }
+
+                        final Annotation missionRestrictionZoneAnnotation = map.addPolygon(new PolygonOptions().addAll(points).alpha((float)0.5).fillColor(Color.argb(255,255, 23, 68)).strokeColor(Color.argb((int)(255 * 0.7), 255, 23, 68)));
+                        missionRestrictionZoneAnnotations.add(missionRestrictionZoneAnnotation);
+                    }
+                }
+            }
+        }
+    };
+
+    @SuppressWarnings({"MissingPermission"})
     private Runnable updateMissionEstimate = new Runnable() {
         public void run() {
             if (map == null) {
@@ -393,6 +455,7 @@ public class MapboxMapFragment extends Fragment implements Dronelink.Listener, D
         missionCentered = false;
         executor.addListener(this);
         getActivity().runOnUiThread(updateMissionRequiredTakeoffArea);
+        getActivity().runOnUiThread(updateMissionRestrictionZones);
         if (executor.isEstimated()) {
             getActivity().runOnUiThread(updateMissionEstimate);
         }
@@ -404,6 +467,7 @@ public class MapboxMapFragment extends Fragment implements Dronelink.Listener, D
         missionCentered = false;
         executor.removeListener(this);
         getActivity().runOnUiThread(updateMissionRequiredTakeoffArea);
+        getActivity().runOnUiThread(updateMissionRestrictionZones);
         getActivity().runOnUiThread(updateMissionEstimate);
     }
 

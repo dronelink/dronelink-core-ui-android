@@ -33,7 +33,9 @@ dependencies {
     implementation 'com.mapbox.mapboxsdk:mapbox-android-sdk:9.5.1'
     implementation 'com.microsoft.maps:maps-sdk:1.1.4'
     implementation 'com.squareup.picasso:picasso:2.71828'
+    implementation 'com.squareup.okhttp3:okhttp:3.12.3'
     implementation 'com.github.stfalcon:stfalcon-imageviewer:1.0.1'
+
     //implementation 'com.github.dronelink:dronelink-core-android:2.0.0'
     implementation project(':dronelink_core')
 

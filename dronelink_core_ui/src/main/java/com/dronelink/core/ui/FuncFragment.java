@@ -36,6 +36,8 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.dronelink.core.DatedValue;
+import com.dronelink.core.DroneOffsets;
 import com.dronelink.core.DroneSession;
 import com.dronelink.core.DroneSessionManager;
 import com.dronelink.core.Dronelink;
@@ -43,6 +45,7 @@ import com.dronelink.core.FuncExecutor;
 import com.dronelink.core.MissionExecutor;
 import com.dronelink.core.ModeExecutor;
 import com.dronelink.core.adapters.DroneStateAdapter;
+import com.dronelink.core.adapters.RemoteControllerStateAdapter;
 import com.dronelink.core.kernel.core.FuncInput;
 import com.dronelink.core.kernel.core.GeoSpatial;
 import com.dronelink.core.kernel.core.enums.VariableValueType;
@@ -53,6 +56,8 @@ import com.stfalcon.imageviewer.loader.ImageLoader;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class FuncFragment extends Fragment implements Dronelink.Listener, DroneSessionManager.Listener, FuncExecutor.Listener {
     private static FuncExecutor mostRecentExecuted;
@@ -87,6 +92,10 @@ public class FuncFragment extends Fragment implements Dronelink.Listener, DroneS
     private String getValueNumberMeasurementTypeDisplay(final int index) { return funcExecutor == null ? null : funcExecutor.readValueNumberMeasurementTypeDisplay(index); }
     private boolean executing = false;
     private Object value = null;
+    private final long listenRCButtonsMillis = 100;
+    private Timer listenRCButtonsTimer;
+    private boolean c1PressedPrevious = false;
+    private boolean c2PressedPrevious = false;
 
     public FuncFragment() {}
 
@@ -208,29 +217,7 @@ public class FuncFragment extends Fragment implements Dronelink.Listener, DroneS
         variableDroneMarkButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(final View v) {
-                if (session == null) {
-                    showToast(getString(R.string.Func_input_drone_unavailable));
-                    return;
-                }
-
-                final DroneStateAdapter state = session.getState().value;
-                Location location = null;
-                if (state != null) {
-                    location = state.getLocation();
-                }
-
-                if (location == null) {
-                    showToast(getString(R.string.Func_input_location_unavailable));
-                    return;
-                }
-
-                final FuncInput input = getInput();
-                if (input != null && input.extensions != null && input.extensions.droneOffsetsCoordinateReference) {
-                    Dronelink.getInstance().droneOffsets.droneCoordinateReference = location;
-                }
-
-                writeValue(false);
-                readValue();
+                onDroneMark();
             }
         });
 
@@ -283,7 +270,57 @@ public class FuncFragment extends Fragment implements Dronelink.Listener, DroneS
             }
         });
         getActivity().runOnUiThread(updateViews);
+
+        listenRCButtonsTimer = new Timer();
+        listenRCButtonsTimer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                listenRCButtonsTimer();
+            }
+        }, 0, listenRCButtonsMillis);
     }
+
+    @Override
+    public void onDestroy() {
+        if (listenRCButtonsTimer != null) {
+            listenRCButtonsTimer.cancel();
+        }
+        super.onDestroy();
+    }
+
+    private void listenRCButtonsTimer() {
+        getActivity().runOnUiThread(listenRCButtons);
+    }
+
+    private Runnable listenRCButtons = new Runnable() {
+        public void run() {
+            final DroneSession sessionLocal = session;
+            if (getView() == null || getView().getVisibility() != View.VISIBLE || sessionLocal == null) {
+                return;
+            }
+
+            final DatedValue<RemoteControllerStateAdapter> remoteControllerState = sessionLocal.getRemoteControllerState(0);
+            if (remoteControllerState != null && remoteControllerState.value != null) {
+                if (c1PressedPrevious && !remoteControllerState.value.getC1Button().pressed && variableDroneMarkButton.getVisibility() == View.VISIBLE) {
+                    onDroneMark();
+                }
+
+                if (c2PressedPrevious && !remoteControllerState.value.getC2Button().pressed && variableDroneMarkButton.getVisibility() == View.VISIBLE) {
+                    if (funcExecutor != null) {
+                        funcExecutor.clearValue(inputIndex);
+                    }
+                    readValue();
+                }
+
+                c1PressedPrevious = remoteControllerState.value.getC1Button().pressed;
+                c2PressedPrevious = remoteControllerState.value.getC2Button().pressed;
+            }
+            else {
+                c1PressedPrevious = false;
+                c2PressedPrevious = false;
+            }
+        }
+    };
 
     private void addNextDynamicInput() {
         if (funcExecutor == null) {
@@ -458,6 +495,10 @@ public class FuncFragment extends Fragment implements Dronelink.Listener, DroneS
             }
         }
 
+        if (value instanceof Integer) {
+            variableEditText.setText(value.toString());
+        }
+
         if (value instanceof Double) {
             variableEditText.setText(value.toString());
         }
@@ -478,7 +519,7 @@ public class FuncFragment extends Fragment implements Dronelink.Listener, DroneS
 
     private void updateHeight(float height) {
         DisplayMetrics displayMetrics = getResources().getDisplayMetrics();
-        float maxHeight = Math.max(135, (displayMetrics.heightPixels / displayMetrics.density) - 200.0f);
+        float maxHeight = Math.max(135, (displayMetrics.heightPixels / displayMetrics.density) - 100.0f);
         getView().getLayoutParams().height = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, Math.min(height, maxHeight), displayMetrics);
         getView().requestLayout();
     }
@@ -534,7 +575,7 @@ public class FuncFragment extends Fragment implements Dronelink.Listener, DroneS
                 primaryButton.setText(getString(executing ? R.string.Func_primary_executing : (hasInputs() ? R.string.Func_primary_intro : R.string.Func_primary_execute)));
 
                 if (funcExecutor.getIntroImageUrl() != null && !funcExecutor.getIntroImageUrl().isEmpty()) {
-                    updateHeight(330);
+                    updateHeight(530);
                     Picasso.get().load(funcExecutor.getIntroImageUrl()).into(variableImageView);
                     variableImageView.setVisibility(View.VISIBLE);
                     final ConstraintLayout.LayoutParams lp = (ConstraintLayout.LayoutParams) variableImageView.getLayoutParams();
@@ -560,7 +601,7 @@ public class FuncFragment extends Fragment implements Dronelink.Listener, DroneS
             final FuncInput input = getInput();
             if (input != null) {
                 if (input.imageUrl != null && !input.imageUrl.isEmpty()) {
-                    updateHeight(330);
+                    updateHeight(530);
                 }
                 else if (input.descriptors.description != null && !input.descriptors.description.isEmpty()) {
                     updateHeight(165);
@@ -572,7 +613,7 @@ public class FuncFragment extends Fragment implements Dronelink.Listener, DroneS
                 variableNameTextView.setVisibility(View.VISIBLE);
                 String name = input.descriptors.name == null ? "" : input.descriptors.name;
                 String valueNumberMeasurementTypeDisplay = getValueNumberMeasurementTypeDisplay(inputIndex);
-                if (valueNumberMeasurementTypeDisplay != null) {
+                if (valueNumberMeasurementTypeDisplay != null && !valueNumberMeasurementTypeDisplay.isEmpty()) {
                     name = name + " (" + valueNumberMeasurementTypeDisplay + ")";
                 }
 
@@ -631,7 +672,7 @@ public class FuncFragment extends Fragment implements Dronelink.Listener, DroneS
             }
 
             if (isLast()) {
-                updateHeight(330);
+                updateHeight(530);
                 variableNameTextView.setVisibility(View.VISIBLE);
                 variableNameTextView.setText(getString(R.string.Func_input_summary));
                 variableSummaryTextView.setVisibility(View.VISIBLE);
@@ -657,7 +698,7 @@ public class FuncFragment extends Fragment implements Dronelink.Listener, DroneS
 
             String name = input.descriptors.name;
             final String valueNumberMeasurementTypeDisplay = getValueNumberMeasurementTypeDisplay(i);
-            if (valueNumberMeasurementTypeDisplay != null) {
+            if (valueNumberMeasurementTypeDisplay != null && !valueNumberMeasurementTypeDisplay.isEmpty()) {
                 name = name + " (" + valueNumberMeasurementTypeDisplay + ")";
             }
 
@@ -667,6 +708,32 @@ public class FuncFragment extends Fragment implements Dronelink.Listener, DroneS
             }
         }
         return summary.toString();
+    }
+
+    private void onDroneMark() {
+        if (session == null) {
+            showToast(getString(R.string.Func_input_drone_unavailable));
+            return;
+        }
+
+        final DroneStateAdapter state = session.getState().value;
+        Location location = null;
+        if (state != null) {
+            location = state.getLocation();
+        }
+
+        if (location == null) {
+            showToast(getString(R.string.Func_input_location_unavailable));
+            return;
+        }
+
+        final FuncInput input = getInput();
+        if (input != null && input.extensions != null && input.extensions.droneOffsetsCoordinateReference) {
+            Dronelink.getInstance().droneOffsets.droneCoordinateReference = location;
+        }
+
+        writeValue(false);
+        readValue();
     }
 
     @Override
@@ -700,6 +767,11 @@ public class FuncFragment extends Fragment implements Dronelink.Listener, DroneS
         inputIndex = 0;
         intro = true;
         getActivity().runOnUiThread(updateViews);
+
+        final String[] urls = executor.getUrls();
+        if (urls != null) {
+            DronelinkUI.getInstance().cacheImages(urls);
+        }
     }
 
     @Override

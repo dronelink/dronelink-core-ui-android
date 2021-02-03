@@ -57,8 +57,15 @@
     <string name="Mode_ready">Ready to start</string>
     <string name="Mode_engaging">Starting Mode</string>
     <string name="Mode_disengaged">Mode Stopped</string>
-    <!-- Status -->
     <string name="StatusWidget_Disconnected">Disconnected</string>
     <string name="StatusWidget_Ready">All Systems Go</string>
     <string name="StatusWidget_Manual">Manual Flight</string>
+    <string name="DroneOffsets_style_altYaw">ALT/YAW</string>
+    <string name="DroneOffsets_style_position">POSITION</string>
+    <string name="DroneOffsets_roll_trim">ROLL TRIM</string>
+    <string name="DroneOffsets_rc_inputs">Caution: RC sticks enabled</string>
+    <string name="DroneOffsets_more_resetGimbal">Gimbal Reset</string>
+    <string name="DroneOffsets_more_levelGimbal">Gimbal 0° (Level)</string>
+    <string name="DroneOffsets_more_nadirGimbal">Gimbal -90° (Nadir)</string>
+    <string name="DroneOffsets_more_rollTrim">Gimbal Roll Trim</string>
 </resources>
