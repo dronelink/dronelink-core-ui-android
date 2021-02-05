@@ -6,6 +6,8 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:layoutDirection="ltr"
+    android:clickable="true"
+    android:focusable="true"
     tools:context=".CameraOffsetsFragment">
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/c1Button"
