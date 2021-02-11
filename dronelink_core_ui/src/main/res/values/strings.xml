@@ -68,4 +68,9 @@
     <string name="DroneOffsets_more_levelGimbal">Gimbal 0° (Level)</string>
     <string name="DroneOffsets_more_nadirGimbal">Gimbal -90° (Nadir)</string>
     <string name="DroneOffsets_more_rollTrim">Gimbal Roll Trim</string>
+    <string name="auto_iso">Auto ISO</string>
+    <string name="shutter">Shutter</string>
+    <string name="f_stop">F</string>
+    <string name="ev">EV</string>
+    <string name="wb">WB</string>
 </resources>

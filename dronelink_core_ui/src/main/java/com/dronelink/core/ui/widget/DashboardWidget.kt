@@ -10,6 +10,11 @@ import androidx.constraintlayout.widget.ConstraintSet
 import androidx.fragment.app.FragmentContainerView
 import com.dronelink.core.ui.R
 import com.dronelink.core.ui.util.dpToPx
+import com.dronelink.core.ui.widget.camera.EVWidget
+import com.dronelink.core.ui.widget.camera.FStopWidget
+import com.dronelink.core.ui.widget.camera.ISOWidget
+import com.dronelink.core.ui.widget.camera.ShutterWidget
+import com.dronelink.core.ui.widget.camera.WBWidget
 
 class DashboardWidget : Widget() {
 
@@ -25,10 +30,19 @@ class DashboardWidget : Widget() {
     private var cameraFeedWidget: Widget? = null
     private var cameraCaptureWidget: CameraCaptureWidget? = null
     private var cameraModeWidget: CameraModeWidget? = null
+    private var shutterWidget: ShutterWidget? = null
+    private var fStopWidget: FStopWidget? = null
+    private var evWidget: EVWidget? = null
+    private var wbWidget: WBWidget? = null
+    private var isoWidget: ISOWidget? = null
 
     private var cameraControlsView: ConstraintLayout? = null
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View? {
         return inflater.inflate(R.layout.fragment_dashboard_widget, container, false)
     }
 
@@ -48,7 +62,11 @@ class DashboardWidget : Widget() {
         gpsWidget = refreshWidget(GPSWidget(), R.id.gpsWidgetContainer) as? GPSWidget
         downlinkWidget = refreshWidget(DownlinkWidget(), R.id.downlinkWidgetContainer) as? DownlinkWidget
         uplinkWidget = refreshWidget(UplinkWidget(), R.id.uplinkWidgetContainer) as? UplinkWidget
-
+        shutterWidget = refreshWidget(ShutterWidget(), R.id.shutterWidgetContainer) as? ShutterWidget
+        fStopWidget = refreshWidget(FStopWidget(), R.id.fStopWidgetContainer) as? FStopWidget
+        evWidget = refreshWidget(EVWidget(), R.id.evWidgetContainer) as? EVWidget
+        wbWidget = refreshWidget(WBWidget(), R.id.wbWidgetContainer) as? WBWidget
+        isoWidget = refreshWidget(ISOWidget(), R.id.isoWidgetContainer) as? ISOWidget
     }
 
     private fun addViews(view: View) {

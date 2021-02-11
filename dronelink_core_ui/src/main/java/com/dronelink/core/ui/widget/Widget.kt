@@ -26,7 +26,6 @@ open class Widget : Fragment() {
         get() = Dronelink.getInstance().funcExecutor
     val widgetFactory: WidgetFactory?
         get() = (targetDroneSessionManager as? WidgetFactoryProvider)?.widgetFactory ?: WidgetFactory.shared
-
 }
 
 open class ListenerWidget: Widget(), Dronelink.Listener, DroneSessionManager.Listener, DroneSession.Listener, MissionExecutor.Listener, ModeExecutor.Listener, FuncExecutor.Listener {

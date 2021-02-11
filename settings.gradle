@@ -1,3 +1,3 @@
 include ':dronelink_core_ui', ':dronelink_core'
-project(':dronelink_core').projectDir = new File(settingsDir, '../../private/dronelink-core-android/dronelink_core')
+project(':dronelink_core').projectDir = new File(settingsDir, '../dronelink-core-android/dronelink_core')
 rootProject.name='DronelinkCoreUI'
