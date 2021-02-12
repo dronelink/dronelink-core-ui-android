@@ -10,7 +10,7 @@ import com.dronelink.core.kernel.command.Command
 import com.dronelink.core.kernel.core.Message
 
 open class Widget : Fragment() {
-
+    protected val gson = Kernel.createGson()
     var droneSessionManager: DroneSessionManager? = null
 
     val targetDroneSessionManager: DroneSessionManager?

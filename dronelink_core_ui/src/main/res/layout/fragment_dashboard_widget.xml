@@ -108,4 +108,38 @@
         app:layout_constraintEnd_toStartOf="@id/shutterWidgetContainer"
         app:layout_constraintTop_toBottomOf="@id/statusGradientWidgetContainer" />
 
+    <androidx.fragment.app.FragmentContainerView
+        android:id="@+id/distanceHomeContainer"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintBottom_toTopOf="@id/horizontalSpeedContainer"
+        app:layout_constraintEnd_toEndOf="@id/horizontalSpeedContainer"
+        app:layout_constraintStart_toStartOf="@id/horizontalSpeedContainer" />
+
+    <androidx.fragment.app.FragmentContainerView
+        android:id="@+id/altitudeContainer"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintBottom_toBottomOf="@id/distanceHomeContainer"
+        app:layout_constraintEnd_toEndOf="@id/verticalSpeedContainer"
+        app:layout_constraintStart_toStartOf="@id/verticalSpeedContainer" />
+
+    <androidx.fragment.app.FragmentContainerView
+        android:id="@+id/horizontalSpeedContainer"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="12dp"
+        android:layout_marginBottom="12dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <androidx.fragment.app.FragmentContainerView
+        android:id="@+id/verticalSpeedContainer"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="12dp"
+        android:layout_marginBottom="12dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toEndOf="@id/horizontalSpeedContainer" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>

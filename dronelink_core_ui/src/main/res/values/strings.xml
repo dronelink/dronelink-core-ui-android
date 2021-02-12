@@ -5,6 +5,7 @@
     <string name="resume">Resume</string>
     <string name="learnMore">Learn More</string>
     <string name="na">N/A</string>
+    <string name="empty">--</string>
     <string name="Func_cachedInputs_title">Previous Inputs Available</string>
     <string name="Func_cachedInputs_message">Do you want to load the previous inputs or start over?</string>
     <string name="Func_cachedInputs_action_new">Start Over</string>
@@ -68,9 +69,14 @@
     <string name="DroneOffsets_more_levelGimbal">Gimbal 0° (Level)</string>
     <string name="DroneOffsets_more_nadirGimbal">Gimbal -90° (Nadir)</string>
     <string name="DroneOffsets_more_rollTrim">Gimbal Roll Trim</string>
-    <string name="auto_iso">Auto ISO</string>
-    <string name="shutter">Shutter</string>
-    <string name="f_stop">F</string>
-    <string name="ev">EV</string>
-    <string name="wb">WB</string>
+    <string name="cameraisowidget_iso">ISO</string>
+    <string name="cameraisowidget_iso_auto">Auto ISO</string>
+    <string name="camerashutterwidget_shutter">Shutter</string>
+    <string name="cameraaperture_f_stop">F</string>
+    <string name="cameraexposurecompensation_ev">EV</string>
+    <string name="camerawhitebalance_wb">WB</string>
+    <string name="distancehomewidget_d">D</string>
+    <string name="altitudewidget_a">A</string>
+    <string name="horizontalspeedwidget_hs">H/S</string>
+    <string name="verticalspeedwidget_vs">V/S</string>
 </resources>

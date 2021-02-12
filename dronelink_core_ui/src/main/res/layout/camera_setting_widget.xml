@@ -15,11 +15,10 @@
     </data>
 
     <androidx.constraintlayout.widget.ConstraintLayout
-        android:layout_width="match_parent"
-        android:paddingVertical="5dp"
-        android:paddingHorizontal="10dp"
+        android:layout_width="wrap_content"
+        android:padding="5dp"
         android:background="@color/darkBlack_transparent"
-        android:layout_height="match_parent">
+        android:layout_height="wrap_content">
 
         <TextView
             android:id="@+id/description"
@@ -27,13 +26,12 @@
             android:layout_height="wrap_content"
             android:text="@{titleText}"
             android:textColor="@color/darkGray"
-            android:textStyle="bold"
-            android:textSize="12sp"
+            android:textSize="8sp"
             app:layout_constraintBottom_toTopOf="@id/value"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintVertical_chainStyle="packed"
-            tools:text="Auto ISO" />
+            tools:text="ISO" />
 
         <TextView
             android:id="@+id/value"
@@ -41,13 +39,12 @@
             android:layout_height="wrap_content"
             android:text="@{valueText}"
             android:textColor="@color/white"
-            android:textSize="16sp"
+            android:textSize="14sp"
             android:textStyle="bold"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/description"
-            tools:text="400"
-            tools:textColor="@color/darkGray" />
+            tools:text="400" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>
