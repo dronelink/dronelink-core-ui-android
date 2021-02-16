@@ -1,4 +1,4 @@
-package com.dronelink.core.ui.widget
+package com.dronelink.core.ui.widget.camera
 
 import android.content.res.ColorStateList
 import android.media.MediaActionSound
@@ -23,6 +23,7 @@ import com.dronelink.core.kernel.core.enums.CameraPhotoMode
 import com.dronelink.core.kernel.core.enums.CameraStorageLocation
 import com.dronelink.core.ui.R
 import com.dronelink.core.ui.util.dpToPx
+import com.dronelink.core.ui.widget.UpdatableWidget
 
 class CameraCaptureWidget: UpdatableWidget() {
 

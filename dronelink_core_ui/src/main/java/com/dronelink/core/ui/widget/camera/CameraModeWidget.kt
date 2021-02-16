@@ -1,4 +1,4 @@
-package com.dronelink.core.ui.widget
+package com.dronelink.core.ui.widget.camera
 
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -16,6 +16,7 @@ import com.dronelink.core.kernel.command.camera.ModeCameraCommand
 import com.dronelink.core.kernel.core.enums.CameraMode
 import com.dronelink.core.ui.R
 import com.dronelink.core.ui.util.dpToPx
+import com.dronelink.core.ui.widget.UpdatableWidget
 import java.lang.Exception
 
 class CameraModeWidget: UpdatableWidget() {

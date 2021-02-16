@@ -10,7 +10,7 @@ import com.dronelink.core.kernel.command.Command
 import com.dronelink.core.kernel.core.Message
 
 open class Widget : Fragment() {
-
+    protected val gson = Kernel.createGson()
     var droneSessionManager: DroneSessionManager? = null
 
     val targetDroneSessionManager: DroneSessionManager?
@@ -26,7 +26,6 @@ open class Widget : Fragment() {
         get() = Dronelink.getInstance().funcExecutor
     val widgetFactory: WidgetFactory?
         get() = (targetDroneSessionManager as? WidgetFactoryProvider)?.widgetFactory ?: WidgetFactory.shared
-
 }
 
 open class ListenerWidget: Widget(), Dronelink.Listener, DroneSessionManager.Listener, DroneSession.Listener, MissionExecutor.Listener, ModeExecutor.Listener, FuncExecutor.Listener {

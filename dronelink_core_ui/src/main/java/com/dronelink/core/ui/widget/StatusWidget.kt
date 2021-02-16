@@ -26,7 +26,7 @@ open class StatusWidget: UpdatableWidget() {
     internal val status: Status
         get() {
             val dronelinkStatusMessages = Dronelink.getInstance().statusMessages
-            dronelinkStatusMessages?.filter { it.level.compare(Message.Level.WARNING) > 0 }?.firstOrNull()?.let {
+            dronelinkStatusMessages?.firstOrNull { it.level.compare(Message.Level.WARNING) > 0 }?.let {
                 return it.getStatus()
             }
 
@@ -36,11 +36,11 @@ open class StatusWidget: UpdatableWidget() {
                 m1.level.compare(m2.level)
             })
 
-            targetDroneSessionManager?.statusMessages?.filter { it.level != Message.Level.INFO }?.sortedWith(comparator)?.last {
+            targetDroneSessionManager?.statusMessages?.filter { it.level != Message.Level.INFO }?.sortedWith(comparator)?.lastOrNull {
                 return it.getStatus()
             }
 
-            dronelinkStatusMessages?.first {
+            dronelinkStatusMessages?.firstOrNull {
                 return it.getStatus()
             }
 
