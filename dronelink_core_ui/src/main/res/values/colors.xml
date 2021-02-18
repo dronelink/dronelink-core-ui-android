@@ -18,6 +18,7 @@
     <color name="red">#EF5350</color>
     <color name="deep_purple">#7E57C2</color>
     <color name="white">#FFFFFF</color>
+    <color name="white_50">#80FFFFFF</color>
     <color name="pink">#EC407A</color>
     <color name="lightGray">#888888</color>
 </resources>

@@ -196,4 +196,6 @@ open class WidgetFactory(open val session: DroneSession? = null) {
     }
 
     open fun createCameraFeedWidget(primary: Boolean = true): Widget? = null
+    open fun createCameraMenuWidget(primary: Boolean = true): Widget? = null
+    open fun createCameraSettingsExposureWidget(primary: Boolean = true): Widget? = null
 }
