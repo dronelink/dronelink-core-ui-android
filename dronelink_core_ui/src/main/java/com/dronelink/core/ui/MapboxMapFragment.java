@@ -17,11 +17,13 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.PopupMenu;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
+import com.dronelink.core.CameraFile;
 import com.dronelink.core.Convert;
 import com.dronelink.core.DroneSession;
 import com.dronelink.core.DroneSessionManager;
@@ -30,16 +32,24 @@ import com.dronelink.core.FuncExecutor;
 import com.dronelink.core.MissionExecutor;
 import com.dronelink.core.ModeExecutor;
 import com.dronelink.core.adapters.DroneStateAdapter;
+import com.dronelink.core.command.CommandError;
+import com.dronelink.core.kernel.command.Command;
+import com.dronelink.core.kernel.core.FuncInput;
+import com.dronelink.core.kernel.core.FuncMapOverlay;
 import com.dronelink.core.kernel.core.GeoCoordinate;
 import com.dronelink.core.kernel.core.GeoSpatial;
 import com.dronelink.core.kernel.core.Message;
 import com.dronelink.core.kernel.core.PlanRestrictionZone;
+import com.dronelink.core.kernel.core.enums.VariableValueType;
 import com.mapbox.android.core.location.LocationEngineCallback;
 import com.mapbox.android.core.location.LocationEngineResult;
 import com.mapbox.android.core.permissions.PermissionsManager;
 import com.mapbox.geojson.Feature;
 import com.mapbox.geojson.Point;
 import com.mapbox.mapboxsdk.annotations.Annotation;
+import com.mapbox.mapboxsdk.annotations.IconFactory;
+import com.mapbox.mapboxsdk.annotations.Marker;
+import com.mapbox.mapboxsdk.annotations.MarkerOptions;
 import com.mapbox.mapboxsdk.annotations.PolygonOptions;
 import com.mapbox.mapboxsdk.annotations.PolylineOptions;
 import com.mapbox.mapboxsdk.camera.CameraUpdateFactory;
@@ -54,20 +64,18 @@ import com.mapbox.mapboxsdk.maps.Style;
 import com.mapbox.mapboxsdk.style.layers.PropertyFactory;
 import com.mapbox.mapboxsdk.style.layers.SymbolLayer;
 import com.mapbox.mapboxsdk.style.sources.GeoJsonSource;
-import com.microsoft.maps.Geocircle;
-import com.microsoft.maps.Geopath;
-import com.microsoft.maps.Geoposition;
-import com.microsoft.maps.MapPolygon;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
-public class MapboxMapFragment extends Fragment implements Dronelink.Listener, DroneSessionManager.Listener, MissionExecutor.Listener, ModeExecutor.Listener, OnMapReadyCallback {
+public class MapboxMapFragment extends Fragment implements Dronelink.Listener, DroneSessionManager.Listener, DroneSession.Listener, MissionExecutor.Listener, FuncExecutor.Listener, ModeExecutor.Listener, OnMapReadyCallback {
     private DroneSession session;
     private MissionExecutor missionExecutor;
+    private FuncExecutor funcExecutor;
     private ModeExecutor modeExecutor;
     private com.mapbox.mapboxsdk.maps.MapView mapView;
     private MapboxMap map;
@@ -77,6 +85,8 @@ public class MapboxMapFragment extends Fragment implements Dronelink.Listener, D
     private Annotation missionEstimateForegroundAnnotation;
     private Annotation missionReengagementEstimateBackgroundAnnotation;
     private Annotation missionReengagementEstimateForegroundAnnotation;
+    private List<Marker> funcDroneAnnotations = new ArrayList<>();
+    private List<Annotation> funcMapOverlayAnnotations = new ArrayList<>();
     private Timer updateTimer;
     private final long updateMillis = 100;
     private boolean missionCentered = false;
@@ -135,9 +145,20 @@ public class MapboxMapFragment extends Fragment implements Dronelink.Listener, D
         mapView.onStop();
         Dronelink.getInstance().getSessionManager().removeListener(this);
         Dronelink.getInstance().removeListener(this);
+
+        final DroneSession sessionLocal = this.session;
+        if (sessionLocal != null) {
+            sessionLocal.removeListener(this);
+        }
+
         final MissionExecutor missionExecutor = this.missionExecutor;
         if (missionExecutor != null) {
             missionExecutor.removeListener(this);
+        }
+
+        final FuncExecutor funcExecutor = this.funcExecutor;
+        if (funcExecutor != null) {
+            funcExecutor.removeListener(this);
         }
 
         final ModeExecutor modeExecutor = this.modeExecutor;
@@ -310,7 +331,11 @@ public class MapboxMapFragment extends Fragment implements Dronelink.Listener, D
                                 break;
                         }
 
-                        final Annotation missionRestrictionZoneAnnotation = map.addPolygon(new PolygonOptions().addAll(points).alpha((float)0.5).fillColor(Color.argb(255,255, 23, 68)).strokeColor(Color.argb((int)(255 * 0.7), 255, 23, 68)));
+                        final int fillColor = DronelinkUI.parseHexColor(restrictionZone.zone.color, Color.argb(255,255, 23, 68));
+                        final Annotation missionRestrictionZoneAnnotation = map.addPolygon(new PolygonOptions().addAll(points)
+                                .alpha(restrictionZone.zone.color != null && restrictionZone.zone.color.length() == 9 ? ((float)Color.alpha(fillColor)) / 255f : (float)0.5)
+                                .fillColor(fillColor)
+                                .strokeColor(DronelinkUI.parseHexColor(restrictionZone.zone.color, Color.argb((int)(255 * 0.7), 255, 23, 68))));
                         missionRestrictionZoneAnnotations.add(missionRestrictionZoneAnnotation);
                     }
                 }
@@ -398,6 +423,96 @@ public class MapboxMapFragment extends Fragment implements Dronelink.Listener, D
         }
     };
 
+    private Runnable updateFuncElements = new Runnable() {
+        public void run() {
+            final FuncExecutor funcExecutorLocal = funcExecutor;
+            int inputIndex = 0;
+            List<GeoSpatial> spatials = new ArrayList<>();
+            GeoSpatial mapCenterSpatial = null;
+            while (true) {
+                final FuncInput input = funcExecutorLocal == null ? null : funcExecutorLocal.getInput(inputIndex);
+                if (input == null) {
+                    break;
+                }
+
+                if (input.variable.valueType == VariableValueType.DRONE) {
+                    Object value = funcExecutorLocal.readValue(inputIndex);
+                    if (value != null) {
+                        if (value instanceof GeoSpatial[]) {
+                            spatials.addAll(Arrays.asList((GeoSpatial[]) value));
+                            if (spatials.size() > 0) {
+                                mapCenterSpatial = spatials.get(spatials.size() - 1);
+                            }
+                        }
+                        else if (value instanceof GeoSpatial) {
+                            spatials.add((GeoSpatial)value);
+                            mapCenterSpatial = (GeoSpatial)value;
+                        }
+                    }
+                }
+                else {
+                    mapCenterSpatial = null;
+                }
+                inputIndex++;
+            }
+
+            while (funcDroneAnnotations.size() > spatials.size()) {
+                map.removeMarker(funcDroneAnnotations.remove(funcDroneAnnotations.size() - 1));
+            }
+
+            while (funcDroneAnnotations.size() < spatials.size()) {
+                funcDroneAnnotations.add(map.addMarker(new MarkerOptions()
+                        .setIcon(IconFactory.getInstance(getActivity()).fromResource(R.drawable.func_input_drone))
+                        .setPosition(new LatLng(spatials.get(funcDroneAnnotations.size()).coordinate.latitude, spatials.get(funcDroneAnnotations.size()).coordinate.longitude))));
+            }
+
+            int index = 0;
+            for (final Marker funcDroneAnnotation : funcDroneAnnotations) {
+                funcDroneAnnotation.setPosition(new LatLng(spatials.get(index).coordinate.latitude, spatials.get(index).coordinate.longitude));
+                index++;
+            }
+
+            if (mapCenterSpatial != null) {
+                map.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(mapCenterSpatial.coordinate.latitude, mapCenterSpatial.coordinate.longitude), 19.5));
+            }
+
+            for (final Annotation funcMapOverlayAnnotation : funcMapOverlayAnnotations) {
+                map.removeAnnotation(funcMapOverlayAnnotation);
+            }
+            funcMapOverlayAnnotations.clear();
+
+            if (funcExecutorLocal != null) {
+                final FuncMapOverlay[] mapOverlays = funcExecutorLocal.getMapOverlays(session, new FuncExecutor.FuncExecuteError() {
+                    @Override
+                    public void error(final String value) {
+                        getActivity().runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                Toast.makeText(getContext(), value, Toast.LENGTH_LONG).show();
+                            }
+                        });
+                    }
+                });
+
+                if (mapOverlays != null && mapOverlays.length > 0) {
+                    for (final FuncMapOverlay mapOverlay : mapOverlays) {
+                        final List<LatLng> points = new LinkedList<>();
+                        for (int c = 0; c < mapOverlay.coordinates.length; c++) {
+                            points.add(new LatLng(mapOverlay.coordinates[c].latitude, mapOverlay.coordinates[c].longitude));
+                        }
+
+                        final int fillColor = DronelinkUI.parseHexColor(mapOverlay.color, Color.argb(255,255, 23, 68));
+                        final Annotation funcMapOverlayAnnotation = map.addPolygon(new PolygonOptions().addAll(points)
+                                .alpha(mapOverlay.color != null && mapOverlay.color.length() == 9 ? ((float)Color.alpha(fillColor)) / 255f : (float)0.5)
+                                .fillColor(fillColor)
+                                .strokeColor(DronelinkUI.parseHexColor(mapOverlay.color, Color.argb((int)(255 * 0.7), 255, 23, 68))));
+                        funcMapOverlayAnnotations.add(funcMapOverlayAnnotation);
+                    }
+                }
+            }
+        }
+    };
+
     private Runnable updateModeElements = new Runnable() {
         public void run() {
             final ModeExecutor modeExecutorLocal = modeExecutor;
@@ -436,16 +551,50 @@ public class MapboxMapFragment extends Fragment implements Dronelink.Listener, D
     @Override
     public void onOpened(final DroneSession session) {
         this.session = session;
+        session.addListener(this);
     }
 
     @Override
     public void onClosed(final DroneSession session) {
         this.session = null;
+        session.removeListener(this);
     }
 
     @Override
-    public void onRegistered(final String error) {
+    public void onRegistered(final String error) {}
+
+    @Override
+    public void onInitialized(final DroneSession session) {}
+
+    @Override
+    public void onLocated(final DroneSession session) {
+        final DroneStateAdapter state = getDroneState();
+        if (state == null) {
+            return;
+        }
+
+        final Location droneLocation = state.getLocation();
+        if (droneLocation != null && missionExecutor == null) {
+            getActivity().runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    map.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(droneLocation.getLatitude(), droneLocation.getLongitude()), 18.5));
+                }
+            });
+        }
     }
+
+    @Override
+    public void onMotorsChanged(final DroneSession session, boolean value) {}
+
+    @Override
+    public void onCommandExecuted(final DroneSession session, final Command command) {}
+
+    @Override
+    public void onCommandFinished(final DroneSession session, final Command command, final CommandError error) {}
+
+    @Override
+    public void onCameraFileGenerated(final DroneSession session, final CameraFile file) {}
 
     @Override
     public void onMissionLoaded(final MissionExecutor executor) {
@@ -470,10 +619,18 @@ public class MapboxMapFragment extends Fragment implements Dronelink.Listener, D
     }
 
     @Override
-    public void onFuncLoaded(final FuncExecutor executor) {}
+    public void onFuncLoaded(final FuncExecutor executor) {
+        funcExecutor = executor;
+        executor.addListener(this);
+        getActivity().runOnUiThread(updateFuncElements);
+    }
 
     @Override
-    public void onFuncUnloaded(final FuncExecutor executor) {}
+    public void onFuncUnloaded(final FuncExecutor executor) {
+        funcExecutor = null;
+        executor.removeListener(this);
+        getActivity().runOnUiThread(updateFuncElements);
+    }
 
     @Override
     public void onModeLoaded(final ModeExecutor executor) {
@@ -506,6 +663,15 @@ public class MapboxMapFragment extends Fragment implements Dronelink.Listener, D
 
     @Override
     public void onMissionDisengaged(final MissionExecutor executor, final MissionExecutor.Engagement engagement, final Message reason) {}
+
+    @Override
+    public void onFuncInputsChanged(final FuncExecutor executor) {
+        getActivity().runOnUiThread(updateFuncElements);
+    }
+
+    @Override
+    public void onFuncExecuted(final FuncExecutor executor) {
+    }
 
     @Override
     public void onModeEngaging(final ModeExecutor executor) {}
@@ -583,8 +749,8 @@ public class MapboxMapFragment extends Fragment implements Dronelink.Listener, D
             locationComponent.getLocationEngine().getLastLocation(new LocationEngineCallback<LocationEngineResult>() {
                 @Override
                 public void onSuccess(LocationEngineResult result) {
-                    if (result.getLastLocation() != null) {
-                        map.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(result.getLastLocation().getLatitude(), result.getLastLocation().getLongitude()), 15));
+                    if (result.getLastLocation() != null && !missionCentered && session == null) {
+                        map.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(result.getLastLocation().getLatitude(), result.getLastLocation().getLongitude()), 17));
                     }
                 }
 

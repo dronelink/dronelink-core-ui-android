@@ -7,6 +7,7 @@
 package com.dronelink.core.ui;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.util.Log;
 
 import com.dronelink.core.Dronelink;
@@ -27,6 +28,7 @@ public class DronelinkUI {
 
     private static final String TAG = Dronelink.class.getCanonicalName();
 
+    public String missionDetailsURL;
     final Context context;
 
     public DronelinkUI(final Context context) {
@@ -57,5 +59,26 @@ public class DronelinkUI {
                 public void onError(final Exception e) {}
             });
         }
+    }
+
+    public static int parseHexColor(String hex, final int defaultColor) {
+        return parseHexColor(hex, defaultColor, null);
+    }
+
+    public static int parseHexColor(String hex, final int defaultColor, final String defaultAlpha) {
+        if (hex == null || hex.isEmpty() || !(hex.length() == 7 || hex.length() == 9) || !hex.startsWith("#")) {
+            return defaultColor;
+        }
+
+        if (hex.length() == 7 && defaultAlpha != null) {
+            hex = hex + defaultAlpha;
+        }
+
+        //android likes aarrggbb
+        if (hex.length() == 9) {
+            hex = hex.substring(0, 1) + hex.substring(7, 9) + hex.substring(1, 7);
+        }
+
+        return Color.parseColor(hex);
     }
 }

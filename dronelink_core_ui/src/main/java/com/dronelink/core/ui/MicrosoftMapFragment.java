@@ -21,6 +21,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.PopupMenu;
+import android.widget.Toast;
 
 import com.dronelink.core.CameraFile;
 import com.dronelink.core.Convert;
@@ -36,11 +37,14 @@ import com.dronelink.core.adapters.GimbalStateAdapter;
 import com.dronelink.core.command.CommandError;
 import com.dronelink.core.kernel.command.Command;
 import com.dronelink.core.kernel.core.FuncInput;
+import com.dronelink.core.kernel.core.FuncMapOverlay;
 import com.dronelink.core.kernel.core.GeoCoordinate;
 import com.dronelink.core.kernel.core.GeoSpatial;
 import com.dronelink.core.kernel.core.Message;
 import com.dronelink.core.kernel.core.PlanRestrictionZone;
 import com.dronelink.core.kernel.core.enums.VariableValueType;
+import com.mapbox.mapboxsdk.camera.CameraUpdateFactory;
+import com.mapbox.mapboxsdk.geometry.LatLng;
 import com.microsoft.maps.AltitudeReferenceSystem;
 import com.microsoft.maps.GeoboundingBox;
 import com.microsoft.maps.Geocircle;
@@ -89,6 +93,7 @@ public class MicrosoftMapFragment extends Fragment implements Dronelink.Listener
     private static int SCENE_ELEMENTS_STANDARD = SCENE_ELEMENT_DRONE_CURRENT | SCENE_ELEMENT_DRONE_HOME | SCENE_ELEMENT_DRONE_TAKEOFF | SCENE_ELEMENT_MISSION_TAKEOFF | SCENE_ELEMENT_MISSION_REENGAGEMENT | SCENE_ELEMENT_MISSION_MAIN | SCENE_ELEMENT_MISSION_TAKEOFF;
 
     private DroneSession session;
+    private boolean sessionLocationCentered = false;
     private MissionExecutor missionExecutor;
     private FuncExecutor funcExecutor;
     private ModeExecutor modeExecutor;
@@ -103,6 +108,7 @@ public class MicrosoftMapFragment extends Fragment implements Dronelink.Listener
     private MapElementLayer missionLayer = new MapElementLayer();
     private MapElementLayer funcLayer = new MapElementLayer();
     private List<MapIcon> funcInputDroneIcons = new ArrayList<>();
+    private MapElementLayer funcMapOverlaysLayer = new MapElementLayer();
     private MapElementLayer modeLayer = new MapElementLayer();
     private MapIcon modeTargetIcon = new MapIcon();
     private final long updateDroneElementsMillis = 100;
@@ -186,6 +192,9 @@ public class MicrosoftMapFragment extends Fragment implements Dronelink.Listener
 
         missionLayer.setZIndex(1);
         mapView.getLayers().add(missionLayer);
+
+        funcMapOverlaysLayer.setZIndex(1);
+        mapView.getLayers().add(funcMapOverlaysLayer);
 
         funcLayer.setZIndex(1);
         mapView.getLayers().add(funcLayer);
@@ -435,7 +444,8 @@ public class MicrosoftMapFragment extends Fragment implements Dronelink.Listener
 
         if (session.isLocated() && droneLocation != null) {
             MapScene trackingScene = null;
-            switch (tracking) {
+            final Tracking trackingResolved = !sessionLocationCentered && tracking == Tracking.NONE && missionExecutor == null ? Tracking.THIRD_PERSON_OBLIQUE : tracking;
+            switch (trackingResolved) {
                 case NONE:
                     break;
 
@@ -469,6 +479,8 @@ public class MicrosoftMapFragment extends Fragment implements Dronelink.Listener
                 mapView.setScene(trackingScene, MapAnimationKind.NONE);
                 trackingPrevious = tracking;
             }
+
+            sessionLocationCentered = true;
         }
     }
 
@@ -502,9 +514,9 @@ public class MicrosoftMapFragment extends Fragment implements Dronelink.Listener
                 }
 
                 final MapPolygon polygon = new MapPolygon();
-                polygon.setStrokeColor(Color.argb((int)(255 * 0.7), 255, 23, 68));
+                polygon.setStrokeColor(DronelinkUI.parseHexColor(restrictionZone.zone.color, Color.argb((int)(255 * 0.7), 255, 23, 68), "B4"));
                 polygon.setStrokeWidth(1);
-                polygon.setFillColor(Color.argb((int)(255 * 0.5), 255, 23, 68));
+                polygon.setFillColor(DronelinkUI.parseHexColor(restrictionZone.zone.color, Color.argb((int)(255 * 0.5), 255, 23, 68), "7F"));
 
                 switch (restrictionZone.zone.shape) {
                     case CIRCLE:
@@ -573,6 +585,7 @@ public class MicrosoftMapFragment extends Fragment implements Dronelink.Listener
     private void updateFuncElements() {
         int iconIndex = 0;
         int inputIndex = 0;
+        GeoSpatial mapCenterSpatial = null;
         FuncExecutor funcExecutor = this.funcExecutor;
         if (funcExecutor != null) {
             while (true) {
@@ -587,9 +600,13 @@ public class MicrosoftMapFragment extends Fragment implements Dronelink.Listener
                         GeoSpatial[] spatials = new GeoSpatial[]{};
                         if (value instanceof GeoSpatial[]) {
                             spatials = (GeoSpatial[])value;
+                            if (spatials.length > 0) {
+                                mapCenterSpatial = spatials[spatials.length - 1];
+                            }
                         }
                         else if (value instanceof GeoSpatial) {
                             spatials = new GeoSpatial[] { (GeoSpatial)value };
+                            mapCenterSpatial = (GeoSpatial)value;
                         }
 
                         for (int variableValueIndex = 0; variableValueIndex < spatials.length; variableValueIndex++) {
@@ -635,6 +652,45 @@ public class MicrosoftMapFragment extends Fragment implements Dronelink.Listener
 
         while (funcLayer.getElements().size() < funcInputDroneIcons.size()) {
             funcLayer.getElements().add(funcInputDroneIcons.get(funcLayer.getElements().size()));
+        }
+
+        if (mapCenterSpatial != null && tracking == Tracking.NONE) {
+            mapView.setScene(MapScene.createFromLocationAndRadius(
+                    new Geopoint(mapCenterSpatial.coordinate.latitude, mapCenterSpatial.coordinate.longitude),
+                    18), MapAnimationKind.NONE);
+        }
+
+        funcMapOverlaysLayer.getElements().clear();
+
+        if (funcExecutor != null) {
+            final FuncMapOverlay[] mapOverlays = funcExecutor.getMapOverlays(session, new FuncExecutor.FuncExecuteError() {
+                @Override
+                public void error(final String value) {
+                    getActivity().runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            Toast.makeText(getContext(), value, Toast.LENGTH_LONG).show();
+                        }
+                    });
+                }
+            });
+
+            if (mapOverlays != null && mapOverlays.length > 0) {
+                for (final FuncMapOverlay mapOverlay : mapOverlays) {
+                    final MapPolygon polygon = new MapPolygon();
+                    polygon.setStrokeColor(DronelinkUI.parseHexColor(mapOverlay.color, Color.argb((int)(255 * 0.7), 255, 23, 68), "B4"));
+                    polygon.setStrokeWidth(1);
+                    polygon.setFillColor(DronelinkUI.parseHexColor(mapOverlay.color, Color.argb((int)(255 * 0.5), 255, 23, 68), "7F"));
+                    final List<Geopath> paths = new ArrayList<>();
+                    final List<Geoposition> positions = new ArrayList<>();
+                    for (int c = 0; c < mapOverlay.coordinates.length; c++) {
+                        positions.add(positionAboveDroneTakeoffLocation(mapOverlay.coordinates[c].getLocation(), 0));
+                    }
+                    paths.add(new Geopath(positions, droneTakeoffAltitudeReferenceSystem));
+                    polygon.setPaths(paths);
+                    funcMapOverlaysLayer.getElements().add(polygon);
+                }
+            }
         }
     }
 
@@ -720,8 +776,8 @@ public class MicrosoftMapFragment extends Fragment implements Dronelink.Listener
             }
 
             //kluge: microsoft maps has a bug / optimization that refuses to render coordinates that are very close, even if the altitude is different, so trick it
-            if (distance < 0.01) {
-                position = positionAboveDroneTakeoffLocation(Convert.locationWithBearing(coordinate, 0, 0.01), altitude);
+            if (distance <= 0.01) {
+                position = positionAboveDroneTakeoffLocation(Convert.locationWithBearing(coordinate, 0, 0.011), altitude);
             }
         }
 
@@ -904,6 +960,7 @@ public class MicrosoftMapFragment extends Fragment implements Dronelink.Listener
     @Override
     public void onOpened(final DroneSession session) {
         this.session = session;
+        sessionLocationCentered = false;
         session.addListener(this);
     }
 

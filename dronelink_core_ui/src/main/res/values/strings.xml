@@ -4,6 +4,7 @@
     <string name="cancel">Cancel</string>
     <string name="resume">Resume</string>
     <string name="learnMore">Learn More</string>
+    <string name="loading">Loading...</string>
     <string name="Func_cachedInputs_title">Previous Inputs Available</string>
     <string name="Func_cachedInputs_message">Do you want to load the previous inputs or start over?</string>
     <string name="Func_cachedInputs_action_new">Start Over</string>
@@ -26,6 +27,8 @@
     <string name="Executable_start_engage_droneSerialNumberUnavailable_title">Unidentified Drone</string>
     <string name="Executable_start_engage_droneSerialNumberUnavailable_message">Unable to determine the serial number of your drone. Try reconnecting or power-cycling.</string>
     <string name="Executable_dismiss">Dismiss</string>
+    <string name="Mission_details">3D Preview</string>
+    <string name="Mission_details_network_error">You need a network connection for 3D previews.</string>
     <string name="Mission_cancel">Cancel</string>
     <string name="Mission_continue">Continue</string>
     <string name="Mission_estimating">Estimating flight path and time...</string>

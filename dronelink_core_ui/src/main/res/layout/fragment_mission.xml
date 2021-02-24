@@ -115,4 +115,19 @@
         custom:layout_constraintTop_toBottomOf="@+id/primaryButton"
         custom:layout_constraintStart_toStartOf="@+id/primaryButton"
         custom:layout_constraintEnd_toEndOf="@+id/dismissButton" />
+
+    <Button
+        android:id="@+id/detailsButton"
+        android:text="@string/Mission_details"
+        android:layout_height="35dp"
+        android:layout_width="0dp"
+        android:layout_marginTop="22dp"
+        custom:layout_constraintTop_toBottomOf="@+id/primaryButton"
+        custom:layout_constraintStart_toStartOf="parent"
+        custom:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginLeft="16dp"
+        android:layout_marginRight="16dp"
+        android:background="@color/darkerGray"
+        android:textColor="@android:color/white" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>

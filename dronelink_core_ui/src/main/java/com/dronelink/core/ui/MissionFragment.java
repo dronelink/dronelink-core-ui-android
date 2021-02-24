@@ -7,7 +7,9 @@
 package com.dronelink.core.ui;
 
 import android.app.AlertDialog;
+import android.app.Dialog;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.location.Location;
@@ -22,6 +24,10 @@ import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
+import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
@@ -57,6 +63,7 @@ public class MissionFragment extends Fragment implements Dronelink.Listener, Dro
 
     private ProgressBar activityIndicator;
     private ImageButton primaryButton;
+    private Button detailsButton;
     private ImageButton dismissButton;
     private TextView titleTextView;
     private TextView subtitleTextView;
@@ -139,6 +146,19 @@ public class MissionFragment extends Fragment implements Dronelink.Listener, Dro
                 }
 
                 promptConfirmation();
+            }
+        });
+        detailsButton = view.findViewById(R.id.detailsButton);
+        detailsButton.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                if (missionExecutor == null) {
+                    return;
+                }
+
+                final Intent intent = new Intent(getActivity(), EmbedActivity.class);
+                intent.putExtra("url", DronelinkUI.getInstance().missionDetailsURL + missionExecutor.id + "?unitSystem=" + Dronelink.getInstance().getUnitSystem().toString().toLowerCase());
+                intent.putExtra("network.error", getString(R.string.Mission_details_network_error));
+                startActivity(intent);
             }
         });
         dismissButton = getView().findViewById(R.id.dismissButton);
@@ -418,6 +438,7 @@ public class MissionFragment extends Fragment implements Dronelink.Listener, Dro
                 progressBar.setVisibility(View.INVISIBLE);
                 dismissButton.setVisibility(View.INVISIBLE);
                 messagesTextView.setVisibility(View.INVISIBLE);
+                detailsButton.setVisibility(missionExecutorLocal.isEngaged() || DronelinkUI.getInstance().missionDetailsURL == null ? View.INVISIBLE : View.VISIBLE);
 
                 subtitleTextView.setText(getString(R.string.Mission_estimating));
                 return;
@@ -432,6 +453,7 @@ public class MissionFragment extends Fragment implements Dronelink.Listener, Dro
                 progressBar.setVisibility(View.INVISIBLE);
                 dismissButton.setVisibility(View.VISIBLE);
                 messagesTextView.setVisibility(View.INVISIBLE);
+                detailsButton.setVisibility(View.INVISIBLE);
 
                 primaryButton.setEnabled(true);
                 primaryButton.setBackgroundTintList(primaryEngagedColor);
@@ -449,6 +471,7 @@ public class MissionFragment extends Fragment implements Dronelink.Listener, Dro
                 progressBar.setVisibility(View.INVISIBLE);
                 dismissButton.setVisibility(View.INVISIBLE);
                 messagesTextView.setVisibility(View.INVISIBLE);
+                detailsButton.setVisibility(View.INVISIBLE);
 
                 subtitleTextView.setText(getString(R.string.Executable_start_engaging));
                 return;
@@ -463,6 +486,7 @@ public class MissionFragment extends Fragment implements Dronelink.Listener, Dro
             progressBar.setVisibility(View.VISIBLE);
             dismissButton.setVisibility(missionExecutorLocal.isEngaged() ? View.INVISIBLE : View.VISIBLE);
             messagesTextView.setVisibility(expanded ? View.VISIBLE : View.INVISIBLE);
+            detailsButton.setVisibility(missionExecutorLocal.isEngaged() || DronelinkUI.getInstance().missionDetailsURL == null ? View.INVISIBLE : View.VISIBLE);
 
             primaryButton.setEnabled(session != null);
 

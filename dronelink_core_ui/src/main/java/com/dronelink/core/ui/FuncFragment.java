@@ -109,55 +109,70 @@ public class FuncFragment extends Fragment implements Dronelink.Listener, DroneS
         return inflater.inflate(R.layout.fragment_func, container, false);
     }
 
-    private View.OnClickListener primaryListener = new View.OnClickListener() {
-        @Override
-        public void onClick(final View v) {
-            if (funcExecutor == null) {
-                return;
-            }
+    private void onNext() {
+        ((InputMethodManager)getContext().getSystemService(Context.INPUT_METHOD_SERVICE)).hideSoftInputFromWindow(nextButton.getWindowToken(), 0);
 
-            if (intro && hasInputs()) {
-                if (mostRecentExecuted != null && mostRecentExecuted.id.equals(funcExecutor.id)) {
-                    final AlertDialog.Builder alertDialog = new AlertDialog.Builder(getActivity());
-                    alertDialog.setTitle(R.string.Func_cachedInputs_title);
-                    alertDialog.setMessage(R.string.Func_cachedInputs_message);
-                    alertDialog.setPositiveButton(getString(R.string.Func_cachedInputs_action_new), new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(final DialogInterface d, int i) {
-                            d.dismiss();
-                            finishIntro();
-                        }
-                    });
-                    alertDialog.setNegativeButton(getString(R.string.Func_cachedInputs_action_previous), new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(final DialogInterface d, int i) {
-                            d.dismiss();
-                            funcExecutor.addCachedInputs(mostRecentExecuted);
-                            finishIntro();
-                        }
-                    });
-                    alertDialog.show();
-                }
-                else {
-                    finishIntro();
-                }
-                return;
-            }
+        if (isLast()) {
+            onPrimary();
+            return;
+        }
 
-            if (!executing) {
-                executing = true;
-                getActivity().runOnUiThread(updateViews);
-                funcExecutor.execute(session, new FuncExecutor.FuncExecuteError() {
+        if (!writeValue(true)) {
+            return;
+        }
+
+        inputIndex += 1;
+        addNextDynamicInput();
+        readValue();
+        getActivity().runOnUiThread(updateViews);
+    }
+
+    private void onPrimary() {
+        if (funcExecutor == null) {
+            return;
+        }
+
+        if (intro && hasInputs()) {
+            if (mostRecentExecuted != null && mostRecentExecuted.id.equals(funcExecutor.id)) {
+                final AlertDialog.Builder alertDialog = new AlertDialog.Builder(getActivity());
+                alertDialog.setTitle(R.string.Func_cachedInputs_title);
+                alertDialog.setMessage(R.string.Func_cachedInputs_message);
+                alertDialog.setPositiveButton(getString(R.string.Func_cachedInputs_action_new), new DialogInterface.OnClickListener() {
                     @Override
-                    public void error(final String value) {
-                        showToast(value);
-                        executing = false;
-                        getActivity().runOnUiThread(updateViews);
+                    public void onClick(final DialogInterface d, int i) {
+                        d.dismiss();
+                        finishIntro();
                     }
                 });
+                alertDialog.setNegativeButton(getString(R.string.Func_cachedInputs_action_previous), new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(final DialogInterface d, int i) {
+                        d.dismiss();
+                        funcExecutor.addCachedInputs(mostRecentExecuted);
+                        finishIntro();
+                    }
+                });
+                alertDialog.show();
             }
+            else {
+                finishIntro();
+            }
+            return;
         }
-    };
+
+        if (!executing) {
+            executing = true;
+            getActivity().runOnUiThread(updateViews);
+            funcExecutor.execute(session, new FuncExecutor.FuncExecuteError() {
+                @Override
+                public void error(final String value) {
+                    showToast(value);
+                    executing = false;
+                    getActivity().runOnUiThread(updateViews);
+                }
+            });
+        }
+    }
 
     private void finishIntro() {
         intro = false;
@@ -193,7 +208,12 @@ public class FuncFragment extends Fragment implements Dronelink.Listener, DroneS
         nextButton = getView().findViewById(R.id.nextButton);
         primaryButton = getView().findViewById(R.id.primaryButton);
 
-        primaryButton.setOnClickListener(primaryListener);
+        primaryButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(final View v) {
+                onPrimary();
+            }
+        });
 
         dismissButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -252,21 +272,7 @@ public class FuncFragment extends Fragment implements Dronelink.Listener, DroneS
         nextButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(final View v) {
-                ((InputMethodManager)getContext().getSystemService(Context.INPUT_METHOD_SERVICE)).hideSoftInputFromWindow(v.getWindowToken(), 0);
-
-                if (isLast()) {
-                    primaryListener.onClick(v);
-                    return;
-                }
-
-                if (!writeValue(true)) {
-                    return;
-                }
-
-                inputIndex += 1;
-                addNextDynamicInput();
-                readValue();
-                getActivity().runOnUiThread(updateViews);
+                onNext();
             }
         });
         getActivity().runOnUiThread(updateViews);
@@ -305,11 +311,13 @@ public class FuncFragment extends Fragment implements Dronelink.Listener, DroneS
                     onDroneMark();
                 }
 
-                if (c2PressedPrevious && !remoteControllerState.value.getC2Button().pressed && variableDroneMarkButton.getVisibility() == View.VISIBLE) {
-                    if (funcExecutor != null) {
-                        funcExecutor.clearValue(inputIndex);
-                    }
-                    readValue();
+                if (c2PressedPrevious && !remoteControllerState.value.getC2Button().pressed) {
+                    getActivity().runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            onNext();
+                        }
+                    });
                 }
 
                 c1PressedPrevious = remoteControllerState.value.getC1Button().pressed;
@@ -519,7 +527,7 @@ public class FuncFragment extends Fragment implements Dronelink.Listener, DroneS
 
     private void updateHeight(float height) {
         DisplayMetrics displayMetrics = getResources().getDisplayMetrics();
-        float maxHeight = Math.max(135, (displayMetrics.heightPixels / displayMetrics.density) - 100.0f);
+        float maxHeight = Math.max(135, (displayMetrics.heightPixels / displayMetrics.density) - 265.0f);
         getView().getLayoutParams().height = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, Math.min(height, maxHeight), displayMetrics);
         getView().requestLayout();
     }
