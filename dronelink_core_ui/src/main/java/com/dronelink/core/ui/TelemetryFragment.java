@@ -52,6 +52,7 @@ public class TelemetryFragment extends Fragment implements DroneSessionManager.L
     private String verticalSpeedSuffixImperial;
 
     private DroneStateAdapter getDroneState() {
+        final DroneSession session = this.session;
         if (session == null || session.getState() == null) {
             return null;
         }

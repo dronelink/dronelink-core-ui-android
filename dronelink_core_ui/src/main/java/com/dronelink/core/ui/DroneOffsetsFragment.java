@@ -485,7 +485,7 @@ public class DroneOffsetsFragment extends Fragment implements DroneSessionManage
                             details.append(Dronelink.getInstance().format("altitude", offsets.droneAltitude, ""));
                         }
 
-                        rcInputsToggleButton.setVisibility(sessionLocal == null ? View.INVISIBLE : View.VISIBLE);
+                        rcInputsToggleButton.setVisibility(sessionLocal == null || sessionLocal.getRemoteControllerState(0) == null ? View.INVISIBLE : View.VISIBLE);
                         moreButton.setVisibility(sessionLocal == null ? View.INVISIBLE : View.VISIBLE);
                         clearButton.setVisibility(details.length() == 0 ? View.INVISIBLE : View.VISIBLE);
                         detailsTextView.setText(details.toString());
@@ -510,7 +510,7 @@ public class DroneOffsetsFragment extends Fragment implements DroneSessionManage
                         rightButton.setVisibility(View.VISIBLE);
                         upButton.setVisibility(View.VISIBLE);
                         downButton.setVisibility(View.VISIBLE);
-                        rcInputsToggleButton.setVisibility(session == null ? View.INVISIBLE : View.VISIBLE);
+                        rcInputsToggleButton.setVisibility(session == null || sessionLocal.getRemoteControllerState(0) == null ? View.INVISIBLE : View.VISIBLE);
                         moreButton.setVisibility(session == null || !stylesEnabled ? View.INVISIBLE : View.VISIBLE);
                         clearButton.setVisibility(offsets.droneCoordinate.magnitude == 0 ? View.INVISIBLE : View.VISIBLE);
                         detailsTextView.setText(clearButton.getVisibility() != View.VISIBLE ? "" : displayVector(offsets.droneCoordinate));

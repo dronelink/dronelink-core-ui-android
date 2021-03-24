@@ -414,7 +414,7 @@ public class MapboxMapFragment extends Fragment implements Dronelink.Listener, D
                 }
             }
 
-            if (visibleCoordinates.size() > 0) {
+            if (visibleCoordinates.size() > 1) {
                 missionCentered = true;
                 final LatLngBounds.Builder bounds = new LatLngBounds.Builder();
                 bounds.includes(visibleCoordinates);
@@ -473,7 +473,7 @@ public class MapboxMapFragment extends Fragment implements Dronelink.Listener, D
             }
 
             if (mapCenterSpatial != null) {
-                map.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(mapCenterSpatial.coordinate.latitude, mapCenterSpatial.coordinate.longitude), 19.5));
+                map.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(mapCenterSpatial.coordinate.latitude, mapCenterSpatial.coordinate.longitude), 19.25));
             }
 
             for (final Annotation funcMapOverlayAnnotation : funcMapOverlayAnnotations) {

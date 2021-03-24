@@ -141,7 +141,7 @@ public class FuncFragment extends Fragment implements Dronelink.Listener, DroneS
                     @Override
                     public void onClick(final DialogInterface d, int i) {
                         d.dismiss();
-                        finishIntro();
+                        finishIntro(false);
                     }
                 });
                 alertDialog.setNegativeButton(getString(R.string.Func_cachedInputs_action_previous), new DialogInterface.OnClickListener() {
@@ -149,13 +149,13 @@ public class FuncFragment extends Fragment implements Dronelink.Listener, DroneS
                     public void onClick(final DialogInterface d, int i) {
                         d.dismiss();
                         funcExecutor.addCachedInputs(mostRecentExecuted);
-                        finishIntro();
+                        finishIntro(true);
                     }
                 });
                 alertDialog.show();
             }
             else {
-                finishIntro();
+                finishIntro(false);
             }
             return;
         }
@@ -174,10 +174,13 @@ public class FuncFragment extends Fragment implements Dronelink.Listener, DroneS
         }
     }
 
-    private void finishIntro() {
+    private void finishIntro(final boolean previous) {
         intro = false;
         if (funcExecutor.getInputCount() == 0) {
             addNextDynamicInput();
+        }
+        else if (previous) {
+            inputIndex = funcExecutor.getInputCount();
         }
         readValue();
         getActivity().runOnUiThread(updateViews);
@@ -527,7 +530,7 @@ public class FuncFragment extends Fragment implements Dronelink.Listener, DroneS
 
     private void updateHeight(float height) {
         DisplayMetrics displayMetrics = getResources().getDisplayMetrics();
-        float maxHeight = Math.max(135, (displayMetrics.heightPixels / displayMetrics.density) - 265.0f);
+        float maxHeight = Math.max(165, (displayMetrics.heightPixels / displayMetrics.density) - 265.0f);
         getView().getLayoutParams().height = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, Math.min(height, maxHeight), displayMetrics);
         getView().requestLayout();
     }
@@ -544,6 +547,7 @@ public class FuncFragment extends Fragment implements Dronelink.Listener, DroneS
         super.onStop();
         Dronelink.getInstance().removeListener(this);
         Dronelink.getInstance().getSessionManager().removeListener(this);
+        final FuncExecutor funcExecutor = this.funcExecutor;
         if (funcExecutor != null) {
             funcExecutor.removeListener(this);
         }
@@ -551,10 +555,11 @@ public class FuncFragment extends Fragment implements Dronelink.Listener, DroneS
 
     private Runnable updateViews = new Runnable() {
         public void run() {
-            final int visibility = funcExecutor == null ? View.INVISIBLE : View.VISIBLE;
+            FuncExecutor funcExecutorLocal = funcExecutor;
+            final int visibility = funcExecutorLocal == null ? View.INVISIBLE : View.VISIBLE;
             getView().setVisibility(visibility == View.INVISIBLE ? View.GONE : View.VISIBLE);
 
-            if (funcExecutor == null) {
+            if (funcExecutorLocal == null) {
                 return;
             }
 
@@ -579,12 +584,12 @@ public class FuncFragment extends Fragment implements Dronelink.Listener, DroneS
                 progressTextView.setVisibility(View.INVISIBLE);
                 primaryButton.setVisibility(View.VISIBLE);
 
-                titleTextView.setText(funcExecutor.getDescriptors().name);
+                titleTextView.setText(funcExecutorLocal.getDescriptors().name);
                 primaryButton.setText(getString(executing ? R.string.Func_primary_executing : (hasInputs() ? R.string.Func_primary_intro : R.string.Func_primary_execute)));
 
-                if (funcExecutor.getIntroImageUrl() != null && !funcExecutor.getIntroImageUrl().isEmpty()) {
+                if (funcExecutorLocal.getIntroImageUrl() != null && !funcExecutorLocal.getIntroImageUrl().isEmpty()) {
                     updateHeight(530);
-                    Picasso.get().load(funcExecutor.getIntroImageUrl()).into(variableImageView);
+                    Picasso.get().load(funcExecutorLocal.getIntroImageUrl()).into(variableImageView);
                     variableImageView.setVisibility(View.VISIBLE);
                     final ConstraintLayout.LayoutParams lp = (ConstraintLayout.LayoutParams) variableImageView.getLayoutParams();
                     lp.bottomToTop = R.id.nextButton;
@@ -592,7 +597,7 @@ public class FuncFragment extends Fragment implements Dronelink.Listener, DroneS
                 }
                 else {
                     updateHeight(135);
-                    variableDescriptionTextView.setText(funcExecutor.getDescriptors().description);
+                    variableDescriptionTextView.setText(funcExecutorLocal.getDescriptors().description);
                     variableDescriptionTextView.setVisibility(View.VISIBLE);
                 }
                 return;
@@ -604,7 +609,7 @@ public class FuncFragment extends Fragment implements Dronelink.Listener, DroneS
             nextButton.setVisibility(View.VISIBLE);
             nextButton.setText(getString(isLast() ? R.string.Func_primary_execute : R.string.Func_next));
             progressTextView.setVisibility(isLast() ? View.INVISIBLE : View.VISIBLE);
-            progressTextView.setText(inputIndex + 1 == funcExecutor.getInputCount() ? ("" + (inputIndex + 1)) : ((inputIndex + 1) + " / " + (funcExecutor == null ? 0 : funcExecutor.getInputCount())));
+            progressTextView.setText(inputIndex + 1 == funcExecutorLocal.getInputCount() ? ("" + (inputIndex + 1)) : ((inputIndex + 1) + " / " + (funcExecutorLocal == null ? 0 : funcExecutorLocal.getInputCount())));
 
             final FuncInput input = getInput();
             if (input != null) {
@@ -690,6 +695,7 @@ public class FuncFragment extends Fragment implements Dronelink.Listener, DroneS
     };
 
     private String getSummary() {
+        final FuncExecutor funcExecutor = this.funcExecutor;
         if (funcExecutor == null) {
             return "";
         }
@@ -719,6 +725,8 @@ public class FuncFragment extends Fragment implements Dronelink.Listener, DroneS
     }
 
     private void onDroneMark() {
+        final DroneSession session = this.session;
+
         if (session == null) {
             showToast(getString(R.string.Func_input_drone_unavailable));
             return;
