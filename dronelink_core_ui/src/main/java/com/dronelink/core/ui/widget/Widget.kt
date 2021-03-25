@@ -1,5 +1,6 @@
 package com.dronelink.core.ui.widget
 
+import android.content.Context
 import android.os.Handler
 import android.view.View
 import android.view.ViewGroup
@@ -14,40 +15,44 @@ open class Widget : Fragment() {
     var droneSessionManager: DroneSessionManager? = null
 
     val targetDroneSessionManager: DroneSessionManager?
-        get() = droneSessionManager ?: Dronelink.getInstance().targetDroneSessionManager
+        get() = droneSessionManager ?: Dronelink.getInstance()?.targetDroneSessionManager
 
     val session: DroneSession?
         get() = targetDroneSessionManager?.session
     val missionExecutor: MissionExecutor?
-        get() = Dronelink.getInstance().missionExecutor
+        get() = Dronelink.getInstance()?.missionExecutor
     val modeExecutor: ModeExecutor?
-        get() = Dronelink.getInstance().modeExecutor
+        get() = Dronelink.getInstance()?.modeExecutor
     val funcExecutor: FuncExecutor?
-        get() = Dronelink.getInstance().funcExecutor
+        get() = Dronelink.getInstance()?.funcExecutor
     val widgetFactory: WidgetFactory?
-        get() = (targetDroneSessionManager as? WidgetFactoryProvider)?.widgetFactory ?: WidgetFactory.shared
+        get() = (targetDroneSessionManager as? WidgetFactoryProvider)?.widgetFactory
+                ?: WidgetFactory.shared
 }
 
-open class ListenerWidget: Widget(), Dronelink.Listener, DroneSessionManager.Listener, DroneSession.Listener, MissionExecutor.Listener, ModeExecutor.Listener, FuncExecutor.Listener {
+open class ListenerWidget(private val onWidgetAttached: (() -> Unit)? = null) : Widget(), Dronelink.Listener, DroneSessionManager.Listener, DroneSession.Listener, MissionExecutor.Listener, ModeExecutor.Listener, FuncExecutor.Listener {
 
     override fun onStart() {
         super.onStart()
-        Dronelink.getInstance().addListener(this)
+        Dronelink.getInstance()?.addListener(this)
+        onWidgetAttached?.invoke()
     }
 
     override fun onStop() {
         super.onStop()
-        Dronelink.getInstance().removeListener(this)
-        Dronelink.getInstance().missionExecutor?.removeListener(this)
-        Dronelink.getInstance().modeExecutor?.removeListener(this)
-        Dronelink.getInstance().funcExecutor?.removeListener(this)
-        Dronelink.getInstance().droneSessionManagers?.forEach {
-            it.removeListener(this)
-            it.session?.removeListener(this)
+        Dronelink.getInstance()?.run {
+            removeListener(this@ListenerWidget)
+            missionExecutor?.removeListener(this@ListenerWidget)
+            modeExecutor?.removeListener(this@ListenerWidget)
+            funcExecutor?.removeListener(this@ListenerWidget)
+            droneSessionManagers?.forEach {
+                it.removeListener(this@ListenerWidget)
+                it.session?.removeListener(this@ListenerWidget)
+            }
         }
     }
 
-    override fun onRegistered(error: String?) { }
+    override fun onRegistered(error: String?) {}
 
     override fun onDroneSessionManagerAdded(manager: DroneSessionManager) {
         manager.addListener(this)
@@ -85,45 +90,45 @@ open class ListenerWidget: Widget(), Dronelink.Listener, DroneSessionManager.Lis
         this.session?.removeListener(this)
     }
 
-    override fun onInitialized(session: DroneSession) { }
+    override fun onInitialized(session: DroneSession) {}
 
-    override fun onLocated(session: DroneSession) { }
+    override fun onLocated(session: DroneSession) {}
 
-    override fun onMotorsChanged(session: DroneSession, value: Boolean) { }
+    override fun onMotorsChanged(session: DroneSession, value: Boolean) {}
 
-    override fun onCommandExecuted(session: DroneSession, command: Command) { }
+    override fun onCommandExecuted(session: DroneSession, command: Command) {}
 
-    override fun onCommandFinished(session: DroneSession, command: Command, error: CommandError?) { }
+    override fun onCommandFinished(session: DroneSession, command: Command, error: CommandError?) {}
 
-    override fun onCameraFileGenerated(session: DroneSession, file: CameraFile) { }
+    override fun onCameraFileGenerated(session: DroneSession, file: CameraFile) {}
 
-    override fun onMissionEstimating(executor: MissionExecutor) { }
+    override fun onMissionEstimating(executor: MissionExecutor) {}
 
-    override fun onMissionEstimated(executor: MissionExecutor, estimate: MissionExecutor.Estimate) { }
+    override fun onMissionEstimated(executor: MissionExecutor, estimate: MissionExecutor.Estimate) {}
 
-    override fun onMissionEngaging(executor: MissionExecutor) { }
+    override fun onMissionEngaging(executor: MissionExecutor) {}
 
-    override fun onMissionEngaged(executor: MissionExecutor, engagement: Executor.Engagement) { }
+    override fun onMissionEngaged(executor: MissionExecutor, engagement: Executor.Engagement) {}
 
-    override fun onMissionExecuted(executor: MissionExecutor, engagement: Executor.Engagement) { }
+    override fun onMissionExecuted(executor: MissionExecutor, engagement: Executor.Engagement) {}
 
-    override fun onMissionDisengaged(executor: MissionExecutor, engagement: Executor.Engagement, reason: Message) { }
+    override fun onMissionDisengaged(executor: MissionExecutor, engagement: Executor.Engagement, reason: Message) {}
 
-    override fun onModeEngaging(executor: ModeExecutor) { }
+    override fun onModeEngaging(executor: ModeExecutor) {}
 
-    override fun onModeEngaged(executor: ModeExecutor, engagement: Executor.Engagement) { }
+    override fun onModeEngaged(executor: ModeExecutor, engagement: Executor.Engagement) {}
 
-    override fun onModeExecuted(executor: ModeExecutor, engagement: Executor.Engagement) { }
+    override fun onModeExecuted(executor: ModeExecutor, engagement: Executor.Engagement) {}
 
-    override fun onModeDisengaged(executor: ModeExecutor, engagement: Executor.Engagement, reason: Message) { }
+    override fun onModeDisengaged(executor: ModeExecutor, engagement: Executor.Engagement, reason: Message) {}
 
-    override fun onFuncInputsChanged(executor: FuncExecutor) { }
+    override fun onFuncInputsChanged(executor: FuncExecutor) {}
 
-    override fun onFuncExecuted(executor: FuncExecutor) { }
+    override fun onFuncExecuted(executor: FuncExecutor) {}
 
 }
 
-open class WrapperWidget: Widget() {
+open class WrapperWidget : Widget() {
 
     private var _fragment: Fragment? = null
 
@@ -134,8 +139,8 @@ open class WrapperWidget: Widget() {
         set(value) {
             value?.let {
                 childFragmentManager.beginTransaction()
-                    .replace(containerId, it)
-                    .commit()
+                        .replace(containerId, it)
+                        .commit()
                 _fragment = fragment
             }
             field = value
@@ -156,7 +161,7 @@ fun View.createWidget(): WrapperWidget {
     return widget
 }
 
-open class UpdatableWidget: ListenerWidget() {
+open class UpdatableWidget(onWidgetAttached: (() -> Unit)? = null) : ListenerWidget(onWidgetAttached) {
 
     open var updateInterval: Long = 1000
     private var updateTimer = Handler()
@@ -182,7 +187,7 @@ open class UpdatableWidget: ListenerWidget() {
         updateTimer.removeCallbacks(timerRunnable)
     }
 
-    open fun update() { }
+    open fun update() {}
 }
 
 interface WidgetFactoryProvider {

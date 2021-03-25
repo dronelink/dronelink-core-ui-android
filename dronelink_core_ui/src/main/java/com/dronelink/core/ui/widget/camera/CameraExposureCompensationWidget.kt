@@ -11,7 +11,7 @@ import com.dronelink.core.ui.delegates.BindFragment
 import com.dronelink.core.ui.util.enumToString
 import com.dronelink.core.ui.widget.UpdatableWidget
 
-class CameraExposureCompensationWidget : UpdatableWidget() {
+class CameraExposureCompensationWidget(onCameraExposureCreated: (() -> Unit)? = null) : UpdatableWidget(onCameraExposureCreated) {
     val binding: CameraSettingWidgetBinding by BindFragment(layout.camera_setting_widget)
 
     override fun onCreateView(
