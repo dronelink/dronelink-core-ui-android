@@ -92,6 +92,24 @@ public class ModeFragment extends Fragment implements Dronelink.Listener, DroneS
                     return;
                 }
 
+                final Message[] engageDisallowedReasons = modeExecutor.engageDisallowedReasons(session);
+                if (engageDisallowedReasons != null && engageDisallowedReasons.length > 0) {
+                    final Message engageDisallowedReason = engageDisallowedReasons[0];
+                    final AlertDialog.Builder alertDialog = new AlertDialog.Builder(getActivity());
+                    alertDialog.setTitle(engageDisallowedReason.title);
+                    if (engageDisallowedReason.details != null) {
+                        alertDialog.setMessage(engageDisallowedReason.details);
+                    }
+                    alertDialog.setPositiveButton(getString(R.string.Executable_dismiss), new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(final DialogInterface d, int i) {
+                            d.dismiss();
+                        }
+                    });
+                    alertDialog.show();
+                    return;
+                }
+
                 startCountdown();
             }
         });
@@ -365,6 +383,10 @@ public class ModeFragment extends Fragment implements Dronelink.Listener, DroneS
         getActivity().runOnUiThread(updateViews);
     }
 
+    @Override
+    public Message[] modeEngageDisallowedReasons(final ModeExecutor executor) {
+        return null;
+    }
 
     @Override
     public void onModeEngaging(final ModeExecutor executor) {

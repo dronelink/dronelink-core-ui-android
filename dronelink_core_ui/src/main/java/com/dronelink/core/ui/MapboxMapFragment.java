@@ -653,6 +653,11 @@ public class MapboxMapFragment extends Fragment implements Dronelink.Listener, D
     }
 
     @Override
+    public Message[] missionEngageDisallowedReasons(final MissionExecutor executor) {
+        return null;
+    }
+
+    @Override
     public void onMissionEngaging(final MissionExecutor executor) {}
 
     @Override
@@ -671,6 +676,11 @@ public class MapboxMapFragment extends Fragment implements Dronelink.Listener, D
 
     @Override
     public void onFuncExecuted(final FuncExecutor executor) {
+    }
+
+    @Override
+    public Message[] modeEngageDisallowedReasons(final ModeExecutor executor) {
+        return null;
     }
 
     @Override

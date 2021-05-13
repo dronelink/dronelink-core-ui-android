@@ -655,6 +655,11 @@ public class MissionFragment extends Fragment implements Dronelink.Listener, Dro
     }
 
     @Override
+    public Message[] missionEngageDisallowedReasons(final MissionExecutor executor) {
+        return null;
+    }
+
+    @Override
     public void onMissionEngaging(final MissionExecutor executor) {
         Dronelink.getInstance().announce(getString(R.string.Mission_engaging));
         getActivity().runOnUiThread(updateViews);

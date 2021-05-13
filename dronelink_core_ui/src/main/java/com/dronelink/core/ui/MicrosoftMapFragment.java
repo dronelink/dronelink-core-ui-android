@@ -1018,6 +1018,11 @@ public class MicrosoftMapFragment extends Fragment implements Dronelink.Listener
     }
 
     @Override
+    public Message[] missionEngageDisallowedReasons(final MissionExecutor executor) {
+        return null;
+    }
+
+    @Override
     public void onMissionEngaging(final MissionExecutor executor) {}
 
     @Override
@@ -1057,6 +1062,11 @@ public class MicrosoftMapFragment extends Fragment implements Dronelink.Listener
 
     @Override
     public void onFuncExecuted(final FuncExecutor executor) {}
+
+    @Override
+    public Message[] modeEngageDisallowedReasons(final ModeExecutor executor) {
+        return null;
+    }
 
     @Override
     public void onModeEngaging(final ModeExecutor executor) {}
