@@ -25,7 +25,7 @@ open class StatusWidget: UpdatableWidget() {
 
     internal val status: Status
         get() {
-            val dronelinkStatusMessages = Dronelink.getInstance().statusMessages
+            val dronelinkStatusMessages = Dronelink.getInstance()?.statusMessages
             dronelinkStatusMessages?.firstOrNull { it.level.compare(Message.Level.WARNING) > 0 }?.let {
                 return it.getStatus()
             }

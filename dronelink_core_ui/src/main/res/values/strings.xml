@@ -79,4 +79,5 @@
     <string name="altitudewidget_a">A</string>
     <string name="horizontalspeedwidget_hs">H/S</string>
     <string name="verticalspeedwidget_vs">V/S</string>
+    <string name="dashboard_camera_menu">MENU</string>
 </resources>

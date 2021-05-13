@@ -109,6 +109,71 @@
         app:layout_constraintTop_toBottomOf="@id/statusGradientWidgetContainer" />
 
     <androidx.fragment.app.FragmentContainerView
+        android:id="@+id/cameraMenuContainer"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/btnCameraMenu"
+        app:layout_constraintTop_toBottomOf="@id/isoWidgetContainer" />
+
+    <Button
+        android:id="@+id/btnCameraMenu"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@android:color/transparent"
+        android:padding="10dp"
+        android:text="@string/dashboard_camera_menu"
+        android:textColor="@color/white"
+        app:layout_constraintBottom_toTopOf="@id/cameraModeContainer"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/isoWidgetContainer"
+        app:layout_constraintVertical_chainStyle="packed" />
+
+    <androidx.fragment.app.FragmentContainerView
+        android:id="@+id/cameraModeContainer"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:padding="5dp"
+        app:layout_constraintBottom_toTopOf="@id/cameraCaptureContainer"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="@id/btnCameraMenu"
+        app:layout_constraintTop_toBottomOf="@id/btnCameraMenu"
+        app:layout_constraintVertical_chainStyle="packed" />
+
+    <androidx.fragment.app.FragmentContainerView
+        android:id="@+id/cameraCaptureContainer"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        app:layout_constraintBottom_toTopOf="@id/btnCameraSettingsExposure"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="@id/btnCameraMenu"
+        app:layout_constraintTop_toBottomOf="@id/cameraModeContainer"
+        app:layout_constraintVertical_chainStyle="packed" />
+
+    <androidx.fragment.app.FragmentContainerView
+        android:id="@+id/cameraSettingsExposureContainer"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/btnCameraSettingsExposure"
+        app:layout_constraintTop_toBottomOf="@id/isoWidgetContainer" />
+
+    <ImageButton
+        android:id="@+id/btnCameraSettingsExposure"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@android:color/transparent"
+        android:padding="10dp"
+        android:src="@drawable/ic_settings"
+        android:textColor="@color/white"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="@id/btnCameraMenu"
+        app:layout_constraintTop_toBottomOf="@id/cameraCaptureContainer"
+        app:layout_constraintVertical_chainStyle="packed" />
+
+    <androidx.fragment.app.FragmentContainerView
         android:id="@+id/distanceHomeContainer"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"

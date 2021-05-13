@@ -58,7 +58,7 @@ class CameraCaptureWidget: UpdatableWidget() {
 
     var stopImage = R.drawable.stop_icon
     var videoColor = R.color.red
-    var photoColor = R.color.white
+    var photoColor = R.color.white_50
 
     private var pendingCommand: Command? = null
     private var previousCapturing = false

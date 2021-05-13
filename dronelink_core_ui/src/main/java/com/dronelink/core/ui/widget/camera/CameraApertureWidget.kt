@@ -11,7 +11,7 @@ import com.dronelink.core.ui.delegates.BindFragment
 import com.dronelink.core.ui.util.enumToString
 import com.dronelink.core.ui.widget.UpdatableWidget
 
-class CameraApertureWidget : UpdatableWidget() {
+class CameraApertureWidget(onCameraApertureCreated: (() -> Unit)? = null) : UpdatableWidget(onCameraApertureCreated) {
     val binding: CameraSettingWidgetBinding by BindFragment(layout.camera_setting_widget)
 
     override fun onCreateView(

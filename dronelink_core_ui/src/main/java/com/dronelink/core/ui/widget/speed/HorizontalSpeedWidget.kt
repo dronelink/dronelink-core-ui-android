@@ -6,19 +6,18 @@ import android.view.View
 import android.view.ViewGroup
 import com.dronelink.core.Dronelink
 import com.dronelink.core.ui.R
-import com.dronelink.core.ui.databinding.SpeedWidgetBinding
+import com.dronelink.core.ui.databinding.WidgetSpeedBinding
 import com.dronelink.core.ui.delegates.BindFragment
 import com.dronelink.core.ui.widget.UpdatableWidget
 
 class HorizontalSpeedWidget : UpdatableWidget() {
-    val binding: SpeedWidgetBinding by BindFragment(R.layout.speed_widget)
+    val binding: WidgetSpeedBinding by BindFragment(R.layout.widget_speed)
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         binding.run {
             metricText = getString(R.string.horizontalspeedwidget_hs)
             valueText = getString(R.string.empty)
         }
-
         return binding.root
     }
 

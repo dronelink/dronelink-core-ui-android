@@ -13,7 +13,7 @@ import com.dronelink.core.ui.delegates.BindFragment
 import com.dronelink.core.ui.util.enumToString
 import com.dronelink.core.ui.widget.UpdatableWidget
 
-class CameraWhiteBalanceWidget : UpdatableWidget() {
+class CameraWhiteBalanceWidget(onWhiteBalanceCreated: (() -> Unit)? = null) : UpdatableWidget(onWhiteBalanceCreated) {
     val binding: CameraSettingWidgetBinding by BindFragment(layout.camera_setting_widget)
 
     override fun onCreateView(
