@@ -1,6 +1,7 @@
 <resources>
     <string name="yes">Yes</string>
     <string name="no">No</string>
+    <string name="_continue">Continue</string>
     <string name="cancel">Cancel</string>
     <string name="resume">Resume</string>
     <string name="learnMore">Learn More</string>
@@ -35,6 +36,9 @@
     <string name="Mission_start_takeoffLocationWarning_title">Confirm Takeoff Location</string>
     <string name="Mission_start_takeoffLocationWarning_message_deviceAltitudeAvailable">The current takeoff location is %1$s from the planned takeoff location, which may cause the drone to fly at an unsafe offset from the planned altitudes. The GPS altitude of this device (%2$s) will be used to adjust AGL and MSL altitudes automatically.</string>
     <string name="Mission_start_takeoffLocationWarning_message_deviceAltitudeUnavailable">The current takeoff location is %1$s from the planned takeoff location, which may cause the drone to fly at an unsafe offset from the planned altitudes.</string>
+    <string name="Mission_cameraFocusCalibrationsRequired_title">Camera Focus Calibration Required</string>
+    <string name="Mission_cameraFocusCalibrationsRequired_message_single">This mission requires a camera focus calibration before running.</string>
+    <string name="Mission_cameraFocusCalibrationsRequired_message_multiple">This mission requires %@ camera focus calibrations before running.</string>
     <string name="Mission_engaging">Starting Mission</string>
     <string name="Mission_disengaged">Mission Stopped</string>
     <string name="Telemetry_distance_prefix">D</string>
@@ -59,12 +63,33 @@
     <string name="Mode_ready">Ready to start</string>
     <string name="Mode_engaging">Starting Mode</string>
     <string name="Mode_disengaged">Mode Stopped</string>
-    <string name="DroneOffsets_style_altYaw">ALT/YAW</string>
+    <string name="CameraFocusCalibration_title">Camera Focus Calibration</string>
+    <string name="CameraFocusCalibration_finished">Calibration finished (%1$d)</string>
+    <string name="CameraFocusCalibration_type_position">POSITION</string>
+    <string name="CameraFocusCalibration_type_altitude">ALTITUDE</string>
+    <string name="CameraFocusCalibration_mark_reference">Mark Reference</string>
+    <string name="CameraFocusCalibration_drone_unavailable">Waiting for drone...</string>
+    <string name="CameraFocusCalibration_serial_number_unavailable">Unable to read drone serial number. Please reconnect the drone.</string>
+    <string name="CameraFocusCalibration_camera_unavailable">Unable to determine camera focus state...</string>
+    <string name="CameraFocusCalibration_location_unavailable">Waiting for location...</string>
+    <string name="CameraFocusCalibration_details_mark_reference">Mark a reference object to focus on.</string>
+    <string name="CameraFocusCalibration_details_move_distance">Move %1$s away while pointing at the reference object with the gimbal at 0°.</string>
+    <string name="CameraFocusCalibration_details_move_altitude">Fly %1$s above your takeoff location with the gimbal at -90°.</string>
+    <string name="CameraFocusCalibration_details_busy">Calibrating...</string>
+    <string name="CameraFocusCalibration_details_focus_distance">Continue focusing the camera by tapping the reference object on the screen (%1$s).</string>
+    <string name="CameraFocusCalibration_details_focus_altitude">Continue focusing the camera by tapping your takeoff location on the screen (%1$s).</string>
+    <string name="DroneOffsets_style_altYaw">YAW/ALT</string>
     <string name="DroneOffsets_style_position">POSITION</string>
     <string name="DroneOffsets_roll_trim">ROLL TRIM</string>
     <string name="DroneOffsets_rc_inputs">Caution: RC sticks enabled</string>
+    <string name="DroneOffsets_relative_altitude_enabled">Caution: Auto altitude enabled</string>
+    <string name="DroneOffsets_relative_altitude_disabled">Auto altitude disabled</string>
     <string name="DroneOffsets_more_resetGimbal">Gimbal Reset</string>
     <string name="DroneOffsets_more_levelGimbal">Gimbal 0° (Level)</string>
     <string name="DroneOffsets_more_nadirGimbal">Gimbal -90° (Nadir)</string>
     <string name="DroneOffsets_more_rollTrim">Gimbal Roll Trim</string>
+    <string name="DroneOffsets_more_clearCameraFocusCalibrations">Clear Focus Calibrations</string>
+    <string name="DroneOffsets_more_clearCameraFocusCalibrations_finished">Cleared %1$d calibration(s)</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
 </resources>

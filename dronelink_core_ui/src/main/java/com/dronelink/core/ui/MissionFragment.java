@@ -7,7 +7,6 @@
 package com.dronelink.core.ui;
 
 import android.app.AlertDialog;
-import android.app.Dialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.res.ColorStateList;
@@ -24,9 +23,6 @@ import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.Window;
-import android.webkit.WebView;
-import android.webkit.WebViewClient;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -46,6 +42,7 @@ import com.dronelink.core.adapters.DroneStateAdapter;
 import com.dronelink.core.command.CommandError;
 import com.dronelink.core.kernel.command.Command;
 import com.dronelink.core.kernel.component.Component;
+import com.dronelink.core.kernel.core.CameraFocusCalibration;
 import com.dronelink.core.kernel.core.GeoCoordinate;
 import com.dronelink.core.kernel.core.Message;
 import com.dronelink.core.kernel.core.MessageGroup;
@@ -53,12 +50,14 @@ import com.squareup.picasso.Picasso;
 import com.stfalcon.imageviewer.StfalconImageViewer;
 import com.stfalcon.imageviewer.loader.ImageLoader;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Timer;
 import java.util.TimerTask;
 
 public class MissionFragment extends Fragment implements Dronelink.Listener, DroneSessionManager.Listener, DroneSession.Listener, MissionExecutor.Listener {
     private DroneSession session;
+    private CameraFocusCalibration cameraFocusCalibration;
     private MissionExecutor missionExecutor;
 
     private ProgressBar activityIndicator;
@@ -124,11 +123,12 @@ public class MissionFragment extends Fragment implements Dronelink.Listener, Dro
                     return;
                 }
 
-                if (session == null) {
+                final DroneSession sessionLocal = session;
+                if (sessionLocal == null) {
                     return;
                 }
 
-                final Message[] engageDisallowedReasons = missionExecutor.engageDisallowedReasons(session);
+                final Message[] engageDisallowedReasons = missionExecutor.engageDisallowedReasons(sessionLocal);
                 if (engageDisallowedReasons != null && engageDisallowedReasons.length > 0) {
                     final AlertDialog.Builder alertDialog = new AlertDialog.Builder(getActivity());
                     alertDialog.setTitle(engageDisallowedReasons[0].title);
@@ -145,6 +145,37 @@ public class MissionFragment extends Fragment implements Dronelink.Listener, Dro
                     return;
                 }
 
+                final CameraFocusCalibration[] calibrationsRequired = missionExecutor.getCameraFocusCalibrationsRequired();
+                if (calibrationsRequired != null) {
+                    final ArrayList<CameraFocusCalibration> calibrationsPending = new ArrayList<>();
+                    for (final CameraFocusCalibration calibration : calibrationsRequired) {
+                        if (Dronelink.getInstance().getCameraFocusCalibration(calibration.withDroneSerialNumber(sessionLocal.getSerialNumber())) == null) {
+                            calibrationsPending.add(calibration);
+                        }
+                    }
+
+                    if (calibrationsPending.size() > 0) {
+                        final AlertDialog.Builder alertDialog = new AlertDialog.Builder(getActivity());
+                        alertDialog.setTitle(getString(R.string.Mission_cameraFocusCalibrationsRequired_title));
+                        alertDialog.setMessage(getString(calibrationsPending.size() == 1 ? R.string.Mission_cameraFocusCalibrationsRequired_message_single : R.string.Mission_cameraFocusCalibrationsRequired_message_multiple));
+                        alertDialog.setPositiveButton(getString(R.string._continue), new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(final DialogInterface d, int i) {
+                                d.dismiss();
+                                Dronelink.getInstance().requestCameraFocusCalibration(calibrationsPending.get(0));
+                            }
+                        });
+                        alertDialog.setNegativeButton(getString(R.string.cancel), new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(final DialogInterface d, int i) {
+                                d.dismiss();
+                            }
+                        });
+                        alertDialog.show();
+                        return;
+                    }
+                }
+
                 promptConfirmation();
             }
         });
@@ -156,7 +187,7 @@ public class MissionFragment extends Fragment implements Dronelink.Listener, Dro
                 }
 
                 final Intent intent = new Intent(getActivity(), EmbedActivity.class);
-                intent.putExtra("url", DronelinkUI.getInstance().missionDetailsURL + missionExecutor.id + "?unitSystem=" + Dronelink.getInstance().getUnitSystem().toString().toLowerCase());
+                intent.putExtra("url", missionExecutor.detailsURL);
                 intent.putExtra("network.error", getString(R.string.Mission_details_network_error));
                 startActivity(intent);
             }
@@ -421,7 +452,7 @@ public class MissionFragment extends Fragment implements Dronelink.Listener, Dro
             }
 
             final MissionExecutor missionExecutorLocal = missionExecutor;
-            if (missionExecutorLocal == null) {
+            if (cameraFocusCalibration != null || missionExecutorLocal == null) {
                 view.setVisibility(View.GONE);
                 return;
             }
@@ -438,7 +469,7 @@ public class MissionFragment extends Fragment implements Dronelink.Listener, Dro
                 progressBar.setVisibility(View.INVISIBLE);
                 dismissButton.setVisibility(View.INVISIBLE);
                 messagesTextView.setVisibility(View.INVISIBLE);
-                detailsButton.setVisibility(missionExecutorLocal.isEngaged() || DronelinkUI.getInstance().missionDetailsURL == null ? View.INVISIBLE : View.VISIBLE);
+                detailsButton.setVisibility(missionExecutorLocal.isEngaged() || missionExecutorLocal.detailsURL == null ? View.INVISIBLE : View.VISIBLE);
 
                 subtitleTextView.setText(getString(R.string.Mission_estimating));
                 return;
@@ -486,7 +517,7 @@ public class MissionFragment extends Fragment implements Dronelink.Listener, Dro
             progressBar.setVisibility(View.VISIBLE);
             dismissButton.setVisibility(missionExecutorLocal.isEngaged() ? View.INVISIBLE : View.VISIBLE);
             messagesTextView.setVisibility(expanded ? View.VISIBLE : View.INVISIBLE);
-            detailsButton.setVisibility(missionExecutorLocal.isEngaged() || DronelinkUI.getInstance().missionDetailsURL == null ? View.INVISIBLE : View.VISIBLE);
+            detailsButton.setVisibility(missionExecutorLocal.isEngaged() || missionExecutorLocal.detailsURL == null ? View.INVISIBLE : View.VISIBLE);
 
             primaryButton.setEnabled(session != null);
 
@@ -640,6 +671,18 @@ public class MissionFragment extends Fragment implements Dronelink.Listener, Dro
     public void onModeUnloaded(final ModeExecutor executor) {}
 
     @Override
+    public void onCameraFocusCalibrationRequested(final CameraFocusCalibration value) {
+        cameraFocusCalibration = value;
+        getActivity().runOnUiThread(updateViews);
+    }
+
+    @Override
+    public void onCameraFocusCalibrationUpdated(final CameraFocusCalibration value) {
+        cameraFocusCalibration = null;
+        getActivity().runOnUiThread(updateViews);
+    }
+
+    @Override
     public void onMissionEstimating(final MissionExecutor executor) {
         getActivity().runOnUiThread(updateViews);
     }
@@ -703,8 +746,14 @@ public class MissionFragment extends Fragment implements Dronelink.Listener, Dro
 
         final Component.ExecutionStatus status = executor.getStatus();
         if (status != null && status.completed) {
-            Dronelink.getInstance().unloadMission();
-            Dronelink.getInstance().announce(reason.title);
+            Handler handler = new Handler(Looper.getMainLooper());
+            handler.post(new Runnable() {
+                @Override
+                public void run() {
+                    Dronelink.getInstance().unloadMission();
+                    Dronelink.getInstance().announce(reason.title);
+                }
+            });
             return;
         }
 

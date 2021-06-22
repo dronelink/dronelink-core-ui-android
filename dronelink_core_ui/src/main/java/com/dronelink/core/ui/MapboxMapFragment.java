@@ -34,6 +34,7 @@ import com.dronelink.core.ModeExecutor;
 import com.dronelink.core.adapters.DroneStateAdapter;
 import com.dronelink.core.command.CommandError;
 import com.dronelink.core.kernel.command.Command;
+import com.dronelink.core.kernel.core.CameraFocusCalibration;
 import com.dronelink.core.kernel.core.FuncInput;
 import com.dronelink.core.kernel.core.FuncMapOverlay;
 import com.dronelink.core.kernel.core.GeoCoordinate;
@@ -143,6 +144,11 @@ public class MapboxMapFragment extends Fragment implements Dronelink.Listener, D
     public void onStop() {
         super.onStop();
         mapView.onStop();
+
+        if (updateTimer != null) {
+            updateTimer.cancel();
+        }
+
         Dronelink.getInstance().getSessionManager().removeListener(this);
         Dronelink.getInstance().removeListener(this);
 
@@ -175,12 +181,7 @@ public class MapboxMapFragment extends Fragment implements Dronelink.Listener, D
 
     @Override
     public void onDestroy() {
-        if (updateTimer != null) {
-            updateTimer.cancel();
-        }
-
         super.onDestroy();
-
         mapView.onDestroy();
     }
 
@@ -229,6 +230,10 @@ public class MapboxMapFragment extends Fragment implements Dronelink.Listener, D
 
     private Runnable update = new Runnable() {
         public void run() {
+            if (!isAdded()) {
+                return;
+            }
+
             final Style style = map.getStyle();
             final DroneStateAdapter state = getDroneState();
             if (style == null || state == null) {
@@ -643,6 +648,12 @@ public class MapboxMapFragment extends Fragment implements Dronelink.Listener, D
         modeExecutor = null;
         executor.removeListener(this);
     }
+
+    @Override
+    public void onCameraFocusCalibrationRequested(final CameraFocusCalibration value) {}
+
+    @Override
+    public void onCameraFocusCalibrationUpdated(final CameraFocusCalibration value) {}
 
     @Override
     public void onMissionEstimating(final MissionExecutor executor) {}

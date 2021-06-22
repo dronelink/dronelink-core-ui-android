@@ -121,11 +121,6 @@ public class CameraOffsetsFragment extends Fragment implements DroneSessionManag
     @Override
     public void onStop() {
         super.onStop();
-        Dronelink.getInstance().getSessionManager().removeListener(this);
-    }
-
-    @Override
-    public void onDestroy() {
         if (updateTimer != null) {
             updateTimer.cancel();
         }
@@ -133,8 +128,7 @@ public class CameraOffsetsFragment extends Fragment implements DroneSessionManag
         if (listenRCButtonsTimer != null) {
             listenRCButtonsTimer.cancel();
         }
-
-        super.onDestroy();
+        Dronelink.getInstance().getSessionManager().removeListener(this);
     }
 
     private void onEV(final int steps) {
@@ -177,7 +171,7 @@ public class CameraOffsetsFragment extends Fragment implements DroneSessionManag
 
     private Runnable update = new Runnable() {
         public void run() {
-            if (getView() == null || getView().getVisibility() != View.VISIBLE) {
+            if (!isAdded()) {
                 return;
             }
 
@@ -211,7 +205,7 @@ public class CameraOffsetsFragment extends Fragment implements DroneSessionManag
 
     private Runnable listenRCButtons = new Runnable() {
         public void run() {
-            if (getView() == null || getView().getVisibility() != View.VISIBLE) {
+            if (!isAdded() && getView() == null || getView().getVisibility() != View.VISIBLE) {
                 return;
             }
 

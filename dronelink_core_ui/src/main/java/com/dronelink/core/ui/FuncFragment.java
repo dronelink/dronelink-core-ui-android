@@ -46,6 +46,7 @@ import com.dronelink.core.MissionExecutor;
 import com.dronelink.core.ModeExecutor;
 import com.dronelink.core.adapters.DroneStateAdapter;
 import com.dronelink.core.adapters.RemoteControllerStateAdapter;
+import com.dronelink.core.kernel.core.CameraFocusCalibration;
 import com.dronelink.core.kernel.core.FuncInput;
 import com.dronelink.core.kernel.core.GeoSpatial;
 import com.dronelink.core.kernel.core.enums.VariableValueType;
@@ -287,14 +288,6 @@ public class FuncFragment extends Fragment implements Dronelink.Listener, DroneS
                 listenRCButtonsTimer();
             }
         }, 0, listenRCButtonsMillis);
-    }
-
-    @Override
-    public void onDestroy() {
-        if (listenRCButtonsTimer != null) {
-            listenRCButtonsTimer.cancel();
-        }
-        super.onDestroy();
     }
 
     private void listenRCButtonsTimer() {
@@ -545,6 +538,9 @@ public class FuncFragment extends Fragment implements Dronelink.Listener, DroneS
     @Override
     public void onStop() {
         super.onStop();
+        if (listenRCButtonsTimer != null) {
+            listenRCButtonsTimer.cancel();
+        }
         Dronelink.getInstance().removeListener(this);
         Dronelink.getInstance().getSessionManager().removeListener(this);
         final FuncExecutor funcExecutor = this.funcExecutor;
@@ -555,6 +551,10 @@ public class FuncFragment extends Fragment implements Dronelink.Listener, DroneS
 
     private Runnable updateViews = new Runnable() {
         public void run() {
+            if (!isAdded()) {
+                return;
+            }
+
             FuncExecutor funcExecutorLocal = funcExecutor;
             final int visibility = funcExecutorLocal == null ? View.INVISIBLE : View.VISIBLE;
             getView().setVisibility(visibility == View.INVISIBLE ? View.GONE : View.VISIBLE);
@@ -804,9 +804,14 @@ public class FuncFragment extends Fragment implements Dronelink.Listener, DroneS
     public void onModeUnloaded(final ModeExecutor executor) {}
 
     @Override
-    public void onFuncInputsChanged(FuncExecutor executor) {
+    public void onCameraFocusCalibrationRequested(final CameraFocusCalibration value) {}
 
-    }
+    @Override
+    public void onCameraFocusCalibrationUpdated(final CameraFocusCalibration value) {}
+
+
+    @Override
+    public void onFuncInputsChanged(final FuncExecutor executor) {}
 
     @Override
     public void onFuncExecuted(final FuncExecutor executor) {

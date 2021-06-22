@@ -28,7 +28,6 @@ public class DronelinkUI {
 
     private static final String TAG = Dronelink.class.getCanonicalName();
 
-    public String missionDetailsURL;
     final Context context;
 
     public DronelinkUI(final Context context) {

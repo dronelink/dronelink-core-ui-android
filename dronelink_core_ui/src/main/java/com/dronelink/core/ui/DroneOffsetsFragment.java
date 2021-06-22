@@ -6,7 +6,12 @@
 //
 package com.dronelink.core.ui;
 
+import android.content.Context;
 import android.content.res.ColorStateList;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.location.Location;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -22,6 +27,7 @@ import android.widget.Toast;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
+import com.dronelink.core.CameraFile;
 import com.dronelink.core.Convert;
 import com.dronelink.core.DatedValue;
 import com.dronelink.core.DroneOffsets;
@@ -32,6 +38,8 @@ import com.dronelink.core.MissionExecutor;
 import com.dronelink.core.adapters.DroneStateAdapter;
 import com.dronelink.core.adapters.GimbalAdapter;
 import com.dronelink.core.adapters.RemoteControllerStateAdapter;
+import com.dronelink.core.command.CommandError;
+import com.dronelink.core.kernel.command.Command;
 import com.dronelink.core.kernel.command.camera.ExposureCompensationStepCameraCommand;
 import com.dronelink.core.kernel.command.gimbal.OrientationGimbalCommand;
 import com.dronelink.core.kernel.core.Vector2;
@@ -39,7 +47,7 @@ import com.dronelink.core.kernel.core.Vector2;
 import java.util.Timer;
 import java.util.TimerTask;
 
-public class DroneOffsetsFragment extends Fragment implements DroneSessionManager.Listener {
+public class DroneOffsetsFragment extends Fragment implements DroneSessionManager.Listener, DroneSession.Listener {
     public enum Style {
         ALT_YAW,
         POSITION
@@ -49,7 +57,6 @@ public class DroneOffsetsFragment extends Fragment implements DroneSessionManage
     private Style style = Style.ALT_YAW;
 
     private DroneSession session;
-    private ExposureCompensationStepCameraCommand exposureCommand = null;
 
     private boolean debug = false;
 
@@ -73,12 +80,39 @@ public class DroneOffsetsFragment extends Fragment implements DroneSessionManage
     private boolean rcInputsEnabled = false;
     private boolean rollVisible = false;
     private int rollValue = 0;
+    private SensorManager sensorManager;
+    private Sensor pressureSensor;
+    private boolean relativeAltitudeUpdating = false;
+    private boolean relativeAltitudeActive = false;
+    private Float relativeAltitudeStartingPressure;
+    private final SensorEventListener pressureSensorEventListener = new SensorEventListener() {
+        @Override
+        public void onSensorChanged(final SensorEvent sensorEvent) {
+            final float pressure = sensorEvent.values[0];
+            final Float relativeAltitudeStartingPressureLocal = relativeAltitudeStartingPressure;
+            if (relativeAltitudeStartingPressureLocal == null) {
+                relativeAltitudeStartingPressure = pressure;
+                return;
+            }
+
+            if (!relativeAltitudeActive) {
+                return;
+            }
+
+            Dronelink.getInstance().droneOffsets.droneAltitude = -SensorManager.getAltitude(relativeAltitudeStartingPressureLocal, pressure);
+        }
+
+        @Override
+        public void onAccuracyChanged(final Sensor sensor, final int i) {}
+    };
 
     public DroneOffsetsFragment() {}
 
     @Override
     public void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        sensorManager = (SensorManager)getActivity().getSystemService(Context.SENSOR_SERVICE);
+        pressureSensor = sensorManager.getDefaultSensor(Sensor.TYPE_PRESSURE);
     }
 
     @Override
@@ -127,6 +161,11 @@ public class DroneOffsetsFragment extends Fragment implements DroneSessionManage
                 menu.getMenu().add(getString(R.string.DroneOffsets_more_nadirGimbal));
                 menu.getMenu().add(getString(R.string.DroneOffsets_more_resetGimbal));
                 menu.getMenu().add(getString(R.string.DroneOffsets_more_rollTrim));
+                final DroneSession sessionLocal = session;
+                if (sessionLocal != null && sessionLocal.getSerialNumber() != null) {
+                    menu.getMenu().add(getString(R.string.DroneOffsets_more_clearCameraFocusCalibrations));
+                }
+
                 menu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
                     @Override
                     public boolean onMenuItemClick(final MenuItem menuItem) {
@@ -165,6 +204,11 @@ public class DroneOffsetsFragment extends Fragment implements DroneSessionManage
                             }
                         }
 
+                        if (menuItem.getTitle() == getString(R.string.DroneOffsets_more_clearCameraFocusCalibrations)) {
+                            final int cleared = Dronelink.getInstance().clearCameraFocusCalibrations(sessionLocal.getSerialNumber());
+                            showToast(getString(R.string.DroneOffsets_more_clearCameraFocusCalibrations_finished, cleared));
+                        }
+
                         return true;
                     }
                 });
@@ -182,6 +226,7 @@ public class DroneOffsetsFragment extends Fragment implements DroneSessionManage
                     final DroneOffsets offsets = Dronelink.getInstance().droneOffsets;
                     switch (style) {
                         case ALT_YAW:
+                            relativeAltitudeActive = false;
                             offsets.droneAltitude = 0;
                             offsets.droneYaw = 0;
                             break;
@@ -280,7 +325,7 @@ public class DroneOffsetsFragment extends Fragment implements DroneSessionManage
                 final DroneOffsets offsets = Dronelink.getInstance().droneOffsets;
                 switch (style) {
                     case ALT_YAW:
-                        offsets.droneAltitude += Convert.FeetToMeters(1.0);
+                        incrementDroneAltitudeOffset(Convert.FeetToMeters(1.0));
                         break;
 
                     case POSITION:
@@ -311,7 +356,7 @@ public class DroneOffsetsFragment extends Fragment implements DroneSessionManage
                 final DroneOffsets offsets = Dronelink.getInstance().droneOffsets;
                 switch (style) {
                     case ALT_YAW:
-                        offsets.droneAltitude += Convert.FeetToMeters(-1.0);
+                        incrementDroneAltitudeOffset(Convert.FeetToMeters(-1.0));
                         break;
 
                     case POSITION:
@@ -346,7 +391,13 @@ public class DroneOffsetsFragment extends Fragment implements DroneSessionManage
                 final DroneOffsets offsets = Dronelink.getInstance().droneOffsets;
                 switch (style) {
                     case ALT_YAW:
-                        offsets.droneAltitudeReference = state.value.getAltitude();
+                        if (relativeAltitudeActive) {
+                            showToast(getString(R.string.DroneOffsets_relative_altitude_disabled));
+                        }
+                        else {
+                            showToast(getString(R.string.DroneOffsets_relative_altitude_enabled));
+                        }
+                        relativeAltitudeActive = !relativeAltitudeActive;
                         break;
 
                     case POSITION:
@@ -411,6 +462,12 @@ public class DroneOffsetsFragment extends Fragment implements DroneSessionManage
         updateRollVisible(rollVisible);
     }
 
+    private void incrementDroneAltitudeOffset(final double value) {
+        relativeAltitudeActive = false;
+        Dronelink.getInstance().droneOffsets.droneAltitude += value;
+    }
+
+
     @Override
     public void onStart() {
         super.onStart();
@@ -420,15 +477,22 @@ public class DroneOffsetsFragment extends Fragment implements DroneSessionManage
     @Override
     public void onStop() {
         super.onStop();
-        Dronelink.getInstance().getSessionManager().removeListener(this);
-    }
-
-    @Override
-    public void onDestroy() {
         if (updateTimer != null) {
             updateTimer.cancel();
         }
-        super.onDestroy();
+        stopRelativeAltitudeUpdates();
+        Dronelink.getInstance().getSessionManager().removeListener(this);
+        if (session != null) {
+            session.removeListener(this);
+        }
+    }
+
+    private void stopRelativeAltitudeUpdates() {
+        if (relativeAltitudeUpdating) {
+            sensorManager.unregisterListener(pressureSensorEventListener);
+            relativeAltitudeUpdating = false;
+            relativeAltitudeActive = false;
+        }
     }
 
     private void updateTimer() {
@@ -437,7 +501,7 @@ public class DroneOffsetsFragment extends Fragment implements DroneSessionManage
 
     private Runnable update = new Runnable() {
         public void run() {
-            if (getView() == null || getView().getVisibility() != View.VISIBLE) {
+            if (!isAdded()) {
                 return;
             }
 
@@ -490,18 +554,27 @@ public class DroneOffsetsFragment extends Fragment implements DroneSessionManage
                         clearButton.setVisibility(details.length() == 0 ? View.INVISIBLE : View.VISIBLE);
                         detailsTextView.setText(details.toString());
 
-                        Double altitude = null;
+                        Double altitude;
                         if (sessionLocal != null) {
                             final Double reference = offsets.droneAltitudeReference;
                             final DatedValue<DroneStateAdapter> state = sessionLocal.getState();
-                            if (reference != null && state != null && state.value != null) {
-                                altitude = state.value.getAltitude();
-                                cText = Dronelink.getInstance().format("distance", reference - altitude, "");
+                            if (state != null && state.value != null) {
+                                if (reference != null) {
+                                    altitude = state.value.getAltitude();
+                                    cText = Dronelink.getInstance().format("distance", reference - altitude, "");
+                                }
+                                c1Button.setVisibility(relativeAltitudeUpdating ? View.VISIBLE : View.INVISIBLE);
+                                c1Button.setBackgroundTintList(ColorStateList.valueOf(getResources().getColor(relativeAltitudeActive ? R.color.amber_a700 : R.color.darkGray)));
                             }
+                            else {
+                                c1Button.setVisibility(View.INVISIBLE);
+                            }
+                        }
+                        else {
+                            c1Button.setVisibility(View.INVISIBLE);
                         }
                         cTextView.setText(cText);
 
-                        c1Button.setVisibility(debug && altitude != null && !missionEngaged ? View.VISIBLE : View.INVISIBLE);
                         c2Button.setVisibility(debug && !missionEngaged && !cText.isEmpty() ? View.VISIBLE : View.INVISIBLE);
                         break;
 
@@ -547,7 +620,7 @@ public class DroneOffsetsFragment extends Fragment implements DroneSessionManage
 
                                 final double altitudePercent = remoteControllerState.value.getLeftStick().y;
                                 if (Math.abs(altitudePercent) > deadband) {
-                                    offsets.droneAltitude += Convert.FeetToMeters(0.5 * altitudePercent);
+                                    incrementDroneAltitudeOffset(Convert.FeetToMeters(0.5 * altitudePercent));
                                 }
                                 break;
 
@@ -609,9 +682,8 @@ public class DroneOffsetsFragment extends Fragment implements DroneSessionManage
         else {
             leftButton.setImageDrawable(getResources().getDrawable(R.drawable.baseline_arrow_left_white_48));
             rightButton.setImageDrawable(getResources().getDrawable(R.drawable.baseline_arrow_right_white_48));
-            c1Button.setImageDrawable(getResources().getDrawable(R.drawable.baseline_check_white_48));
+            c1Button.setImageDrawable(getResources().getDrawable(R.drawable.baseline_timeline_white_48));
             c2Button.setImageDrawable(getResources().getDrawable(R.drawable.baseline_arrow_upward_white_48));
-            c1Button.setBackgroundTintList(ColorStateList.valueOf(getResources().getColor(style == Style.ALT_YAW ? R.color.green_a400 : R.color.lightBlue_a400)));
             c2Button.setBackgroundTintList(ColorStateList.valueOf(getResources().getColor(style == Style.ALT_YAW ? R.color.purple_a400 : R.color.pink_a400)));
         }
 
@@ -639,12 +711,46 @@ public class DroneOffsetsFragment extends Fragment implements DroneSessionManage
     @Override
     public void onOpened(final DroneSession session) {
         this.session = session;
+        session.addListener(this);
     }
 
     @Override
     public void onClosed(final DroneSession session) {
         this.session = null;
+        stopRelativeAltitudeUpdates();
     }
+
+    @Override
+    public void onInitialized(final DroneSession session) {}
+
+    @Override
+    public void onLocated(final DroneSession session) {}
+
+    @Override
+    public void onMotorsChanged(final  DroneSession session, final boolean value) {
+        if (pressureSensor == null) {
+            return;
+        }
+
+        if (value) {
+            //disabling this for now until we do more testing
+//            relativeAltitudeStartingPressure = null;
+//            relativeAltitudeUpdating = true;
+//            sensorManager.registerListener(pressureSensorEventListener, pressureSensor, SensorManager.SENSOR_DELAY_UI);
+        }
+        else {
+            stopRelativeAltitudeUpdates();
+        }
+    }
+
+    @Override
+    public void onCommandExecuted(final DroneSession session, final Command command) {}
+
+    @Override
+    public void onCommandFinished(final DroneSession session, final Command command, final CommandError error) {}
+
+    @Override
+    public void onCameraFileGenerated(final DroneSession session, final CameraFile file) {}
 
     private void showToast(final String message) {
         getActivity().runOnUiThread(new Runnable() {

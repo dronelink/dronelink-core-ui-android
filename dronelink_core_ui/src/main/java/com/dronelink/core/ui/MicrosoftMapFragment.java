@@ -36,6 +36,7 @@ import com.dronelink.core.adapters.DroneStateAdapter;
 import com.dronelink.core.adapters.GimbalStateAdapter;
 import com.dronelink.core.command.CommandError;
 import com.dronelink.core.kernel.command.Command;
+import com.dronelink.core.kernel.core.CameraFocusCalibration;
 import com.dronelink.core.kernel.core.FuncInput;
 import com.dronelink.core.kernel.core.FuncMapOverlay;
 import com.dronelink.core.kernel.core.GeoCoordinate;
@@ -241,6 +242,12 @@ public class MicrosoftMapFragment extends Fragment implements Dronelink.Listener
     public void onStop() {
         super.onStop();
         mapView.onStop();
+
+        if (updateDroneElementsTimer != null) {
+            updateDroneElementsTimer.cancel();
+        }
+
+
         Dronelink.getInstance().getSessionManager().removeListener(this);
         Dronelink.getInstance().removeListener(this);
         if (session != null) {
@@ -271,12 +278,7 @@ public class MicrosoftMapFragment extends Fragment implements Dronelink.Listener
 
     @Override
     public void onDestroy() {
-        if (updateDroneElementsTimer != null) {
-            updateDroneElementsTimer.cancel();
-        }
-
         super.onDestroy();
-
         mapView.onDestroy();
     }
 
@@ -377,6 +379,10 @@ public class MicrosoftMapFragment extends Fragment implements Dronelink.Listener
     }
 
     private void updateDroneElements() {
+        if (!isAdded()) {
+            return;
+        }
+
         final DroneSession session = this.session;
         final DroneStateAdapter state = getDroneState();
         if (session == null || state == null) {
@@ -956,6 +962,12 @@ public class MicrosoftMapFragment extends Fragment implements Dronelink.Listener
         modeExecutor = null;
         executor.removeListener(this);
     }
+
+    @Override
+    public void onCameraFocusCalibrationRequested(final CameraFocusCalibration value) {}
+
+    @Override
+    public void onCameraFocusCalibrationUpdated(final CameraFocusCalibration value) {}
 
     @Override
     public void onOpened(final DroneSession session) {

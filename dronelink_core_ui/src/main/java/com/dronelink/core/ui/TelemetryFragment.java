@@ -111,15 +111,10 @@ public class TelemetryFragment extends Fragment implements DroneSessionManager.L
     @Override
     public void onStop() {
         super.onStop();
-        Dronelink.getInstance().getSessionManager().removeListener(this);
-    }
-
-    @Override
-    public void onDestroy() {
         if (updateTimer != null) {
             updateTimer.cancel();
         }
-        super.onDestroy();
+        Dronelink.getInstance().getSessionManager().removeListener(this);
     }
 
     private void updateTimer() {
@@ -128,6 +123,10 @@ public class TelemetryFragment extends Fragment implements DroneSessionManager.L
 
     private Runnable update = new Runnable() {
         public void run() {
+            if (!isAdded()) {
+                return;
+            }
+
             double distance = 0.0;
             double altitude = 0.0;
             double horizontalSpeed = 0.0;

@@ -30,6 +30,7 @@ import com.dronelink.core.Executor;
 import com.dronelink.core.FuncExecutor;
 import com.dronelink.core.MissionExecutor;
 import com.dronelink.core.ModeExecutor;
+import com.dronelink.core.kernel.core.CameraFocusCalibration;
 import com.dronelink.core.kernel.core.Message;
 import com.dronelink.core.kernel.core.MessageGroup;
 
@@ -382,6 +383,12 @@ public class ModeFragment extends Fragment implements Dronelink.Listener, DroneS
         executor.removeListener(this);
         getActivity().runOnUiThread(updateViews);
     }
+
+    @Override
+    public void onCameraFocusCalibrationRequested(final CameraFocusCalibration value) {}
+
+    @Override
+    public void onCameraFocusCalibrationUpdated(final CameraFocusCalibration value) {}
 
     @Override
     public Message[] modeEngageDisallowedReasons(final ModeExecutor executor) {
