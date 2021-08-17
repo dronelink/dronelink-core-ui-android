@@ -7,7 +7,6 @@
 package com.dronelink.core.ui;
 
 import android.content.res.ColorStateList;
-import android.graphics.Color;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -20,7 +19,6 @@ import androidx.fragment.app.Fragment;
 
 import com.dronelink.core.CameraFile;
 import com.dronelink.core.DatedValue;
-import com.dronelink.core.DroneOffsets;
 import com.dronelink.core.DroneSession;
 import com.dronelink.core.DroneSessionManager;
 import com.dronelink.core.Dronelink;

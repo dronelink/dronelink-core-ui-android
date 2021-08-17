@@ -217,7 +217,7 @@ public class MissionFragment extends Fragment implements Dronelink.Listener, Dro
             }
         });
 
-        messagesTextView = getView().findViewById(R.id.detailsTextView);
+        messagesTextView = getView().findViewById(R.id.messagesTextView);
         messagesTextView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -439,7 +439,7 @@ public class MissionFragment extends Fragment implements Dronelink.Listener, Dro
 
     private void toggleMissionExpanded(final boolean expanded) {
         this.expanded = expanded;
-        getView().getLayoutParams().height = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, (float)(expanded ? 135 : 70), getResources().getDisplayMetrics());
+        getView().getLayoutParams().height = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, (float)(expanded ? 145 : 70), getResources().getDisplayMetrics());
         getView().requestLayout();
         getActivity().runOnUiThread(updateViews);
     }

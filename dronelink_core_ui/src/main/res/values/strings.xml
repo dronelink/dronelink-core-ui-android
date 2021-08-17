@@ -76,8 +76,8 @@
     <string name="CameraFocusCalibration_details_move_distance">Move %1$s away while pointing at the reference object with the gimbal at 0°.</string>
     <string name="CameraFocusCalibration_details_move_altitude">Fly %1$s above your takeoff location with the gimbal at -90°.</string>
     <string name="CameraFocusCalibration_details_busy">Calibrating...</string>
-    <string name="CameraFocusCalibration_details_focus_distance">Continue focusing the camera by tapping the reference object on the screen (%1$s).</string>
-    <string name="CameraFocusCalibration_details_focus_altitude">Continue focusing the camera by tapping your takeoff location on the screen (%1$s).</string>
+    <string name="CameraFocusCalibration_details_focus_distance">Continue focusing the camera by tapping the reference object on the screen (%1$s). Switch to focus from spot metering.</string>
+    <string name="CameraFocusCalibration_details_focus_altitude">Continue focusing the camera by tapping the takeoff location on the screen (%1$s). Switch to focus from spot metering.</string>
     <string name="DroneOffsets_style_altYaw">YAW/ALT</string>
     <string name="DroneOffsets_style_position">POSITION</string>
     <string name="DroneOffsets_roll_trim">ROLL TRIM</string>
