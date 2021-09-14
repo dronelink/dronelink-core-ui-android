@@ -19,6 +19,7 @@ import androidx.fragment.app.Fragment;
 
 import android.os.Handler;
 import android.os.Looper;
+import android.text.method.ScrollingMovementMethod;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -42,6 +43,7 @@ import com.dronelink.core.adapters.DroneStateAdapter;
 import com.dronelink.core.command.CommandError;
 import com.dronelink.core.kernel.command.Command;
 import com.dronelink.core.kernel.component.Component;
+import com.dronelink.core.kernel.component.ComponentExecutionState;
 import com.dronelink.core.kernel.core.CameraFocusCalibration;
 import com.dronelink.core.kernel.core.GeoCoordinate;
 import com.dronelink.core.kernel.core.Message;
@@ -218,12 +220,7 @@ public class MissionFragment extends Fragment implements Dronelink.Listener, Dro
         });
 
         messagesTextView = getView().findViewById(R.id.messagesTextView);
-        messagesTextView.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                toggleMissionExpanded();
-            }
-        });
+        messagesTextView.setMovementMethod(new ScrollingMovementMethod());
 
         getActivity().runOnUiThread(updateViews);
     }
@@ -508,6 +505,14 @@ public class MissionFragment extends Fragment implements Dronelink.Listener, Dro
                 return;
             }
 
+            final MissionExecutor.Estimate estimate = missionExecutorLocal.getEstimate();
+            double estimateTime = 0;
+            double executionDuration = 0;
+            if (estimate != null) {
+                estimateTime = estimate.time;
+                executionDuration = missionExecutorLocal.getExecutionDuration();
+            }
+            final double timeRemaining = estimateTime - executionDuration;
 
             activityIndicator.setVisibility(View.INVISIBLE);
             primaryButton.setVisibility(View.VISIBLE);
@@ -521,17 +526,9 @@ public class MissionFragment extends Fragment implements Dronelink.Listener, Dro
 
             primaryButton.setEnabled(session != null);
 
-            final MissionExecutor.Estimate estimate = missionExecutorLocal.getEstimate();
-            double totalTime = 0;
-            double executionDuration = 0;
-            if (estimate != null) {
-                totalTime = estimate.time;
-                executionDuration = missionExecutorLocal.getExecutionDuration();
-            }
-            final double timeRemaining = Math.max(totalTime - executionDuration, 0);
             executionDurationTextView.setText(Dronelink.getInstance().format("timeElapsed", executionDuration, "00:00"));
-            timeRemainingTextView.setText(Dronelink.getInstance().format("timeElapsed", timeRemaining, "00:00"));
-            progressBar.setProgress((int)(Math.min(totalTime == 0 ? 0.0 : executionDuration / totalTime, 1.0) * 100));
+            timeRemainingTextView.setText((timeRemaining < 0 ? "+" : "") + Dronelink.getInstance().format("timeElapsed", Math.abs(timeRemaining), "00:00"));
+            progressBar.setProgress((int)(Math.min(estimateTime == 0 ? 0.0 : executionDuration / estimateTime, 1.0) * 100));
 
             if (missionExecutorLocal.isEngaged()) {
                 progressBar.setProgressTintList(progressEngagedColor);
@@ -584,7 +581,8 @@ public class MissionFragment extends Fragment implements Dronelink.Listener, Dro
         }
 
         if (previousEstimateContext != null) {
-            if (previousEstimateContext.location.distanceTo(estimateContext.location) < 1 && Math.abs(previousEstimateContext.altitude - estimateContext.altitude) < 1) {
+            final double tolerance = 4.0;
+            if (previousEstimateContext.location.distanceTo(estimateContext.location) < tolerance && Math.abs(previousEstimateContext.altitude - estimateContext.altitude) < tolerance) {
                 return false;
             }
         }
@@ -636,8 +634,6 @@ public class MissionFragment extends Fragment implements Dronelink.Listener, Dro
         missionExecutor = executor;
         previousEstimateContext = null;
         executor.addListener(this);
-        estimateMission();
-
         if (executor.userInterfaceSettings != null && executor.userInterfaceSettings.missionDetailsExpanded != null && executor.userInterfaceSettings.missionDetailsExpanded != expanded) {
             getActivity().runOnUiThread(new Runnable() {
                 @Override
@@ -648,6 +644,7 @@ public class MissionFragment extends Fragment implements Dronelink.Listener, Dro
         }
 
         getActivity().runOnUiThread(updateViews);
+        estimateMission();
     }
 
     @Override

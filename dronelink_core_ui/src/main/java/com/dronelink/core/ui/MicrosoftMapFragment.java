@@ -26,6 +26,7 @@ import android.widget.Toast;
 import com.dronelink.core.CameraFile;
 import com.dronelink.core.Convert;
 import com.dronelink.core.DatedValue;
+import com.dronelink.core.DroneOffsets;
 import com.dronelink.core.DroneSession;
 import com.dronelink.core.DroneSessionManager;
 import com.dronelink.core.Dronelink;
@@ -44,6 +45,8 @@ import com.dronelink.core.kernel.core.GeoSpatial;
 import com.dronelink.core.kernel.core.Message;
 import com.dronelink.core.kernel.core.PlanRestrictionZone;
 import com.dronelink.core.kernel.core.enums.VariableValueType;
+import com.mapbox.mapboxsdk.annotations.IconFactory;
+import com.mapbox.mapboxsdk.annotations.MarkerOptions;
 import com.mapbox.mapboxsdk.camera.CameraUpdateFactory;
 import com.mapbox.mapboxsdk.geometry.LatLng;
 import com.microsoft.maps.AltitudeReferenceSystem;
@@ -107,6 +110,7 @@ public class MicrosoftMapFragment extends Fragment implements Dronelink.Listener
     private MapPolyline droneMissionExecutedPolyline;
     private List<Geoposition> droneMissionExecutedPositions = new ArrayList<>();
     private MapElementLayer missionLayer = new MapElementLayer();
+    private MapElementLayer missionReengagementLayer = new MapElementLayer();
     private MapElementLayer funcLayer = new MapElementLayer();
     private List<MapIcon> funcInputDroneIcons = new ArrayList<>();
     private MapElementLayer funcMapOverlaysLayer = new MapElementLayer();
@@ -193,6 +197,9 @@ public class MicrosoftMapFragment extends Fragment implements Dronelink.Listener
 
         missionLayer.setZIndex(1);
         mapView.getLayers().add(missionLayer);
+
+        missionReengagementLayer.setZIndex(1);
+        mapView.getLayers().add(missionReengagementLayer);
 
         funcMapOverlaysLayer.setZIndex(1);
         mapView.getLayers().add(funcMapOverlaysLayer);
@@ -300,13 +307,13 @@ public class MicrosoftMapFragment extends Fragment implements Dronelink.Listener
         actionSheet.getMenu().add(R.string.MicrosoftMap_follow);
         actionSheet.getMenu().add(R.string.MicrosoftMap_chase_plane);
         actionSheet.getMenu().add(R.string.MicrosoftMap_fpv);
-//        if (tracking == Tracking.NONE) {
-//            if (style == Style.STREETS) {
-//                actionSheet.getMenu().add(R.string.MicrosoftMap_satellite);
-//            } else {
-//                actionSheet.getMenu().add(R.string.MicrosoftMap_streets);
-//            }
-//        }
+        if (tracking == Tracking.NONE) {
+            if (style == Style.STREETS) {
+                actionSheet.getMenu().add(R.string.MicrosoftMap_satellite);
+            } else {
+                actionSheet.getMenu().add(R.string.MicrosoftMap_streets);
+            }
+        }
 
         if (actions != null) {
             for (final MoreMenuItem action : actions) {
@@ -399,8 +406,11 @@ public class MicrosoftMapFragment extends Fragment implements Dronelink.Listener
             droneHomeIcon.setLocation(new Geopoint(droneHomeLocation.getLatitude(), droneHomeLocation.getLongitude()));
         }
 
-        final Location droneLocation = state.getLocation();
+        Location droneLocation = state.getLocation();
         if (session.isLocated() && droneLocation != null) {
+            final DroneOffsets offsets = Dronelink.getInstance().droneOffsets;
+            droneLocation = Convert.locationWithBearing(droneLocation, offsets.droneCoordinate.direction + Math.PI, offsets.droneCoordinate.magnitude);
+
             int rotation = (int)(-Convert.RadiansToDegrees(state.getOrientation().getYaw())) % 360;
             if (rotation < 0) {
                 rotation += 360;
@@ -565,26 +575,59 @@ public class MicrosoftMapFragment extends Fragment implements Dronelink.Listener
             missionLayer.getElements().add(polyline);
         }
 
-        if (missionExecutor.isEngaged()) {
-            positions = new ArrayList<>();
-            for (final GeoSpatial spatial : estimate.reengagementSpatials) {
+        updateMissionReengagementElements();
+    }
+
+    private void updateMissionReengagementElements() {
+        missionReengagementLayer.getElements().clear();
+
+        final MissionExecutor missionExecutor = this.missionExecutor;
+        if (missionExecutor == null) {
+            return;
+        }
+
+        final boolean engaged = missionExecutor.isEngaged();
+        final boolean reengaging = missionExecutor.isReengaging();
+        GeoSpatial[] reengagementEstimateSpatials = reengaging ? missionExecutor.getReengagementSpatials() : null;
+        if (reengagementEstimateSpatials == null) {
+            final MissionExecutor.Estimate estimate = missionExecutor.getEstimate();
+            if (estimate != null) {
+                reengagementEstimateSpatials = estimate.reengagementSpatials;
+            }
+        }
+
+        if (reengaging && reengagementEstimateSpatials != null && reengagementEstimateSpatials.length > 0) {
+            List<Geoposition> positions = new ArrayList<>();
+            for (final GeoSpatial spatial : reengagementEstimateSpatials) {
                 addPositionAboveDroneTakeoffLocation(positions, spatial.coordinate.getLocation(), spatial.altitude.value, 0.1);
             }
 
             if (positions.size() > 0) {
-                final MapIcon reengagementIcon = new MapIcon();
-                reengagementIcon.setImage(new MapImage(BitmapFactory.decodeResource(MicrosoftMapFragment.this.getResources(), R.drawable.reengagement)));
-                reengagementIcon.setFlat(true);
-                reengagementIcon.setDesiredCollisionBehavior(MapElementCollisionBehavior.REMAIN_VISIBLE);
-                reengagementIcon.setLocation(new Geopoint(positions.get(positions.size() - 1), droneTakeoffAltitudeReferenceSystem));
-                missionLayer.getElements().add(reengagementIcon);
-
                 final MapPolyline polyline = new MapPolyline();
                 polyline.setStrokeColor(Color.argb((int) (255 * 1.0), 224, 64, 251));
                 polyline.setStrokeWidth(1);
                 polyline.setPath(new Geopath(positions, droneTakeoffAltitudeReferenceSystem));
-                missionLayer.getElements().add(polyline);
+                missionReengagementLayer.getElements().add(polyline);
             }
+        }
+
+        GeoSpatial reengagementSpatial = null;
+        if (reengaging) {
+            if (reengagementEstimateSpatials != null && reengagementEstimateSpatials.length > 0) {
+                reengagementSpatial = reengagementEstimateSpatials[reengagementEstimateSpatials.length - 1];
+            }
+        }
+        else {
+            reengagementSpatial = missionExecutor.getReengagementSpatial();
+        }
+
+        if (reengagementSpatial != null && (!engaged || reengaging)) {
+            final MapIcon reengagementIcon = new MapIcon();
+            reengagementIcon.setImage(new MapImage(BitmapFactory.decodeResource(MicrosoftMapFragment.this.getResources(), R.drawable.drone_reengagement)));
+            reengagementIcon.setFlat(true);
+            reengagementIcon.setDesiredCollisionBehavior(MapElementCollisionBehavior.REMAIN_VISIBLE);
+            reengagementIcon.setLocation(new Geopoint(positionAboveDroneTakeoffLocation(reengagementSpatial.coordinate.getLocation(), reengagementSpatial.altitude.value), droneTakeoffAltitudeReferenceSystem));
+            missionReengagementLayer.getElements().add(reengagementIcon);
         }
     }
 
@@ -1047,6 +1090,15 @@ public class MicrosoftMapFragment extends Fragment implements Dronelink.Listener
             final Location location = state.getLocation();
             if (location != null) {
                 addPositionAboveDroneTakeoffLocation(droneMissionExecutedPositions, location, state.getAltitude());
+            }
+
+            if ((missionReengagementLayer.getElements().size() == 0 && executor.isReengaging()) || (missionReengagementLayer.getElements().size() > 0 && !executor.isReengaging())) {
+                getActivity().runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        updateMissionReengagementElements();
+                    }
+                });
             }
         }
     }

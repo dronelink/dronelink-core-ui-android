@@ -12,6 +12,7 @@ import android.graphics.Color;
 import android.location.Location;
 import android.os.Bundle;
 import android.os.Handler;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
@@ -25,6 +26,7 @@ import androidx.fragment.app.Fragment;
 
 import com.dronelink.core.CameraFile;
 import com.dronelink.core.Convert;
+import com.dronelink.core.DroneOffsets;
 import com.dronelink.core.DroneSession;
 import com.dronelink.core.DroneSessionManager;
 import com.dronelink.core.Dronelink;
@@ -86,11 +88,13 @@ public class MapboxMapFragment extends Fragment implements Dronelink.Listener, D
     private Annotation missionEstimateForegroundAnnotation;
     private Annotation missionReengagementEstimateBackgroundAnnotation;
     private Annotation missionReengagementEstimateForegroundAnnotation;
+    private Marker missionReengagementDroneAnnotation;
     private List<Marker> funcDroneAnnotations = new ArrayList<>();
     private List<Annotation> funcMapOverlayAnnotations = new ArrayList<>();
     private Timer updateTimer;
     private final long updateMillis = 100;
     private boolean missionCentered = false;
+    private String currentMissionEstimateID = null;
 
     private DroneStateAdapter getDroneState() {
         final DroneSession session = this.session;
@@ -246,9 +250,11 @@ public class MapboxMapFragment extends Fragment implements Dronelink.Listener, D
                 droneHomeSource.setGeoJson(Feature.fromGeometry(Point.fromLngLat(droneHomeLocation.getLongitude(), droneHomeLocation.getLatitude())));
             }
 
-            final Location droneLocation = state.getLocation();
+            Location droneLocation = state.getLocation();
             if (droneLocation != null) {
                 final GeoJsonSource droneSource = style.getSourceAs("drone");
+                final DroneOffsets offsets = Dronelink.getInstance().droneOffsets;
+                droneLocation = Convert.locationWithBearing(droneLocation, offsets.droneCoordinate.direction + Math.PI, offsets.droneCoordinate.magnitude);
                 droneSource.setGeoJson(Feature.fromGeometry(Point.fromLngLat(droneLocation.getLongitude(), droneLocation.getLatitude())));
                 style.getLayerAs("drone").setProperties(PropertyFactory.iconRotate((float)(Convert.RadiansToDegrees(state.getOrientation().getYaw()) - map.getCameraPosition().bearing)));
             }
@@ -361,6 +367,14 @@ public class MapboxMapFragment extends Fragment implements Dronelink.Listener, D
                 return;
             }
 
+            final MissionExecutor missionExecutorLocal = missionExecutor;
+            final MissionExecutor.Estimate estimate = missionExecutorLocal != null ? missionExecutor.getEstimate() : null;
+            final String id = estimate != null ? estimate.id : null;
+            if (currentMissionEstimateID == id) {
+                return;
+            }
+            currentMissionEstimateID = id;
+
             if (missionEstimateBackgroundAnnotation != null) {
                 map.removeAnnotation(missionEstimateBackgroundAnnotation);
             }
@@ -369,21 +383,7 @@ public class MapboxMapFragment extends Fragment implements Dronelink.Listener, D
                 map.removeAnnotation(missionEstimateForegroundAnnotation);
             }
 
-            if (missionReengagementEstimateBackgroundAnnotation != null) {
-                map.removeAnnotation(missionReengagementEstimateBackgroundAnnotation);
-            }
-
-            if (missionReengagementEstimateForegroundAnnotation != null) {
-                map.removeAnnotation(missionReengagementEstimateForegroundAnnotation);
-            }
-
-            final MissionExecutor missionExecutorLocal = missionExecutor;
-            if (missionExecutorLocal == null) {
-                return;
-            }
-
-            final MissionExecutor.Estimate estimate = missionExecutorLocal.getEstimate();
-            if (estimate == null) {
+            if (missionExecutorLocal == null || estimate == null) {
                 return;
             }
 
@@ -402,20 +402,12 @@ public class MapboxMapFragment extends Fragment implements Dronelink.Listener, D
                 if (!missionCentered) {
                     visibleCoordinates.addAll(pathPoints);
                 }
+            }
 
-                final GeoSpatial[] reengagementEstimateSpatials = estimate.reengagementSpatials;
-                if (reengagementEstimateSpatials != null && reengagementEstimateSpatials.length > 0) {
-                    final List<LatLng> reengagementPoints = new LinkedList<>();
-                    for (final GeoSpatial spatial : reengagementEstimateSpatials) {
-                        reengagementPoints.add(new LatLng(spatial.coordinate.latitude, spatial.coordinate.longitude));
-                    }
-
-                    missionReengagementEstimateBackgroundAnnotation = map.addPolyline(new PolylineOptions().addAll(reengagementPoints).width(6).color(Color.parseColor("#6a1b9a")));
-                    missionReengagementEstimateForegroundAnnotation = map.addPolyline(new PolylineOptions().addAll(reengagementPoints).width((float) 2.5).color(Color.parseColor("#e040fb")));
-
-                    if (!missionCentered) {
-                        visibleCoordinates.addAll(reengagementPoints);
-                    }
+            final List<LatLng> reengagementPoints = missionReengagementEstimate();
+            if (reengagementPoints != null) {
+                if (!missionCentered) {
+                    visibleCoordinates.addAll(reengagementPoints);
                 }
             }
 
@@ -427,6 +419,79 @@ public class MapboxMapFragment extends Fragment implements Dronelink.Listener, D
             }
         }
     };
+
+    @SuppressWarnings({"MissingPermission"})
+    private Runnable updateMissionReengagementEstimate = new Runnable() {
+        public void run() {
+            missionReengagementEstimate();
+        }
+    };
+
+    private List<LatLng> missionReengagementEstimate() {
+        if (missionReengagementEstimateBackgroundAnnotation != null) {
+            map.removeAnnotation(missionReengagementEstimateBackgroundAnnotation);
+        }
+        missionReengagementEstimateBackgroundAnnotation = null;
+
+        if (missionReengagementEstimateForegroundAnnotation != null) {
+            map.removeAnnotation(missionReengagementEstimateForegroundAnnotation);
+        }
+        missionReengagementEstimateForegroundAnnotation = null;
+
+        if (missionReengagementDroneAnnotation != null) {
+            map.removeAnnotation(missionReengagementDroneAnnotation);
+        }
+        missionReengagementDroneAnnotation = null;
+
+        final MissionExecutor missionExecutor = this.missionExecutor;
+        if (missionExecutor == null) {
+            return null;
+        }
+
+        final boolean engaged = missionExecutor.isEngaged();
+        final boolean reengaging = missionExecutor.isReengaging();
+        GeoSpatial[] reengagementEstimateSpatials = reengaging ? missionExecutor.getReengagementSpatials() : null;
+        if (reengagementEstimateSpatials == null) {
+            final MissionExecutor.Estimate estimate = missionExecutor.getEstimate();
+            if (estimate != null) {
+                reengagementEstimateSpatials = estimate.reengagementSpatials;
+            }
+        }
+
+        List<LatLng> reengagementPoints = null;
+        if (reengagementEstimateSpatials != null && reengagementEstimateSpatials.length > 0) {
+            reengagementPoints = new LinkedList<>();
+            for (final GeoSpatial spatial : reengagementEstimateSpatials) {
+                reengagementPoints.add(new LatLng(spatial.coordinate.latitude, spatial.coordinate.longitude));
+            }
+        }
+
+        if (reengaging && reengagementPoints != null) {
+            missionReengagementEstimateBackgroundAnnotation = map.addPolyline(new PolylineOptions().addAll(reengagementPoints).width(6).color(Color.parseColor("#6a1b9a")));
+            missionReengagementEstimateForegroundAnnotation = map.addPolyline(new PolylineOptions().addAll(reengagementPoints).width((float) 2.5).color(Color.parseColor("#e040fb")));
+        }
+
+        LatLng reengagementCoordinate = null;
+        if (reengaging) {
+            if (reengagementPoints != null && reengagementPoints.size() > 0) {
+                reengagementCoordinate = reengagementPoints.get(reengagementPoints.size() - 1);
+            }
+        }
+        else {
+            final GeoSpatial reengagementSpatial = missionExecutor.getReengagementSpatial();
+            if (reengagementSpatial != null) {
+                reengagementCoordinate = new LatLng(reengagementSpatial.coordinate.latitude, reengagementSpatial.coordinate.longitude);
+            }
+        }
+
+        if (reengagementCoordinate != null && (!engaged || reengaging)) {
+            missionReengagementDroneAnnotation = map.addMarker(new MarkerOptions()
+                    .setIcon(IconFactory.getInstance(getActivity()).fromResource(R.drawable.drone_reengagement))
+                    .setPosition(reengagementCoordinate));
+        }
+
+        return reengagementPoints;
+    }
 
     private Runnable updateFuncElements = new Runnable() {
         public void run() {
@@ -675,10 +740,16 @@ public class MapboxMapFragment extends Fragment implements Dronelink.Listener, D
     public void onMissionEngaged(final MissionExecutor executor, final MissionExecutor.Engagement engagement) {}
 
     @Override
-    public void onMissionExecuted(final MissionExecutor executor, final MissionExecutor.Engagement engagement) {}
+    public void onMissionExecuted(final MissionExecutor executor, final MissionExecutor.Engagement engagement) {
+        if ((missionReengagementDroneAnnotation == null && executor.isReengaging()) || (missionReengagementDroneAnnotation != null && !executor.isReengaging())) {
+            getActivity().runOnUiThread(updateMissionReengagementEstimate);
+        }
+    }
 
     @Override
-    public void onMissionDisengaged(final MissionExecutor executor, final MissionExecutor.Engagement engagement, final Message reason) {}
+    public void onMissionDisengaged(final MissionExecutor executor, final MissionExecutor.Engagement engagement, final Message reason) {
+        getActivity().runOnUiThread(updateMissionReengagementEstimate);
+    }
 
     @Override
     public void onFuncInputsChanged(final FuncExecutor executor) {
@@ -718,6 +789,9 @@ public class MapboxMapFragment extends Fragment implements Dronelink.Listener, D
             @Override
             public void onStyleLoaded(@NonNull Style style) {
                 enableLocationComponent(style);
+
+                map.getUiSettings().setTiltGesturesEnabled(false);
+                map.getUiSettings().setCompassGravity(Gravity.BOTTOM | Gravity.RIGHT);
 
                 style.addImage("drone-home", BitmapFactory.decodeResource(MapboxMapFragment.this.getResources(), R.drawable.home));
                 final GeoJsonSource droneHomeSource = new GeoJsonSource("drone-home", Feature.fromGeometry(Point.fromLngLat(0, 0)));

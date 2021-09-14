@@ -138,6 +138,7 @@ public class CameraOffsetsFragment extends Fragment implements DroneSessionManag
         evStepsPending = evStepsPending == null ? steps : evStepsPending + steps;
 
         final Timer evStepsTimerNew = new Timer();
+        this.evStepsTimer = evStepsTimerNew;
         evStepsTimerNew.schedule(new TimerTask() {
             @Override
             public void run() {
@@ -159,7 +160,6 @@ public class CameraOffsetsFragment extends Fragment implements DroneSessionManag
             }
         }, 750, 750);
 
-        this.evStepsTimer = evStepsTimer;
         updateTimer();
     }
 

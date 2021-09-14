@@ -584,7 +584,7 @@ public class FuncFragment extends Fragment implements Dronelink.Listener, DroneS
                 primaryButton.setVisibility(View.VISIBLE);
 
                 titleTextView.setText(funcExecutorLocal.getDescriptors().name);
-                primaryButton.setText(getString(executing ? R.string.Func_primary_executing : (hasInputs() ? R.string.Func_primary_intro : R.string.Func_primary_execute)));
+                primaryButton.setText(getString(hasInputs() ? R.string.Func_primary_intro : R.string.Func_primary_execute));
 
                 if (funcExecutorLocal.getIntroImageUrl() != null && !funcExecutorLocal.getIntroImageUrl().isEmpty()) {
                     updateHeight(530);
@@ -606,9 +606,9 @@ public class FuncFragment extends Fragment implements Dronelink.Listener, DroneS
             backButton.setVisibility(inputIndex > 0 ? View.VISIBLE : View.INVISIBLE);
             nextButton.requestLayout();
             nextButton.setVisibility(View.VISIBLE);
-            nextButton.setText(getString(isLast() ? R.string.Func_primary_execute : R.string.Func_next));
+            nextButton.setText(getString(executing ? R.string.Func_primary_executing : isLast() ? R.string.Func_primary_execute : R.string.Func_next));
             progressTextView.setVisibility(isLast() ? View.INVISIBLE : View.VISIBLE);
-            progressTextView.setText(inputIndex + 1 == funcExecutorLocal.getInputCount() ? ("" + (inputIndex + 1)) : ((inputIndex + 1) + " / " + (funcExecutorLocal == null ? 0 : funcExecutorLocal.getInputCount())));
+            progressTextView.setText(inputIndex + 1 == funcExecutorLocal.getInputCount() ? ("" + (inputIndex + 1)) : ((inputIndex + 1) + " / " + funcExecutorLocal.getInputCount()));
 
             final FuncInput input = getInput();
             if (input != null) {
@@ -807,7 +807,6 @@ public class FuncFragment extends Fragment implements Dronelink.Listener, DroneS
 
     @Override
     public void onCameraFocusCalibrationUpdated(final CameraFocusCalibration value) {}
-
 
     @Override
     public void onFuncInputsChanged(final FuncExecutor executor) {}

@@ -18,7 +18,8 @@ allprojects {
     repositories {
         google()
         jcenter()
-        maven { url "https://jitpack.io" }
+        maven { url 'https://jitpack.io' }
+        maven { url 'https://microsoftmaps.jfrog.io/artifactory/Maven/' }
         maven {
             url 'https://api.mapbox.com/downloads/v2/releases/maven'
             authentication {
