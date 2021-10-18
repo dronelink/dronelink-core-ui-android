@@ -42,12 +42,11 @@ import com.dronelink.core.ModeExecutor;
 import com.dronelink.core.adapters.DroneStateAdapter;
 import com.dronelink.core.command.CommandError;
 import com.dronelink.core.kernel.command.Command;
-import com.dronelink.core.kernel.component.Component;
-import com.dronelink.core.kernel.component.ComponentExecutionState;
 import com.dronelink.core.kernel.core.CameraFocusCalibration;
 import com.dronelink.core.kernel.core.GeoCoordinate;
 import com.dronelink.core.kernel.core.Message;
 import com.dronelink.core.kernel.core.MessageGroup;
+import com.dronelink.core.kernel.core.enums.ExecutionStatus;
 import com.squareup.picasso.Picasso;
 import com.stfalcon.imageviewer.StfalconImageViewer;
 import com.stfalcon.imageviewer.loader.ImageLoader;
@@ -147,10 +146,9 @@ public class MissionFragment extends Fragment implements Dronelink.Listener, Dro
                     return;
                 }
 
-                final CameraFocusCalibration[] calibrationsRequired = missionExecutor.getCameraFocusCalibrationsRequired();
-                if (calibrationsRequired != null) {
+                if (missionExecutor.cameraFocusCalibrationsRequired != null) {
                     final ArrayList<CameraFocusCalibration> calibrationsPending = new ArrayList<>();
-                    for (final CameraFocusCalibration calibration : calibrationsRequired) {
+                    for (final CameraFocusCalibration calibration : missionExecutor.cameraFocusCalibrationsRequired) {
                         if (Dronelink.getInstance().getCameraFocusCalibration(calibration.withDroneSerialNumber(sessionLocal.getSerialNumber())) == null) {
                             calibrationsPending.add(calibration);
                         }
@@ -741,7 +739,7 @@ public class MissionFragment extends Fragment implements Dronelink.Listener, Dro
             });
         }
 
-        final Component.ExecutionStatus status = executor.getStatus();
+        final ExecutionStatus status = executor.getStatus();
         if (status != null && status.completed) {
             Handler handler = new Handler(Looper.getMainLooper());
             handler.post(new Runnable() {
@@ -757,4 +755,7 @@ public class MissionFragment extends Fragment implements Dronelink.Listener, Dro
         Dronelink.getInstance().announce(getString(R.string.Mission_disengaged));
         getActivity().runOnUiThread(updateViews);
     }
+
+    @Override
+    public void onMissionUpdatedDisconnected(final MissionExecutor executor, final MissionExecutor.Engagement engagement) {}
 }

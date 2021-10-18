@@ -76,6 +76,12 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 public class MapboxMapFragment extends Fragment implements Dronelink.Listener, DroneSessionManager.Listener, DroneSession.Listener, MissionExecutor.Listener, FuncExecutor.Listener, ModeExecutor.Listener, OnMapReadyCallback {
+    private enum Tracking {
+        NONE,
+        DRONE_NORTH_UP,
+        DRONE_HEADING
+    }
+
     private DroneSession session;
     private MissionExecutor missionExecutor;
     private FuncExecutor funcExecutor;
@@ -95,6 +101,7 @@ public class MapboxMapFragment extends Fragment implements Dronelink.Listener, D
     private final long updateMillis = 100;
     private boolean missionCentered = false;
     private String currentMissionEstimateID = null;
+    private Tracking tracking = Tracking.NONE;
 
     private DroneStateAdapter getDroneState() {
         final DroneSession session = this.session;
@@ -203,6 +210,10 @@ public class MapboxMapFragment extends Fragment implements Dronelink.Listener, D
     public void onMore(final Context context, final View anchor, final MapboxMapFragment.MoreMenuItem[] actions) {
         final PopupMenu actionSheet = new PopupMenu(context, anchor);
 
+        actionSheet.getMenu().add(R.string.MapboxMap_reset);
+        actionSheet.getMenu().add(R.string.MapboxMap_drone_heading);
+        actionSheet.getMenu().add(R.string.MapboxMap_drone_north_up);
+
         if (actions != null) {
             for (final MapboxMapFragment.MoreMenuItem action : actions) {
                 actionSheet.getMenu().add(action.getTitle());
@@ -212,6 +223,21 @@ public class MapboxMapFragment extends Fragment implements Dronelink.Listener, D
         actionSheet.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
             @Override
             public boolean onMenuItemClick(final MenuItem item) {
+                if (item.getTitle() == getString(R.string.MapboxMap_reset)) {
+                    tracking = Tracking.NONE;
+                    return true;
+                }
+
+                if (item.getTitle() == getString(R.string.MapboxMap_drone_heading)) {
+                    tracking = Tracking.DRONE_HEADING;
+                    return true;
+                }
+
+                if (item.getTitle() == getString(R.string.MapboxMap_drone_north_up)) {
+                    tracking = Tracking.DRONE_NORTH_UP;
+                    return true;
+                }
+
                 if (actions != null) {
                     for (final MapboxMapFragment.MoreMenuItem action : actions) {
                         if (item.getTitle() == action.getTitle()) {
@@ -258,8 +284,41 @@ public class MapboxMapFragment extends Fragment implements Dronelink.Listener, D
                 droneSource.setGeoJson(Feature.fromGeometry(Point.fromLngLat(droneLocation.getLongitude(), droneLocation.getLatitude())));
                 style.getLayerAs("drone").setProperties(PropertyFactory.iconRotate((float)(Convert.RadiansToDegrees(state.getOrientation().getYaw()) - map.getCameraPosition().bearing)));
             }
+
+            if (tracking != Tracking.NONE) {
+                final Location location = state.getLocation();
+                if (location != null) {
+                    final double distance = Math.max(20, state.getAltitude() / 1.5);
+
+                    final List<LatLng> visibleCoordinates = new ArrayList<>();
+                    visibleCoordinates.add(getLatLng(Convert.locationWithBearing(location, 0, distance)));
+                    visibleCoordinates.add(getLatLng(Convert.locationWithBearing(location, Math.PI / 2, distance)));
+                    visibleCoordinates.add(getLatLng(Convert.locationWithBearing(location, Math.PI, distance)));
+                    visibleCoordinates.add(getLatLng(Convert.locationWithBearing(location, 3 * Math.PI / 2, distance)));
+                    setVisibleCoordinates(visibleCoordinates, tracking == Tracking.DRONE_NORTH_UP ? 0 : Convert.RadiansToDegrees(state.getOrientation().getYaw()));
+                }
+            }
         }
     };
+
+    private void setVisibleCoordinates(final List<LatLng> visibleCoordinates) {
+        setVisibleCoordinates(visibleCoordinates, null);
+    }
+
+    private void setVisibleCoordinates(final List<LatLng> visibleCoordinates, final Double direction) {
+        if (visibleCoordinates.size() == 0) {
+            return;
+        }
+
+        final LatLngBounds.Builder bounds = new LatLngBounds.Builder();
+        bounds.includes(visibleCoordinates);
+        if (direction == null) {
+            map.animateCamera(CameraUpdateFactory.newLatLngBounds(bounds.build(), (int) (Math.max(mapView.getHeight(), mapView.getWidth()) * 0.05)));
+        }
+        else {
+            map.animateCamera(CameraUpdateFactory.newLatLngBounds(bounds.build(), direction < 0 ? direction + 360 : direction, 0, (int) (Math.max(mapView.getHeight(), mapView.getWidth()) * 0.05)));
+        }
+    }
 
     @SuppressWarnings({"MissingPermission"})
     private Runnable updateMissionRequiredTakeoffArea = new Runnable() {
@@ -287,7 +346,7 @@ public class MapboxMapFragment extends Fragment implements Dronelink.Listener, D
                     final List<LatLng> takeoffAreaPoints = new LinkedList<>();
                     for (int i = 0; i < 100; i++) {
                         final Location location = Convert.locationWithBearing(takeoffLocation, (double)i / 100.0 * Math.PI * 2.0, requiredTakeoffArea.distanceTolerance.horizontal);
-                        takeoffAreaPoints.add(new LatLng(location.getLatitude(), location.getLongitude()));
+                        takeoffAreaPoints.add(getLatLng(location));
                     }
                     missionRequiredTakeoffAreaAnnotation = map.addPolygon(new PolygonOptions().addAll(takeoffAreaPoints).alpha((float)0.25).fillColor(Color.parseColor("#ffa726")));
                 }
@@ -315,11 +374,10 @@ public class MapboxMapFragment extends Fragment implements Dronelink.Listener, D
 
             final MissionExecutor missionExecutorLocal = missionExecutor;
             if (missionExecutorLocal != null) {
-                final PlanRestrictionZone[] restrictionZones = missionExecutorLocal.getRestrictionZones();
-                if (restrictionZones != null) {
-                    for (int i = 0; i < restrictionZones.length; i++) {
-                        final PlanRestrictionZone restrictionZone = restrictionZones[i];
-                        final GeoCoordinate[] coordinates = missionExecutorLocal.getRestrictionZoneBoundaryCoordinates(i);
+                if (missionExecutorLocal.restrictionZones != null && missionExecutor.restrictionZoneBoundaryCoordinates != null) {
+                    for (int i = 0; i < missionExecutorLocal.restrictionZones.length; i++) {
+                        final PlanRestrictionZone restrictionZone = missionExecutorLocal.restrictionZones[i];
+                        final GeoCoordinate[] coordinates = i < missionExecutorLocal.restrictionZoneBoundaryCoordinates.length ? missionExecutorLocal.restrictionZoneBoundaryCoordinates[i] : null;
                         if (coordinates == null) {
                             continue;
                         }
@@ -331,7 +389,7 @@ public class MapboxMapFragment extends Fragment implements Dronelink.Listener, D
                                 final double radius = center.distanceTo(coordinates[1].getLocation());
                                 for (int p = 0; p < 100; p++) {
                                     final Location location = Convert.locationWithBearing(center, (double)p / 100.0 * Math.PI * 2.0, radius);
-                                    points.add(new LatLng(location.getLatitude(), location.getLongitude()));
+                                    points.add(getLatLng(location));
                                 }
                                 break;
 
@@ -413,9 +471,7 @@ public class MapboxMapFragment extends Fragment implements Dronelink.Listener, D
 
             if (visibleCoordinates.size() > 1) {
                 missionCentered = true;
-                final LatLngBounds.Builder bounds = new LatLngBounds.Builder();
-                bounds.includes(visibleCoordinates);
-                map.animateCamera(CameraUpdateFactory.newLatLngBounds(bounds.build(), 10));
+                setVisibleCoordinates(visibleCoordinates);
             }
         }
     };
@@ -602,18 +658,18 @@ public class MapboxMapFragment extends Fragment implements Dronelink.Listener, D
                 style.getLayerAs("mode-target").setProperties(PropertyFactory.iconRotate((float)(Convert.RadiansToDegrees(modeTarget.orientation.getYaw()) - map.getCameraPosition().bearing)));
             }
 
-            final List<LatLng> visibleCoordinates = new LinkedList<>();
-            final GeoCoordinate[] modeVisibleCoordinates = modeExecutorLocal.getVisibleCoordinates();
-            if (modeVisibleCoordinates != null) {
-                for (final GeoCoordinate coordinate : modeVisibleCoordinates) {
-                    visibleCoordinates.add(new LatLng(coordinate.latitude, coordinate.longitude));
+            if (tracking == Tracking.NONE) {
+                final List<LatLng> visibleCoordinates = new LinkedList<>();
+                final GeoCoordinate[] modeVisibleCoordinates = modeExecutorLocal.getVisibleCoordinates();
+                if (modeVisibleCoordinates != null) {
+                    for (final GeoCoordinate coordinate : modeVisibleCoordinates) {
+                        visibleCoordinates.add(new LatLng(coordinate.latitude, coordinate.longitude));
+                    }
                 }
-            }
 
-            if (visibleCoordinates.size() > 0) {
-                final LatLngBounds.Builder bounds = new LatLngBounds.Builder();
-                bounds.includes(visibleCoordinates);
-                map.animateCamera(CameraUpdateFactory.newLatLngBounds(bounds.build(), (int)(Math.max(mapView.getHeight(), mapView.getWidth()) * 0.2)));
+                if (visibleCoordinates.size() > 0) {
+                    setVisibleCoordinates(visibleCoordinates);
+                }
             }
         }
     };
@@ -752,6 +808,11 @@ public class MapboxMapFragment extends Fragment implements Dronelink.Listener, D
     }
 
     @Override
+    public void onMissionUpdatedDisconnected(final MissionExecutor executor, final MissionExecutor.Engagement engagement) {
+        getActivity().runOnUiThread(updateMissionReengagementEstimate);
+    }
+
+    @Override
     public void onFuncInputsChanged(final FuncExecutor executor) {
         getActivity().runOnUiThread(updateFuncElements);
     }
@@ -845,7 +906,7 @@ public class MapboxMapFragment extends Fragment implements Dronelink.Listener, D
                 @Override
                 public void onSuccess(LocationEngineResult result) {
                     if (result.getLastLocation() != null && !missionCentered && session == null) {
-                        map.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(result.getLastLocation().getLatitude(), result.getLastLocation().getLongitude()), 17));
+                        map.moveCamera(CameraUpdateFactory.newLatLngZoom(getLatLng(result.getLastLocation()), 17));
                     }
                 }
 
@@ -855,5 +916,9 @@ public class MapboxMapFragment extends Fragment implements Dronelink.Listener, D
                 }
             });
         }
+    }
+
+    private LatLng getLatLng(final Location location) {
+        return new LatLng(location.getLatitude(), location.getLongitude());
     }
 }

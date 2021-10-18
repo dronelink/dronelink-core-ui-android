@@ -520,11 +520,10 @@ public class MicrosoftMapFragment extends Fragment implements Dronelink.Listener
             missionLayer.getElements().add(polygon);
         }
 
-        final PlanRestrictionZone[] restrictionZones = missionExecutor.getRestrictionZones();
-        if (restrictionZones != null) {
-            for (int i = 0; i < restrictionZones.length; i++) {
-                final PlanRestrictionZone restrictionZone = restrictionZones[i];
-                final GeoCoordinate[] coordinates = missionExecutor.getRestrictionZoneBoundaryCoordinates(i);
+        if (missionExecutor.restrictionZones != null && missionExecutor.restrictionZoneBoundaryCoordinates != null) {
+            for (int i = 0; i < missionExecutor.restrictionZones.length; i++) {
+                final PlanRestrictionZone restrictionZone = missionExecutor.restrictionZones[i];
+                final GeoCoordinate[] coordinates = i < missionExecutor.restrictionZoneBoundaryCoordinates.length ? missionExecutor.restrictionZoneBoundaryCoordinates[i] : null;
                 if (coordinates == null) {
                     continue;
                 }
@@ -756,7 +755,7 @@ public class MicrosoftMapFragment extends Fragment implements Dronelink.Listener
                 rotation += 360;
             }
             modeTargetIcon.setRotation(rotation);
-            modeTargetIcon.setLocation(new Geopoint(positionAboveDroneTakeoffLocation(location(modeTarget.coordinate), modeTarget.altitude.value), droneTakeoffAltitudeReferenceSystem));
+            modeTargetIcon.setLocation(new Geopoint(positionAboveDroneTakeoffLocation(modeTarget.coordinate.getLocation(), modeTarget.altitude.value), droneTakeoffAltitudeReferenceSystem));
             modeTargetIcon.setVisible(true);
         }
         else {
@@ -921,13 +920,6 @@ public class MicrosoftMapFragment extends Fragment implements Dronelink.Listener
         final Location location = new Location("");
         location.setLatitude(position.getLatitude());
         location.setLongitude(position.getLongitude());
-        return location;
-    }
-
-    private Location location(final GeoCoordinate coordinate) {
-        final Location location = new Location("");
-        location.setLatitude(coordinate.latitude);
-        location.setLongitude(coordinate.longitude);
         return location;
     }
 
@@ -1105,6 +1097,17 @@ public class MicrosoftMapFragment extends Fragment implements Dronelink.Listener
 
     @Override
     public void onMissionDisengaged(final MissionExecutor executor, final MissionExecutor.Engagement engagement, final Message reason) {
+        droneMissionExecutedPositions.clear();
+        getActivity().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                updateMissionElements();
+            }
+        });
+    }
+
+    @Override
+    public void onMissionUpdatedDisconnected(final MissionExecutor executor, final MissionExecutor.Engagement engagement) {
         droneMissionExecutedPositions.clear();
         getActivity().runOnUiThread(new Runnable() {
             @Override

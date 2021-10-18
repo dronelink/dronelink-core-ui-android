@@ -52,6 +52,9 @@
     <string name="Telemetry_verticalSpeed_suffix_imperial">fps</string>
     <string name="Telemetry_verticalSpeed_suffix_metric">m/s</string>
     <string name="MissionDisengageReason_user_disengaged">Mission Paused</string>
+    <string name="MapboxMap_reset">Reset</string>
+    <string name="MapboxMap_drone_north_up">Follow (North Up)</string>
+    <string name="MapboxMap_drone_heading">Follow Drone</string>
     <string name="MicrosoftMap_reset">Reset</string>
     <string name="MicrosoftMap_follow">Follow</string>
     <string name="MicrosoftMap_chase_plane">Chase Plane (Beta)</string>
