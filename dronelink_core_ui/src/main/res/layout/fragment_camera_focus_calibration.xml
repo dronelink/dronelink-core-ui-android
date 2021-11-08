@@ -48,7 +48,7 @@
 
     <Button
         android:id="@+id/type0Button"
-        android:text="@string/CameraFocusCalibration_type_position"
+        android:text="@string/CameraFocusCalibration_type_altitude"
         android:layout_height="24dp"
         android:layout_width="140dp"
         android:layout_marginTop="8dp"
@@ -60,7 +60,7 @@
 
     <Button
         android:id="@+id/type1Button"
-        android:text="@string/CameraFocusCalibration_type_altitude"
+        android:text="@string/CameraFocusCalibration_type_distance"
         android:layout_height="24dp"
         android:layout_width="140dp"
         android:layout_marginTop="8dp"
@@ -100,20 +100,15 @@
         android:background="@color/darkGray"
         android:textColor="@android:color/white" />
 
-    <TextView
-        android:id="@+id/referenceTextView"
-        android:textColor="#FFFFFF"
-        android:gravity="center"
-        android:textSize="14sp"
-        android:textStyle="bold"
+    <Button
+        android:id="@+id/primaryButton"
         android:layout_width="0dp"
-        android:layout_height="30dp"
+        android:layout_height="35dp"
+        android:layout_marginBottom="12dp"
         android:layout_marginLeft="12dp"
-        android:layout_marginRight="12dp"
-        android:layout_marginTop="2dp"
-        android:scrollbars="vertical"
         custom:layout_constraintTop_toTopOf="@+id/markReferenceButton"
         custom:layout_constraintStart_toEndOf="@+id/markReferenceButton"
-        custom:layout_constraintEnd_toEndOf="parent" />
+        custom:layout_constraintEnd_toEndOf="@+id/type1Button"
+        android:textColor="@android:color/white" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
