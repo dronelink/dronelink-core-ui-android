@@ -628,6 +628,9 @@ public class MissionFragment extends Fragment implements Dronelink.Listener, Dro
     public void onCameraFileGenerated(final DroneSession session, final CameraFile file) {}
 
     @Override
+    public void onVideoFeedSourceUpdated(final DroneSession session, final Integer channel) {}
+
+    @Override
     public void onMissionLoaded(final MissionExecutor executor) {
         missionExecutor = executor;
         previousEstimateContext = null;

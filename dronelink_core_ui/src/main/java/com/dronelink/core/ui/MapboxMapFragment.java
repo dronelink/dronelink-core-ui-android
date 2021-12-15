@@ -137,6 +137,17 @@ public class MapboxMapFragment extends Fragment implements Dronelink.Listener, D
     public void onStart() {
         super.onStart();
         mapView.onStart();
+
+        Dronelink.getInstance().getSessionManager().addListener(this);
+        Dronelink.getInstance().addListener(this);
+
+        updateTimer = new Timer();
+        updateTimer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                updateTimer();
+            }
+        }, 0, updateMillis);
     }
 
     @Override
@@ -260,7 +271,7 @@ public class MapboxMapFragment extends Fragment implements Dronelink.Listener, D
 
     private Runnable update = new Runnable() {
         public void run() {
-            if (!isAdded()) {
+            if (!isAdded() || map == null) {
                 return;
             }
 
@@ -288,7 +299,7 @@ public class MapboxMapFragment extends Fragment implements Dronelink.Listener, D
             if (tracking != Tracking.NONE) {
                 final Location location = state.getLocation();
                 if (location != null) {
-                    final double distance = Math.max(20, state.getAltitude() / 1.5);
+                    final double distance = Math.max(20, state.getAltitude() / 2.0);
 
                     final List<LatLng> visibleCoordinates = new ArrayList<>();
                     visibleCoordinates.add(getLatLng(Convert.locationWithBearing(location, 0, distance)));
@@ -704,7 +715,9 @@ public class MapboxMapFragment extends Fragment implements Dronelink.Listener, D
             getActivity().runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    map.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(droneLocation.getLatitude(), droneLocation.getLongitude()), 18.5));
+                    if (map != null) {
+                        map.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(droneLocation.getLatitude(), droneLocation.getLongitude()), 18.5));
+                    }
                 }
             });
         }
@@ -721,6 +734,9 @@ public class MapboxMapFragment extends Fragment implements Dronelink.Listener, D
 
     @Override
     public void onCameraFileGenerated(final DroneSession session, final CameraFile file) {}
+
+    @Override
+    public void onVideoFeedSourceUpdated(final DroneSession session, final Integer channel) {}
 
     @Override
     public void onMissionLoaded(final MissionExecutor executor) {
@@ -880,17 +896,6 @@ public class MapboxMapFragment extends Fragment implements Dronelink.Listener, D
                 modeTargetLayer = new SymbolLayer("mode-target", "mode-target");
                 modeTargetLayer.withProperties(PropertyFactory.iconImage("mode-target"), PropertyFactory.iconAllowOverlap(true), PropertyFactory.iconOpacity((float) 0.5));
                 style.addLayer(modeTargetLayer);
-
-                updateTimer = new Timer();
-                updateTimer.schedule(new TimerTask() {
-                    @Override
-                    public void run() {
-                        updateTimer();
-                    }
-                }, 0, updateMillis);
-
-                Dronelink.getInstance().getSessionManager().addListener(self);
-                Dronelink.getInstance().addListener(self);
             }
         });
     }

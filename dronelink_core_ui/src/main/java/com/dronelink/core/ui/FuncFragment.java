@@ -279,14 +279,6 @@ public class FuncFragment extends Fragment implements Dronelink.Listener, DroneS
             }
         });
         getActivity().runOnUiThread(updateViews);
-
-        listenRCButtonsTimer = new Timer();
-        listenRCButtonsTimer.schedule(new TimerTask() {
-            @Override
-            public void run() {
-                listenRCButtonsTimer();
-            }
-        }, 0, listenRCButtonsMillis);
     }
 
     private void listenRCButtonsTimer() {
@@ -532,6 +524,14 @@ public class FuncFragment extends Fragment implements Dronelink.Listener, DroneS
         super.onStart();
         Dronelink.getInstance().addListener(this);
         Dronelink.getInstance().getSessionManager().addListener(this);
+
+        listenRCButtonsTimer = new Timer();
+        listenRCButtonsTimer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                listenRCButtonsTimer();
+            }
+        }, 0, listenRCButtonsMillis);
     }
 
     @Override

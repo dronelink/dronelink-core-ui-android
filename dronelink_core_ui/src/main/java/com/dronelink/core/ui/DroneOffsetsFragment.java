@@ -451,14 +451,6 @@ public class DroneOffsetsFragment extends Fragment implements DroneSessionManage
 
         cTextView = getView().findViewById(R.id.cLabel);
 
-        updateTimer = new Timer();
-        updateTimer.schedule(new TimerTask() {
-            @Override
-            public void run() {
-                updateTimer();
-            }
-        }, 0, updateMillis);
-
         updateRollVisible(rollVisible);
     }
 
@@ -472,6 +464,14 @@ public class DroneOffsetsFragment extends Fragment implements DroneSessionManage
     public void onStart() {
         super.onStart();
         Dronelink.getInstance().getSessionManager().addListener(this);
+
+        updateTimer = new Timer();
+        updateTimer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                updateTimer();
+            }
+        }, 0, updateMillis);
     }
 
     @Override
@@ -751,6 +751,9 @@ public class DroneOffsetsFragment extends Fragment implements DroneSessionManage
 
     @Override
     public void onCameraFileGenerated(final DroneSession session, final CameraFile file) {}
+
+    @Override
+    public void onVideoFeedSourceUpdated(final DroneSession session, final Integer channel) {}
 
     private void showToast(final String message) {
         getActivity().runOnUiThread(new Runnable() {

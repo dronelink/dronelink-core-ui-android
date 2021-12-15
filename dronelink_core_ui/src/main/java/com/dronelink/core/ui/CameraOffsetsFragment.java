@@ -92,6 +92,12 @@ public class CameraOffsetsFragment extends Fragment implements DroneSessionManag
         });
 
         cTextView = getView().findViewById(R.id.cTextView);
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        Dronelink.getInstance().getSessionManager().addListener(this);
 
         updateTimer = new Timer();
         updateTimer.schedule(new TimerTask() {
@@ -108,12 +114,6 @@ public class CameraOffsetsFragment extends Fragment implements DroneSessionManag
                 listenRCButtonsTimer();
             }
         }, 0, listenRCButtonsMillis);
-    }
-
-    @Override
-    public void onStart() {
-        super.onStart();
-        Dronelink.getInstance().getSessionManager().addListener(this);
     }
 
     @Override
@@ -276,4 +276,7 @@ public class CameraOffsetsFragment extends Fragment implements DroneSessionManag
 
     @Override
     public void onCameraFileGenerated(final DroneSession session, final CameraFile file) {}
+
+    @Override
+    public void onVideoFeedSourceUpdated(final DroneSession session, final Integer channel) {}
 }

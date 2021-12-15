@@ -21,7 +21,10 @@ import com.dronelink.core.DroneSessionManager;
 import com.dronelink.core.Dronelink;
 import com.dronelink.core.adapters.CameraStateAdapter;
 import com.dronelink.core.adapters.DroneStateAdapter;
+import com.dronelink.core.adapters.GimbalAdapter;
+import com.dronelink.core.adapters.GimbalStateAdapter;
 
+import java.util.Collection;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -78,6 +81,12 @@ public class DebugFragment extends Fragment implements DroneSessionManager.Liste
         super.onViewCreated(view, savedInstanceState);
 
         textView = getView().findViewById(R.id.textView);
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        Dronelink.getInstance().getSessionManager().addListener(this);
 
         updateTimer = new Timer();
         updateTimer.schedule(new TimerTask() {
@@ -86,12 +95,6 @@ public class DebugFragment extends Fragment implements DroneSessionManager.Liste
                 updateTimer();
             }
         }, 0, updateMillis);
-    }
-
-    @Override
-    public void onStart() {
-        super.onStart();
-        Dronelink.getInstance().getSessionManager().addListener(this);
     }
 
     @Override
@@ -137,6 +140,20 @@ public class DebugFragment extends Fragment implements DroneSessionManager.Liste
                     value.append("Focus ring max: " + focusRingMax).append("\n");
                 }
             }
+
+            final DroneSession sessionLocal = session;
+            if (sessionLocal != null) {
+                final Collection<GimbalAdapter> gimbals = sessionLocal.getDrone().getGimbals();
+                if (gimbals != null) {
+                    for (final GimbalAdapter gimbal : gimbals) {
+                        final DatedValue<GimbalStateAdapter> state = session.getGimbalState(gimbal.getIndex());
+                        if (state != null) {
+                            value.append("Gimbal " + gimbal.getIndex() + " heading: " + Dronelink.getInstance().format("angle", state.value.getOrientation().getYaw(), "")).append("\n");
+                        }
+                    }
+                }
+            }
+
             textView.setText(value.toString());
         }
     };

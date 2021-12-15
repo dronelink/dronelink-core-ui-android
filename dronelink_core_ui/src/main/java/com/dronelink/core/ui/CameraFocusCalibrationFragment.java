@@ -147,14 +147,6 @@ public class CameraFocusCalibrationFragment extends Fragment implements Dronelin
                 onPrimary();
             }
         });
-
-        updateTimer = new Timer();
-        updateTimer.schedule(new TimerTask() {
-            @Override
-            public void run() {
-                updateTimer();
-            }
-        }, 0, updateMillis);
     }
 
     public void setType(final int type) {
@@ -186,6 +178,14 @@ public class CameraFocusCalibrationFragment extends Fragment implements Dronelin
         super.onStart();
         Dronelink.getInstance().addListener(this);
         Dronelink.getInstance().getSessionManager().addListener(this);
+
+        updateTimer = new Timer();
+        updateTimer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                updateTimer();
+            }
+        }, 0, updateMillis);
     }
 
     @Override
@@ -552,6 +552,9 @@ public class CameraFocusCalibrationFragment extends Fragment implements Dronelin
 
     @Override
     public void onCameraFileGenerated(final DroneSession session, final CameraFile file) {}
+
+    @Override
+    public void onVideoFeedSourceUpdated(final DroneSession session, final Integer channel) {}
 
     private void checkCalibrationFinished(final int attempt) {
         if (attempt > 5) {

@@ -12,6 +12,7 @@ import android.os.Bundle;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -92,7 +93,12 @@ public class TelemetryFragment extends Fragment implements DroneSessionManager.L
         verticalSpeedPrefix = getString(R.string.Telemetry_verticalSpeed_prefix);
         verticalSpeedSuffixMetric = getString(R.string.Telemetry_verticalSpeed_suffix_metric);
         verticalSpeedSuffixImperial = getString(R.string.Telemetry_verticalSpeed_suffix_imperial);
+    }
 
+    @Override
+    public void onStart() {
+        super.onStart();
+        Dronelink.getInstance().getSessionManager().addListener(this);
         updateTimer = new Timer();
         updateTimer.schedule(new TimerTask() {
             @Override
@@ -100,12 +106,6 @@ public class TelemetryFragment extends Fragment implements DroneSessionManager.L
                 updateTimer();
             }
         }, 0, updateMillis);
-    }
-
-    @Override
-    public void onStart() {
-        super.onStart();
-        Dronelink.getInstance().getSessionManager().addListener(this);
     }
 
     @Override

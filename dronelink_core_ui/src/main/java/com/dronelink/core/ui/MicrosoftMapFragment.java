@@ -214,6 +214,15 @@ public class MicrosoftMapFragment extends Fragment implements Dronelink.Listener
         modeTargetIcon.setDesiredCollisionBehavior(MapElementCollisionBehavior.REMAIN_VISIBLE);
         modeLayer.getElements().add(modeTargetIcon);
         mapView.getLayers().add(modeLayer);
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        mapView.onStart();
+
+        Dronelink.getInstance().getSessionManager().addListener(this);
+        Dronelink.getInstance().addListener(this);
 
         updateDroneElementsTimer = new Timer();
         updateDroneElementsTimer.schedule(new TimerTask() {
@@ -222,15 +231,6 @@ public class MicrosoftMapFragment extends Fragment implements Dronelink.Listener
                 updateDroneElements();
             }
         }, 0, updateDroneElementsMillis);
-
-        Dronelink.getInstance().getSessionManager().addListener(this);
-        Dronelink.getInstance().addListener(this);
-    }
-
-    @Override
-    public void onStart() {
-        super.onStart();
-        mapView.onStart();
     }
 
     @Override
@@ -253,7 +253,6 @@ public class MicrosoftMapFragment extends Fragment implements Dronelink.Listener
         if (updateDroneElementsTimer != null) {
             updateDroneElementsTimer.cancel();
         }
-
 
         Dronelink.getInstance().getSessionManager().removeListener(this);
         Dronelink.getInstance().removeListener(this);
@@ -468,7 +467,7 @@ public class MicrosoftMapFragment extends Fragment implements Dronelink.Listener
                 case THIRD_PERSON_NADIR:
                     trackingScene = MapScene.createFromLocationAndRadius(
                         new Geopoint(droneLocation.getLatitude(), droneLocation.getLongitude()),
-                        Math.max(20, state.getAltitude() / 1.5));
+                        Math.max(20, state.getAltitude() / 2.0));
                     break;
 
                 case THIRD_PERSON_OBLIQUE:
@@ -1049,6 +1048,9 @@ public class MicrosoftMapFragment extends Fragment implements Dronelink.Listener
 
     @Override
     public void onCameraFileGenerated(final DroneSession session, final CameraFile file) {}
+
+    @Override
+    public void onVideoFeedSourceUpdated(final DroneSession session, final Integer channel) {}
 
     @Override
     public void onMissionEstimating(final MissionExecutor executor) {}

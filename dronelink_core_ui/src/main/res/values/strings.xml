@@ -96,6 +96,10 @@
     <string name="DroneOffsets_more_rollTrim">Gimbal Roll Trim</string>
     <string name="DroneOffsets_more_clearCameraFocusCalibrations">Clear Focus Calibrations</string>
     <string name="DroneOffsets_more_clearCameraFocusCalibrations_finished">Cleared %1$d calibration(s)</string>
-    <!-- TODO: Remove or change this placeholder text -->
-    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="DJIDashboard_camera_video_stream_source_wide">Visible</string>
+    <string name="DJIDashboard_camera_video_stream_source_zoom">Zoom</string>
+    <string name="DJIDashboard_camera_video_stream_source_thermal">Thermal</string>
+    <string name="DJIDashboard_camera_display_mode_visible">Visible</string>
+    <string name="DJIDashboard_camera_display_mode_thermal">Thermal</string>
+    <string name="DJIDashboard_camera_display_mode_both">Side-by-Side</string>
 </resources>
