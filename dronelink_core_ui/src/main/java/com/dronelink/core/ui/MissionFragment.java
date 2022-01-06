@@ -6,6 +6,7 @@
 //
 package com.dronelink.core.ui;
 
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -363,69 +364,74 @@ public class MissionFragment extends Fragment implements Dronelink.Listener, Dro
         if (countdownTimer != null) {
             countdownTimer.cancel();
             countdownTimer = null;
-            getActivity().runOnUiThread(updateViews);
-            if (aborted) {
-                Dronelink.getInstance().announce(getString(R.string.Executable_start_cancelled));
+            final Activity activity = getActivity();
+            if (activity != null) {
+                activity.runOnUiThread(updateViews);
+                if (aborted) {
+                    Dronelink.getInstance().announce(getString(R.string.Executable_start_cancelled));
+                }
             }
         }
     }
 
     private void engage() {
         engageOnMissionEstimated = false;
-        getActivity().runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                if (missionExecutor == null || session == null) {
-                    return;
-                }
+        final Activity activity = getActivity();
+        if (activity != null) {
+            activity.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    if (missionExecutor == null || session == null) {
+                        return;
+                    }
 
-                try {
-                    missionExecutor.engage(session, new Executor.EngageDisallowed() {
-                        @Override
-                        public void disallowed(final Message reason) {
-                            Handler handler = new Handler(Looper.getMainLooper());
-                            handler.post(new Runnable() {
-                                @Override
-                                public void run() {
-                                    final AlertDialog.Builder alertDialog = new AlertDialog.Builder(getActivity());
-                                    alertDialog.setTitle(reason.title);
-                                    if (reason.details != null) {
-                                        alertDialog.setMessage(reason.details);
-                                    }
-                                    alertDialog.setPositiveButton(getString(R.string.Executable_dismiss), new DialogInterface.OnClickListener() {
-                                        @Override
-                                        public void onClick(final DialogInterface d, int i) {
-                                            d.dismiss();
+                    try {
+                        missionExecutor.engage(session, new Executor.EngageDisallowed() {
+                            @Override
+                            public void disallowed(final Message reason) {
+                                Handler handler = new Handler(Looper.getMainLooper());
+                                handler.post(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        final AlertDialog.Builder alertDialog = new AlertDialog.Builder(getActivity());
+                                        alertDialog.setTitle(reason.title);
+                                        if (reason.details != null) {
+                                            alertDialog.setMessage(reason.details);
                                         }
-                                    });
-                                    alertDialog.show();
-                                }
-                            });
-                            getActivity().runOnUiThread(updateViews);
-                        }
-                    });
+                                        alertDialog.setPositiveButton(getString(R.string.Executable_dismiss), new DialogInterface.OnClickListener() {
+                                            @Override
+                                            public void onClick(final DialogInterface d, int i) {
+                                                d.dismiss();
+                                            }
+                                        });
+                                        alertDialog.show();
+                                    }
+                                });
+                                getActivity().runOnUiThread(updateViews);
+                            }
+                        });
+                    } catch (final Dronelink.DroneSerialNumberUnavailableException e) {
+                        Handler handler = new Handler(Looper.getMainLooper());
+                        handler.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                final AlertDialog.Builder alertDialog = new AlertDialog.Builder(getActivity());
+                                alertDialog.setTitle(getString(R.string.Executable_start_engage_droneSerialNumberUnavailable_title));
+                                alertDialog.setMessage(getString(R.string.Executable_start_engage_droneSerialNumberUnavailable_message));
+                                alertDialog.setPositiveButton(getString(R.string.Executable_dismiss), new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(final DialogInterface d, int i) {
+                                        d.dismiss();
+                                    }
+                                });
+                                alertDialog.show();
+                            }
+                        });
+                        getActivity().runOnUiThread(updateViews);
+                    }
                 }
-                catch (final Dronelink.DroneSerialNumberUnavailableException e) {
-                    Handler handler = new Handler(Looper.getMainLooper());
-                    handler.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            final AlertDialog.Builder alertDialog = new AlertDialog.Builder(getActivity());
-                            alertDialog.setTitle(getString(R.string.Executable_start_engage_droneSerialNumberUnavailable_title));
-                            alertDialog.setMessage(getString(R.string.Executable_start_engage_droneSerialNumberUnavailable_message));
-                            alertDialog.setPositiveButton(getString(R.string.Executable_dismiss), new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(final DialogInterface d, int i) {
-                                    d.dismiss();
-                                }
-                            });
-                            alertDialog.show();
-                        }
-                    });
-                    getActivity().runOnUiThread(updateViews);
-                }
-            }
-        });
+            });
+        }
     }
 
     private void toggleMissionExpanded() {
@@ -635,16 +641,19 @@ public class MissionFragment extends Fragment implements Dronelink.Listener, Dro
         missionExecutor = executor;
         previousEstimateContext = null;
         executor.addListener(this);
-        if (executor.userInterfaceSettings != null && executor.userInterfaceSettings.missionDetailsExpanded != null && executor.userInterfaceSettings.missionDetailsExpanded != expanded) {
-            getActivity().runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    toggleMissionExpanded(executor.userInterfaceSettings.missionDetailsExpanded);
-                }
-            });
-        }
+        final Activity activity = getActivity();
+        if (activity != null) {
+            if (executor.userInterfaceSettings != null && executor.userInterfaceSettings.missionDetailsExpanded != null && executor.userInterfaceSettings.missionDetailsExpanded != expanded) {
+                activity.runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        toggleMissionExpanded(executor.userInterfaceSettings.missionDetailsExpanded);
+                    }
+                });
+            }
 
-        getActivity().runOnUiThread(updateViews);
+            activity.runOnUiThread(updateViews);
+        }
         estimateMission();
     }
 
@@ -653,7 +662,10 @@ public class MissionFragment extends Fragment implements Dronelink.Listener, Dro
         missionExecutor = null;
         previousEstimateContext = null;
         executor.removeListener(this);
-        getActivity().runOnUiThread(updateViews);
+        final Activity activity = getActivity();
+        if (activity != null) {
+            activity.runOnUiThread(updateViews);
+        }
     }
 
     @Override
@@ -671,18 +683,27 @@ public class MissionFragment extends Fragment implements Dronelink.Listener, Dro
     @Override
     public void onCameraFocusCalibrationRequested(final CameraFocusCalibration value) {
         cameraFocusCalibration = value;
-        getActivity().runOnUiThread(updateViews);
+        final Activity activity = getActivity();
+        if (activity != null) {
+            activity.runOnUiThread(updateViews);
+        }
     }
 
     @Override
     public void onCameraFocusCalibrationUpdated(final CameraFocusCalibration value) {
         cameraFocusCalibration = null;
-        getActivity().runOnUiThread(updateViews);
+        final Activity activity = getActivity();
+        if (activity != null) {
+            activity.runOnUiThread(updateViews);
+        }
     }
 
     @Override
     public void onMissionEstimating(final MissionExecutor executor) {
-        getActivity().runOnUiThread(updateViews);
+        final Activity activity = getActivity();
+        if (activity != null) {
+            activity.runOnUiThread(updateViews);
+        }
     }
 
     @Override
@@ -692,7 +713,10 @@ public class MissionFragment extends Fragment implements Dronelink.Listener, Dro
             return;
         }
 
-        getActivity().runOnUiThread(updateViews);
+        final Activity activity = getActivity();
+        if (activity != null) {
+            activity.runOnUiThread(updateViews);
+        }
     }
 
     @Override
@@ -703,19 +727,28 @@ public class MissionFragment extends Fragment implements Dronelink.Listener, Dro
     @Override
     public void onMissionEngaging(final MissionExecutor executor) {
         Dronelink.getInstance().announce(getString(R.string.Mission_engaging));
-        getActivity().runOnUiThread(updateViews);
+        final Activity activity = getActivity();
+        if (activity != null) {
+            activity.runOnUiThread(updateViews);
+        }
     }
 
     @Override
     public void onMissionEngaged(final MissionExecutor executor, final MissionExecutor.Engagement engagement) {
-        getActivity().runOnUiThread(updateViews);
+        final Activity activity = getActivity();
+        if (activity != null) {
+            activity.runOnUiThread(updateViews);
+        }
     }
 
     @Override
     public void onMissionExecuted(final MissionExecutor executor, final MissionExecutor.Engagement engagement) {
         if (System.currentTimeMillis() - lastUpdatedMillis > updateMillis) {
             lastUpdatedMillis = System.currentTimeMillis();
-            getActivity().runOnUiThread(updateViews);
+            final Activity activity = getActivity();
+            if (activity != null) {
+                activity.runOnUiThread(updateViews);
+            }
         }
     }
 
@@ -756,7 +789,10 @@ public class MissionFragment extends Fragment implements Dronelink.Listener, Dro
         }
 
         Dronelink.getInstance().announce(getString(R.string.Mission_disengaged));
-        getActivity().runOnUiThread(updateViews);
+        final Activity activity = getActivity();
+        if (activity != null) {
+            activity.runOnUiThread(updateViews);
+        }
     }
 
     @Override

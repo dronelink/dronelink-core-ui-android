@@ -6,6 +6,7 @@
 //
 package com.dronelink.core.ui;
 
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -282,7 +283,10 @@ public class FuncFragment extends Fragment implements Dronelink.Listener, DroneS
     }
 
     private void listenRCButtonsTimer() {
-        getActivity().runOnUiThread(listenRCButtons);
+        final Activity activity = getActivity();
+        if (activity != null) {
+            activity.runOnUiThread(listenRCButtons);
+        }
     }
 
     private Runnable listenRCButtons = new Runnable() {
@@ -754,13 +758,19 @@ public class FuncFragment extends Fragment implements Dronelink.Listener, DroneS
     @Override
     public void onOpened(final DroneSession session) {
         this.session = session;
-        getActivity().runOnUiThread(updateViews);
+        final Activity activity = getActivity();
+        if (activity != null) {
+            activity.runOnUiThread(updateViews);
+        }
     }
 
     @Override
     public void onClosed(final DroneSession session) {
         this.session = null;
-        getActivity().runOnUiThread(updateViews);
+        final Activity activity = getActivity();
+        if (activity != null) {
+            activity.runOnUiThread(updateViews);
+        }
     }
 
     @Override
@@ -781,7 +791,10 @@ public class FuncFragment extends Fragment implements Dronelink.Listener, DroneS
         executor.addListener(this);
         inputIndex = 0;
         intro = true;
-        getActivity().runOnUiThread(updateViews);
+        final Activity activity = getActivity();
+        if (activity != null) {
+            activity.runOnUiThread(updateViews);
+        }
 
         final String[] urls = executor.getUrls();
         if (urls != null) {
@@ -793,7 +806,10 @@ public class FuncFragment extends Fragment implements Dronelink.Listener, DroneS
     public void onFuncUnloaded(final FuncExecutor executor) {
         funcExecutor = null;
         executor.removeListener(this);
-        getActivity().runOnUiThread(updateViews);
+        final Activity activity = getActivity();
+        if (activity != null) {
+            activity.runOnUiThread(updateViews);
+        }
     }
 
     @Override

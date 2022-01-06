@@ -6,6 +6,7 @@
 //
 package com.dronelink.core.ui;
 
+import android.app.Activity;
 import android.location.Location;
 import android.os.Bundle;
 
@@ -118,7 +119,10 @@ public class TelemetryFragment extends Fragment implements DroneSessionManager.L
     }
 
     private void updateTimer() {
-        getActivity().runOnUiThread(update);
+        final Activity activity = getActivity();
+        if (activity != null) {
+            activity.runOnUiThread(update);
+        }
     }
 
     private Runnable update = new Runnable() {

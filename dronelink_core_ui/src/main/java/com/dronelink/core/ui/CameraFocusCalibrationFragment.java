@@ -6,6 +6,7 @@
 //
 package com.dronelink.core.ui;
 
+import android.app.Activity;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.location.Location;
@@ -326,7 +327,10 @@ public class CameraFocusCalibrationFragment extends Fragment implements Dronelin
     };
 
     private void updateTimer() {
-        getActivity().runOnUiThread(update);
+        final Activity activity = getActivity();
+        if (activity != null) {
+            activity.runOnUiThread(update);
+        }
     }
 
     private Runnable update = new Runnable() {

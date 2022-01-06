@@ -6,6 +6,7 @@
 //
 package com.dronelink.core.ui;
 
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.res.ColorStateList;
@@ -176,7 +177,10 @@ public class ModeFragment extends Fragment implements Dronelink.Listener, DroneS
                 }
                 else {
                     countdownRemaining--;
-                    getActivity().runOnUiThread(updateViews);
+                    final Activity activity = getActivity();
+                    if (activity != null) {
+                        activity.runOnUiThread(updateViews);
+                    }
                     Dronelink.getInstance().announce("" + (countdownRemaining + 1));
                 }
             }
@@ -187,7 +191,10 @@ public class ModeFragment extends Fragment implements Dronelink.Listener, DroneS
         if (countdownTimer != null) {
             countdownTimer.cancel();
             countdownTimer = null;
-            getActivity().runOnUiThread(updateViews);
+            final Activity activity = getActivity();
+            if (activity != null) {
+                activity.runOnUiThread(updateViews);
+            }
             if (aborted) {
                 Dronelink.getInstance().announce(getString(R.string.Executable_start_cancelled));
             }
@@ -197,60 +204,62 @@ public class ModeFragment extends Fragment implements Dronelink.Listener, DroneS
     private void engage() {
         final ModeExecutor modeExecutor = this.modeExecutor;
         final DroneSession session = this.session;
-        getActivity().runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                if (modeExecutor == null || session == null) {
-                    return;
-                }
+        final Activity activity = getActivity();
+        if (activity != null) {
+            activity.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    if (modeExecutor == null || session == null) {
+                        return;
+                    }
 
-                try {
-                    modeExecutor.engage(session, new Executor.EngageDisallowed() {
-                        @Override
-                        public void disallowed(final Message reason) {
-                            Handler handler = new Handler(Looper.getMainLooper());
-                            handler.post(new Runnable() {
-                                @Override
-                                public void run() {
-                                    final AlertDialog.Builder alertDialog = new AlertDialog.Builder(getActivity());
-                                    alertDialog.setTitle(reason.title);
-                                    if (reason.details != null) {
-                                        alertDialog.setMessage(reason.details);
-                                    }
-                                    alertDialog.setPositiveButton(getString(R.string.Executable_dismiss), new DialogInterface.OnClickListener() {
-                                        @Override
-                                        public void onClick(final DialogInterface d, int i) {
-                                            d.dismiss();
+                    try {
+                        modeExecutor.engage(session, new Executor.EngageDisallowed() {
+                            @Override
+                            public void disallowed(final Message reason) {
+                                Handler handler = new Handler(Looper.getMainLooper());
+                                handler.post(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        final AlertDialog.Builder alertDialog = new AlertDialog.Builder(getActivity());
+                                        alertDialog.setTitle(reason.title);
+                                        if (reason.details != null) {
+                                            alertDialog.setMessage(reason.details);
                                         }
-                                    });
-                                    alertDialog.show();
-                                }
-                            });
-                            getActivity().runOnUiThread(updateViews);
-                        }
-                    });
+                                        alertDialog.setPositiveButton(getString(R.string.Executable_dismiss), new DialogInterface.OnClickListener() {
+                                            @Override
+                                            public void onClick(final DialogInterface d, int i) {
+                                                d.dismiss();
+                                            }
+                                        });
+                                        alertDialog.show();
+                                    }
+                                });
+                                getActivity().runOnUiThread(updateViews);
+                            }
+                        });
+                    } catch (final Dronelink.DroneSerialNumberUnavailableException e) {
+                        Handler handler = new Handler(Looper.getMainLooper());
+                        handler.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                final AlertDialog.Builder alertDialog = new AlertDialog.Builder(getActivity());
+                                alertDialog.setTitle(getString(R.string.Executable_start_engage_droneSerialNumberUnavailable_title));
+                                alertDialog.setMessage(getString(R.string.Executable_start_engage_droneSerialNumberUnavailable_message));
+                                alertDialog.setPositiveButton(getString(R.string.Executable_dismiss), new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(final DialogInterface d, int i) {
+                                        d.dismiss();
+                                    }
+                                });
+                                alertDialog.show();
+                            }
+                        });
+                        getActivity().runOnUiThread(updateViews);
+                    }
                 }
-                catch (final Dronelink.DroneSerialNumberUnavailableException e) {
-                    Handler handler = new Handler(Looper.getMainLooper());
-                    handler.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            final AlertDialog.Builder alertDialog = new AlertDialog.Builder(getActivity());
-                            alertDialog.setTitle(getString(R.string.Executable_start_engage_droneSerialNumberUnavailable_title));
-                            alertDialog.setMessage(getString(R.string.Executable_start_engage_droneSerialNumberUnavailable_message));
-                            alertDialog.setPositiveButton(getString(R.string.Executable_dismiss), new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(final DialogInterface d, int i) {
-                                    d.dismiss();
-                                }
-                            });
-                            alertDialog.show();
-                        }
-                    });
-                    getActivity().runOnUiThread(updateViews);
-                }
-            }
-        });
+            });
+        }
     }
 
     private void toggleModeExpanded() {
@@ -261,7 +270,10 @@ public class ModeFragment extends Fragment implements Dronelink.Listener, DroneS
         this.expanded = expanded;
         getView().getLayoutParams().height = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, (float)(expanded ? 135 : 70), getResources().getDisplayMetrics());
         getView().requestLayout();
-        getActivity().runOnUiThread(updateViews);
+        final Activity activity = getActivity();
+        if (activity != null) {
+            activity.runOnUiThread(updateViews);
+        }
     }
 
     private Runnable updateViews = new Runnable() {
@@ -374,14 +386,20 @@ public class ModeFragment extends Fragment implements Dronelink.Listener, DroneS
     public void onModeLoaded(final ModeExecutor executor) {
         modeExecutor = executor;
         executor.addListener(this);
-        getActivity().runOnUiThread(updateViews);
+        final Activity activity = getActivity();
+        if (activity != null) {
+            activity.runOnUiThread(updateViews);
+        }
     }
 
     @Override
     public void onModeUnloaded(final ModeExecutor executor) {
         modeExecutor = null;
         executor.removeListener(this);
-        getActivity().runOnUiThread(updateViews);
+        final Activity activity = getActivity();
+        if (activity != null) {
+            activity.runOnUiThread(updateViews);
+        }
     }
 
     @Override
@@ -398,19 +416,28 @@ public class ModeFragment extends Fragment implements Dronelink.Listener, DroneS
     @Override
     public void onModeEngaging(final ModeExecutor executor) {
         Dronelink.getInstance().announce(getString(R.string.Mode_engaging));
-        getActivity().runOnUiThread(updateViews);
+        final Activity activity = getActivity();
+        if (activity != null) {
+            activity.runOnUiThread(updateViews);
+        }
     }
 
     @Override
     public void onModeEngaged(final ModeExecutor executor, final Executor.Engagement engagement) {
-        getActivity().runOnUiThread(updateViews);
+        final Activity activity = getActivity();
+        if (activity != null) {
+            activity.runOnUiThread(updateViews);
+        }
     }
 
     @Override
     public void onModeExecuted(final ModeExecutor executor, final Executor.Engagement engagement) {
         if (System.currentTimeMillis() - lastUpdatedMillis > updateMillis) {
             lastUpdatedMillis = System.currentTimeMillis();
-            getActivity().runOnUiThread(updateViews);
+            final Activity activity = getActivity();
+            if (activity != null) {
+                activity.runOnUiThread(updateViews);
+            }
         }
     }
 
@@ -438,6 +465,9 @@ public class ModeFragment extends Fragment implements Dronelink.Listener, DroneS
         }
 
         Dronelink.getInstance().announce(getString(R.string.Mode_disengaged));
-        getActivity().runOnUiThread(updateViews);
+        final Activity activity = getActivity();
+        if (activity != null) {
+            activity.runOnUiThread(updateViews);
+        }
     }
 }

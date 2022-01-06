@@ -6,6 +6,7 @@
 //
 package com.dronelink.core.ui;
 
+import android.app.Activity;
 import android.content.res.ColorStateList;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -164,7 +165,10 @@ public class CameraOffsetsFragment extends Fragment implements DroneSessionManag
     }
 
     private void updateTimer() {
-        getActivity().runOnUiThread(update);
+        final Activity activity = getActivity();
+        if (activity != null) {
+            activity.runOnUiThread(update);
+        }
     }
 
     private Runnable update = new Runnable() {
@@ -198,7 +202,10 @@ public class CameraOffsetsFragment extends Fragment implements DroneSessionManag
     };
 
     private void listenRCButtonsTimer() {
-        getActivity().runOnUiThread(listenRCButtons);
+        final Activity activity = getActivity();
+        if (activity != null) {
+            activity.runOnUiThread(listenRCButtons);
+        }
     }
 
     private Runnable listenRCButtons = new Runnable() {

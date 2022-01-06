@@ -6,6 +6,7 @@
 //
 package com.dronelink.core.ui;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.res.ColorStateList;
 import android.hardware.Sensor;
@@ -496,7 +497,10 @@ public class DroneOffsetsFragment extends Fragment implements DroneSessionManage
     }
 
     private void updateTimer() {
-        getActivity().runOnUiThread(update);
+        final Activity activity = getActivity();
+        if (activity != null) {
+            activity.runOnUiThread(update);
+        }
     }
 
     private Runnable update = new Runnable() {

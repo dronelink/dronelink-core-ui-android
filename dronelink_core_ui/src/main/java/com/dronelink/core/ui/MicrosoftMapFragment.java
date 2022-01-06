@@ -6,6 +6,7 @@
 //
 package com.dronelink.core.ui;
 
+import android.app.Activity;
 import android.content.Context;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
@@ -44,11 +45,8 @@ import com.dronelink.core.kernel.core.GeoCoordinate;
 import com.dronelink.core.kernel.core.GeoSpatial;
 import com.dronelink.core.kernel.core.Message;
 import com.dronelink.core.kernel.core.PlanRestrictionZone;
+import com.dronelink.core.kernel.core.UserInterfaceSettings;
 import com.dronelink.core.kernel.core.enums.VariableValueType;
-import com.mapbox.mapboxsdk.annotations.IconFactory;
-import com.mapbox.mapboxsdk.annotations.MarkerOptions;
-import com.mapbox.mapboxsdk.camera.CameraUpdateFactory;
-import com.mapbox.mapboxsdk.geometry.LatLng;
 import com.microsoft.maps.AltitudeReferenceSystem;
 import com.microsoft.maps.GeoboundingBox;
 import com.microsoft.maps.Geocircle;
@@ -926,6 +924,29 @@ public class MicrosoftMapFragment extends Fragment implements Dronelink.Listener
         return new Geoposition(location.getLatitude(), location.getLongitude());
     }
 
+    public void applyUserInterfaceSettings(final UserInterfaceSettings userInterfaceSettings) {
+        if (userInterfaceSettings == null) {
+            return;
+        }
+
+        switch (userInterfaceSettings.mapTracking) {
+            case NO_CHANGE:
+                break;
+
+            case NONE:
+                tracking = Tracking.NONE;
+                break;
+
+            case DRONE_NORTH_UP:
+                tracking = Tracking.THIRD_PERSON_NADIR;
+                break;
+
+            case DRONE_HEADING:
+                tracking = Tracking.THIRD_PERSON_NADIR;
+                break;
+        }
+    }
+
     @Override
     public void onRegistered(final String error) {}
 
@@ -934,16 +955,21 @@ public class MicrosoftMapFragment extends Fragment implements Dronelink.Listener
         missionExecutor = executor;
         executor.addListener(this);
 
-        getActivity().runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                updateScene();
-                updateDroneTakeoffAltitude();
-                if (executor.isEstimated()) {
-                    updateMissionElements();
+        applyUserInterfaceSettings(executor.userInterfaceSettings);
+
+        final Activity activity = getActivity();
+        if (activity != null) {
+            activity.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    updateScene();
+                    updateDroneTakeoffAltitude();
+                    if (executor.isEstimated()) {
+                        updateMissionElements();
+                    }
                 }
-            }
-        });
+            });
+        }
     }
 
     @Override
@@ -952,24 +978,33 @@ public class MicrosoftMapFragment extends Fragment implements Dronelink.Listener
         missionExecutor = null;
         executor.removeListener(this);
 
-        getActivity().runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                updateMissionElements();
-            }
-        });
+        final Activity activity = getActivity();
+        if (activity != null) {
+            activity.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    updateMissionElements();
+                }
+            });
+        }
     }
 
     @Override
     public void onFuncLoaded(final FuncExecutor executor) {
         funcExecutor = executor;
         executor.addListener(this);
-        getActivity().runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                updateFuncElements();
-            }
-        });
+
+        applyUserInterfaceSettings(executor.getUserInterfaceSettings());
+
+        final Activity activity = getActivity();
+        if (activity != null) {
+            activity.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    updateFuncElements();
+                }
+            });
+        }
     }
 
     @Override
@@ -977,12 +1012,15 @@ public class MicrosoftMapFragment extends Fragment implements Dronelink.Listener
         funcExecutor = null;
         executor.removeListener(this);
 
-        getActivity().runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                updateFuncElements();
-            }
-        });
+        final Activity activity = getActivity();
+        if (activity != null) {
+            activity.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    updateFuncElements();
+                }
+            });
+        }
     }
 
     @Override
@@ -1022,19 +1060,22 @@ public class MicrosoftMapFragment extends Fragment implements Dronelink.Listener
 
     @Override
     public void onLocated(final DroneSession session) {
-        getActivity().runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                updateScene();
-                //wait 2 seconds to give the map time to load the elevation data
-                new Handler().postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        updateMissionElements();
-                    }
-                }, 2000);
-            }
-        });
+        final Activity activity = getActivity();
+        if (activity != null) {
+            activity.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    updateScene();
+                    //wait 2 seconds to give the map time to load the elevation data
+                    new Handler().postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            updateMissionElements();
+                        }
+                    }, 2000);
+                }
+            });
+        }
     }
 
     @Override
@@ -1057,13 +1098,16 @@ public class MicrosoftMapFragment extends Fragment implements Dronelink.Listener
 
     @Override
     public void onMissionEstimated(final MissionExecutor executor, final MissionExecutor.Estimate estimate) {
-        getActivity().runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                updateScene();
-                updateMissionElements();
-            }
-        });
+        final Activity activity = getActivity();
+        if (activity != null) {
+            activity.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    updateScene();
+                    updateMissionElements();
+                }
+            });
+        }
     }
 
     @Override
@@ -1087,12 +1131,15 @@ public class MicrosoftMapFragment extends Fragment implements Dronelink.Listener
             }
 
             if ((missionReengagementLayer.getElements().size() == 0 && executor.isReengaging()) || (missionReengagementLayer.getElements().size() > 0 && !executor.isReengaging())) {
-                getActivity().runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        updateMissionReengagementElements();
-                    }
-                });
+                final Activity activity = getActivity();
+                if (activity != null) {
+                    activity.runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            updateMissionReengagementElements();
+                        }
+                    });
+                }
             }
         }
     }
@@ -1100,33 +1147,42 @@ public class MicrosoftMapFragment extends Fragment implements Dronelink.Listener
     @Override
     public void onMissionDisengaged(final MissionExecutor executor, final MissionExecutor.Engagement engagement, final Message reason) {
         droneMissionExecutedPositions.clear();
-        getActivity().runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                updateMissionElements();
-            }
-        });
+        final Activity activity = getActivity();
+        if (activity != null) {
+            activity.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    updateMissionElements();
+                }
+            });
+        }
     }
 
     @Override
     public void onMissionUpdatedDisconnected(final MissionExecutor executor, final MissionExecutor.Engagement engagement) {
         droneMissionExecutedPositions.clear();
-        getActivity().runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                updateMissionElements();
-            }
-        });
+        final Activity activity = getActivity();
+        if (activity != null) {
+            activity.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    updateMissionElements();
+                }
+            });
+        }
     }
 
     @Override
     public void onFuncInputsChanged(final FuncExecutor executor) {
-        getActivity().runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                updateFuncElements();
-            }
-        });
+        final Activity activity = getActivity();
+        if (activity != null) {
+            activity.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    updateFuncElements();
+                }
+            });
+        }
     }
 
     @Override
@@ -1145,21 +1201,27 @@ public class MicrosoftMapFragment extends Fragment implements Dronelink.Listener
 
     @Override
     public void onModeExecuted(final ModeExecutor executor, final ModeExecutor.Engagement engagement) {
-        getActivity().runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                updateModeElements();
-            }
-        });
+        final Activity activity = getActivity();
+        if (activity != null) {
+            activity.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    updateModeElements();
+                }
+            });
+        }
     }
 
     @Override
     public void onModeDisengaged(final ModeExecutor executor, final ModeExecutor.Engagement engagement, final Message reason) {
-        getActivity().runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                updateModeElements();
-            }
-        });
+        final Activity activity = getActivity();
+        if (activity != null) {
+            activity.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    updateModeElements();
+                }
+            });
+        }
     }
 }
