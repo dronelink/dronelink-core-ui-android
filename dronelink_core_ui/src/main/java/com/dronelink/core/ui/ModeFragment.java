@@ -331,11 +331,14 @@ public class ModeFragment extends Fragment implements Dronelink.Listener, DroneS
                 subtitleTextView.setText(summaryMessage == null ? "" : summaryMessage.toString());
                 if (expanded) {
                     final StringBuilder messages = new StringBuilder();
-                    for (final MessageGroup messageGroup : modeExecutorLocal.getExecutingMessageGroups()) {
-                        if (messages.length() > 0) {
-                            messages.append("\n");
+                    final MessageGroup[] messageGroups = modeExecutorLocal.getExecutingMessageGroups();
+                    if (messageGroups != null) {
+                        for (final MessageGroup messageGroup : modeExecutorLocal.getExecutingMessageGroups()) {
+                            if (messages.length() > 0) {
+                                messages.append("\n");
+                            }
+                            messages.append(messageGroup.toString());
                         }
-                        messages.append(messageGroup.toString());
                     }
                     messagesTextView.setText(messages.toString());
                 }
