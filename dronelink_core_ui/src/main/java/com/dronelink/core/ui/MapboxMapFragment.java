@@ -874,7 +874,7 @@ public class MapboxMapFragment extends Fragment implements Dronelink.Listener, D
 
     @Override
     public void onMissionExecuted(final MissionExecutor executor, final MissionExecutor.Engagement engagement) {
-        if ((missionReengagementDroneAnnotation == null && executor.isReengaging()) || (missionReengagementDroneAnnotation != null && !executor.isReengaging())) {
+        if ((missionReengagementEstimateBackgroundAnnotation == null && executor.isReengaging()) || (missionReengagementEstimateBackgroundAnnotation != null && !executor.isReengaging())) {
             final Activity activity = getActivity();
             if (activity != null) {
                 activity.runOnUiThread(updateMissionReengagementEstimate);
