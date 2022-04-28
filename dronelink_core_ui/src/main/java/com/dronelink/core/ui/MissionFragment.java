@@ -293,7 +293,7 @@ public class MissionFragment extends Fragment implements Dronelink.Listener, Dro
         if (missionExecutor.requiredTakeoffArea == null) {
             final Location actualTakeoffLocation = session.getState().value.getTakeoffLocation();
             final GeoCoordinate suggestedTakeoffCoordinate = missionExecutor.takeoffCoordinate;
-            if (actualTakeoffLocation != null && actualTakeoffLocation.distanceTo(suggestedTakeoffCoordinate.getLocation()) > Convert.FeetToMeters(50)) {
+            if (actualTakeoffLocation != null && actualTakeoffLocation.distanceTo(suggestedTakeoffCoordinate.getLocation()) > Convert.FeetToMeters(300)) {
                 final Location deviceLocation = Dronelink.getInstance().getLocation();
                 if (deviceLocation != null && deviceLocation.hasAltitude()) {
                     missionExecutor.droneTakeoffAltitudeAlternate = Dronelink.getInstance().getAltitude();
