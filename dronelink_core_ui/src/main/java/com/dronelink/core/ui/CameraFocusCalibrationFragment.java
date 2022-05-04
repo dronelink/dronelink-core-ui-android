@@ -178,7 +178,7 @@ public class CameraFocusCalibrationFragment extends Fragment implements Dronelin
     public void onStart() {
         super.onStart();
         Dronelink.getInstance().addListener(this);
-        Dronelink.getInstance().getSessionManager().addListener(this);
+        Dronelink.getInstance().getTargetDroneSessionManager().addListener(this);
 
         updateTimer = new Timer();
         updateTimer.schedule(new TimerTask() {
@@ -196,7 +196,7 @@ public class CameraFocusCalibrationFragment extends Fragment implements Dronelin
             updateTimer.cancel();
         }
         Dronelink.getInstance().removeListener(this);
-        Dronelink.getInstance().getSessionManager().removeListener(this);
+        Dronelink.getInstance().getTargetDroneSessionManager().removeListener(this);
     }
 
     private void onMarkReference() {
@@ -484,6 +484,9 @@ public class CameraFocusCalibrationFragment extends Fragment implements Dronelin
 
     @Override
     public void onRegistered(final String error) {}
+
+    @Override
+    public void onDroneSessionManagerAdded(final DroneSessionManager manager) {}
 
     @Override
     public void onMissionLoaded(final MissionExecutor executor) {}

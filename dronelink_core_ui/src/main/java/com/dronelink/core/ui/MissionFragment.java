@@ -227,14 +227,14 @@ public class MissionFragment extends Fragment implements Dronelink.Listener, Dro
     @Override
     public void onStart() {
         super.onStart();
-        Dronelink.getInstance().getSessionManager().addListener(this);
+        Dronelink.getInstance().getTargetDroneSessionManager().addListener(this);
         Dronelink.getInstance().addListener(this);
     }
 
     @Override
     public void onStop() {
         super.onStop();
-        Dronelink.getInstance().getSessionManager().removeListener(this);
+        Dronelink.getInstance().getTargetDroneSessionManager().removeListener(this);
         Dronelink.getInstance().removeListener(this);
         if (missionExecutor != null) {
             missionExecutor.removeListener(this);
@@ -612,6 +612,9 @@ public class MissionFragment extends Fragment implements Dronelink.Listener, Dro
 
     @Override
     public void onRegistered(final String error) {}
+
+    @Override
+    public void onDroneSessionManagerAdded(final DroneSessionManager manager) {}
 
     @Override
     public void onInitialized(final DroneSession session) {}

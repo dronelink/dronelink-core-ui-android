@@ -99,7 +99,7 @@ public class TelemetryFragment extends Fragment implements DroneSessionManager.L
     @Override
     public void onStart() {
         super.onStart();
-        Dronelink.getInstance().getSessionManager().addListener(this);
+        Dronelink.getInstance().getTargetDroneSessionManager().addListener(this);
         updateTimer = new Timer();
         updateTimer.schedule(new TimerTask() {
             @Override
@@ -115,7 +115,7 @@ public class TelemetryFragment extends Fragment implements DroneSessionManager.L
         if (updateTimer != null) {
             updateTimer.cancel();
         }
-        Dronelink.getInstance().getSessionManager().removeListener(this);
+        Dronelink.getInstance().getTargetDroneSessionManager().removeListener(this);
     }
 
     private void updateTimer() {

@@ -219,7 +219,7 @@ public class MicrosoftMapFragment extends Fragment implements Dronelink.Listener
         super.onStart();
         mapView.onStart();
 
-        Dronelink.getInstance().getSessionManager().addListener(this);
+        Dronelink.getInstance().getTargetDroneSessionManager().addListener(this);
         Dronelink.getInstance().addListener(this);
 
         updateDroneElementsTimer = new Timer();
@@ -252,7 +252,7 @@ public class MicrosoftMapFragment extends Fragment implements Dronelink.Listener
             updateDroneElementsTimer.cancel();
         }
 
-        Dronelink.getInstance().getSessionManager().removeListener(this);
+        Dronelink.getInstance().getTargetDroneSessionManager().removeListener(this);
         Dronelink.getInstance().removeListener(this);
         if (session != null) {
             session.removeListener(this);
@@ -949,6 +949,9 @@ public class MicrosoftMapFragment extends Fragment implements Dronelink.Listener
 
     @Override
     public void onRegistered(final String error) {}
+
+    @Override
+    public void onDroneSessionManagerAdded(final DroneSessionManager manager) {}
 
     @Override
     public void onMissionLoaded(final MissionExecutor executor) {

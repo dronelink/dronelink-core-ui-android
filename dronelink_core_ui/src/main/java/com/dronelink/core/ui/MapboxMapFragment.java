@@ -141,7 +141,7 @@ public class MapboxMapFragment extends Fragment implements Dronelink.Listener, D
         super.onStart();
         mapView.onStart();
 
-        Dronelink.getInstance().getSessionManager().addListener(this);
+        Dronelink.getInstance().getTargetDroneSessionManager().addListener(this);
         Dronelink.getInstance().addListener(this);
 
         updateTimer = new Timer();
@@ -174,7 +174,7 @@ public class MapboxMapFragment extends Fragment implements Dronelink.Listener, D
             updateTimer.cancel();
         }
 
-        Dronelink.getInstance().getSessionManager().removeListener(this);
+        Dronelink.getInstance().getTargetDroneSessionManager().removeListener(this);
         Dronelink.getInstance().removeListener(this);
 
         final DroneSession sessionLocal = this.session;
@@ -740,6 +740,9 @@ public class MapboxMapFragment extends Fragment implements Dronelink.Listener, D
 
     @Override
     public void onRegistered(final String error) {}
+
+    @Override
+    public void onDroneSessionManagerAdded(final DroneSessionManager manager) {}
 
     @Override
     public void onInitialized(final DroneSession session) {}

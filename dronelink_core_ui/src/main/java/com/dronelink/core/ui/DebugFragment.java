@@ -87,7 +87,7 @@ public class DebugFragment extends Fragment implements DroneSessionManager.Liste
     @Override
     public void onStart() {
         super.onStart();
-        Dronelink.getInstance().getSessionManager().addListener(this);
+        Dronelink.getInstance().getTargetDroneSessionManager().addListener(this);
 
         updateTimer = new Timer();
         updateTimer.schedule(new TimerTask() {
@@ -104,7 +104,7 @@ public class DebugFragment extends Fragment implements DroneSessionManager.Liste
         if (updateTimer != null) {
             updateTimer.cancel();
         }
-        Dronelink.getInstance().getSessionManager().removeListener(this);
+        Dronelink.getInstance().getTargetDroneSessionManager().removeListener(this);
     }
 
     private void updateTimer() {

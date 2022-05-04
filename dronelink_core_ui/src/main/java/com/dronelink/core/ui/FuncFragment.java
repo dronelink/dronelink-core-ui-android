@@ -527,7 +527,7 @@ public class FuncFragment extends Fragment implements Dronelink.Listener, DroneS
     public void onStart() {
         super.onStart();
         Dronelink.getInstance().addListener(this);
-        Dronelink.getInstance().getSessionManager().addListener(this);
+        Dronelink.getInstance().getTargetDroneSessionManager().addListener(this);
 
         listenRCButtonsTimer = new Timer();
         listenRCButtonsTimer.schedule(new TimerTask() {
@@ -545,7 +545,7 @@ public class FuncFragment extends Fragment implements Dronelink.Listener, DroneS
             listenRCButtonsTimer.cancel();
         }
         Dronelink.getInstance().removeListener(this);
-        Dronelink.getInstance().getSessionManager().removeListener(this);
+        Dronelink.getInstance().getTargetDroneSessionManager().removeListener(this);
         final FuncExecutor funcExecutor = this.funcExecutor;
         if (funcExecutor != null) {
             funcExecutor.removeListener(this);
@@ -774,16 +774,16 @@ public class FuncFragment extends Fragment implements Dronelink.Listener, DroneS
     }
 
     @Override
-    public void onRegistered(final String error) {
-    }
+    public void onRegistered(final String error) {}
 
     @Override
-    public void onMissionLoaded(final MissionExecutor executor) {
-    }
+    public void onDroneSessionManagerAdded(final DroneSessionManager manager) {}
 
     @Override
-    public void onMissionUnloaded(final MissionExecutor executor) {
-    }
+    public void onMissionLoaded(final MissionExecutor executor) {}
+
+    @Override
+    public void onMissionUnloaded(final MissionExecutor executor) { }
 
     @Override
     public void onFuncLoaded(final FuncExecutor executor) {

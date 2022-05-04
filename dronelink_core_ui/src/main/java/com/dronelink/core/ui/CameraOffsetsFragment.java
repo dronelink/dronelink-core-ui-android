@@ -98,7 +98,7 @@ public class CameraOffsetsFragment extends Fragment implements DroneSessionManag
     @Override
     public void onStart() {
         super.onStart();
-        Dronelink.getInstance().getSessionManager().addListener(this);
+        Dronelink.getInstance().getTargetDroneSessionManager().addListener(this);
 
         updateTimer = new Timer();
         updateTimer.schedule(new TimerTask() {
@@ -127,7 +127,7 @@ public class CameraOffsetsFragment extends Fragment implements DroneSessionManag
         if (listenRCButtonsTimer != null) {
             listenRCButtonsTimer.cancel();
         }
-        Dronelink.getInstance().getSessionManager().removeListener(this);
+        Dronelink.getInstance().getTargetDroneSessionManager().removeListener(this);
     }
 
     private void onEV(final int steps) {
@@ -196,7 +196,7 @@ public class CameraOffsetsFragment extends Fragment implements DroneSessionManag
                 cTextView.setText((steps > 0 ? "+" : "") + steps);
             }
             else {
-                cTextView.setText(exposureCompensation == null ? "" : Dronelink.getInstance().formatEnum("CameraExposureCompensation", gson.toJson(exposureCompensation).replace("\"", ""), ""));
+                cTextView.setText(exposureCompensation == null ? "" : Dronelink.getInstance().formatEnum("CameraExposureCompensation", Kernel.enumRawValue(gson, exposureCompensation), ""));
             }
         }
     };

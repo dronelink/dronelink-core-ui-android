@@ -145,14 +145,14 @@ public class ModeFragment extends Fragment implements Dronelink.Listener, DroneS
     @Override
     public void onStart() {
         super.onStart();
-        Dronelink.getInstance().getSessionManager().addListener(this);
+        Dronelink.getInstance().getTargetDroneSessionManager().addListener(this);
         Dronelink.getInstance().addListener(this);
     }
 
     @Override
     public void onStop() {
         super.onStop();
-        Dronelink.getInstance().getSessionManager().removeListener(this);
+        Dronelink.getInstance().getTargetDroneSessionManager().removeListener(this);
         Dronelink.getInstance().removeListener(this);
         final ModeExecutor modeExecutor = this.modeExecutor;
         if (modeExecutor != null) {
@@ -372,6 +372,9 @@ public class ModeFragment extends Fragment implements Dronelink.Listener, DroneS
 
     @Override
     public void onRegistered(final String error) {}
+
+    @Override
+    public void onDroneSessionManagerAdded(final DroneSessionManager manager) {}
 
     @Override
     public void onMissionLoaded(final MissionExecutor executor) {}
