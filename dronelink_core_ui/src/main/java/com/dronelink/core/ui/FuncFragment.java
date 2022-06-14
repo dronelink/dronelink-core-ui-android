@@ -527,7 +527,10 @@ public class FuncFragment extends Fragment implements Dronelink.Listener, DroneS
     public void onStart() {
         super.onStart();
         Dronelink.getInstance().addListener(this);
-        Dronelink.getInstance().getTargetDroneSessionManager().addListener(this);
+        final DroneSessionManager manager = Dronelink.getInstance().getTargetDroneSessionManager();
+        if (manager != null) {
+            manager.addListener(this);
+        }
 
         listenRCButtonsTimer = new Timer();
         listenRCButtonsTimer.schedule(new TimerTask() {
@@ -545,7 +548,10 @@ public class FuncFragment extends Fragment implements Dronelink.Listener, DroneS
             listenRCButtonsTimer.cancel();
         }
         Dronelink.getInstance().removeListener(this);
-        Dronelink.getInstance().getTargetDroneSessionManager().removeListener(this);
+        final DroneSessionManager manager = Dronelink.getInstance().getTargetDroneSessionManager();
+        if (manager != null) {
+            manager.removeListener(this);
+        }
         final FuncExecutor funcExecutor = this.funcExecutor;
         if (funcExecutor != null) {
             funcExecutor.removeListener(this);

@@ -227,14 +227,20 @@ public class MissionFragment extends Fragment implements Dronelink.Listener, Dro
     @Override
     public void onStart() {
         super.onStart();
-        Dronelink.getInstance().getTargetDroneSessionManager().addListener(this);
+        final DroneSessionManager manager = Dronelink.getInstance().getTargetDroneSessionManager();
+        if (manager != null) {
+            manager.addListener(this);
+        }
         Dronelink.getInstance().addListener(this);
     }
 
     @Override
     public void onStop() {
         super.onStop();
-        Dronelink.getInstance().getTargetDroneSessionManager().removeListener(this);
+        final DroneSessionManager manager = Dronelink.getInstance().getTargetDroneSessionManager();
+        if (manager != null) {
+            manager.removeListener(this);
+        }
         Dronelink.getInstance().removeListener(this);
         if (missionExecutor != null) {
             missionExecutor.removeListener(this);
@@ -407,7 +413,7 @@ public class MissionFragment extends Fragment implements Dronelink.Listener, Dro
                                         alertDialog.show();
                                     }
                                 });
-                                getActivity().runOnUiThread(updateViews);
+                                activity.runOnUiThread(updateViews);
                             }
                         });
                     } catch (final Dronelink.DroneSerialNumberUnavailableException e) {
@@ -427,7 +433,7 @@ public class MissionFragment extends Fragment implements Dronelink.Listener, Dro
                                 alertDialog.show();
                             }
                         });
-                        getActivity().runOnUiThread(updateViews);
+                        activity.runOnUiThread(updateViews);
                     }
                 }
             });
@@ -600,14 +606,20 @@ public class MissionFragment extends Fragment implements Dronelink.Listener, Dro
     public void onOpened(final DroneSession session) {
         this.session = session;
         session.addListener(this);
-        getActivity().runOnUiThread(updateViews);
+        final Activity activity = getActivity();
+        if (activity != null) {
+            activity.runOnUiThread(updateViews);
+        }
     }
 
     @Override
     public void onClosed(final DroneSession session) {
         this.session = null;
         session.removeListener(this);
-        getActivity().runOnUiThread(updateViews);
+        final Activity activity = getActivity();
+        if (activity != null) {
+            activity.runOnUiThread(updateViews);
+        }
     }
 
     @Override

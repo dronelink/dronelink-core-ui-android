@@ -464,7 +464,10 @@ public class DroneOffsetsFragment extends Fragment implements DroneSessionManage
     @Override
     public void onStart() {
         super.onStart();
-        Dronelink.getInstance().getTargetDroneSessionManager().addListener(this);
+        final DroneSessionManager manager = Dronelink.getInstance().getTargetDroneSessionManager();
+        if (manager != null) {
+            manager.addListener(this);
+        }
 
         updateTimer = new Timer();
         updateTimer.schedule(new TimerTask() {
@@ -482,7 +485,12 @@ public class DroneOffsetsFragment extends Fragment implements DroneSessionManage
             updateTimer.cancel();
         }
         stopRelativeAltitudeUpdates();
-        Dronelink.getInstance().getTargetDroneSessionManager().removeListener(this);
+
+        final DroneSessionManager manager = Dronelink.getInstance().getTargetDroneSessionManager();
+        if (manager != null) {
+            manager.removeListener(this);
+        }
+
         if (session != null) {
             session.removeListener(this);
         }

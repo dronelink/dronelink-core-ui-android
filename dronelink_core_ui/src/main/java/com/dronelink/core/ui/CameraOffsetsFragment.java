@@ -98,7 +98,10 @@ public class CameraOffsetsFragment extends Fragment implements DroneSessionManag
     @Override
     public void onStart() {
         super.onStart();
-        Dronelink.getInstance().getTargetDroneSessionManager().addListener(this);
+        final DroneSessionManager manager = Dronelink.getInstance().getTargetDroneSessionManager();
+        if (manager != null) {
+            manager.addListener(this);
+        }
 
         updateTimer = new Timer();
         updateTimer.schedule(new TimerTask() {
@@ -127,7 +130,11 @@ public class CameraOffsetsFragment extends Fragment implements DroneSessionManag
         if (listenRCButtonsTimer != null) {
             listenRCButtonsTimer.cancel();
         }
-        Dronelink.getInstance().getTargetDroneSessionManager().removeListener(this);
+
+        final DroneSessionManager manager = Dronelink.getInstance().getTargetDroneSessionManager();
+        if (manager != null) {
+            manager.removeListener(this);
+        }
     }
 
     private void onEV(final int steps) {
