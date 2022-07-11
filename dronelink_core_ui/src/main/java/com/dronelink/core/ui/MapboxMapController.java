@@ -1,29 +1,24 @@
-//  MapboxMapFragment.java
+//  MapboxMapController.java
 //  DronelinkCoreUI
 //
-//  Created by Jim McAndrew on 11/8/19.
-//  Copyright © 2019 Dronelink. All rights reserved.
+//  Created by Jim McAndrew on 6/15/22.
+//  Copyright © 2022 Dronelink. All rights reserved.
 //
 package com.dronelink.core.ui;
 
-import android.app.Activity;
 import android.content.Context;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.location.Location;
-import android.os.Bundle;
 import android.os.Handler;
+import android.view.ContextThemeWrapper;
 import android.view.Gravity;
-import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.PopupMenu;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.fragment.app.Fragment;
 
 import com.dronelink.core.CameraFile;
 import com.dronelink.core.Convert;
@@ -63,8 +58,8 @@ import com.mapbox.mapboxsdk.geometry.LatLngBounds;
 import com.mapbox.mapboxsdk.location.LocationComponent;
 import com.mapbox.mapboxsdk.location.LocationComponentActivationOptions;
 import com.mapbox.mapboxsdk.location.modes.RenderMode;
+import com.mapbox.mapboxsdk.maps.MapView;
 import com.mapbox.mapboxsdk.maps.MapboxMap;
-import com.mapbox.mapboxsdk.maps.OnMapReadyCallback;
 import com.mapbox.mapboxsdk.maps.Style;
 import com.mapbox.mapboxsdk.style.layers.PropertyFactory;
 import com.mapbox.mapboxsdk.style.layers.SymbolLayer;
@@ -77,7 +72,7 @@ import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
-public class MapboxMapFragment extends Fragment implements Dronelink.Listener, DroneSessionManager.Listener, DroneSession.Listener, MissionExecutor.Listener, FuncExecutor.Listener, ModeExecutor.Listener, OnMapReadyCallback {
+public class MapboxMapController implements Dronelink.Listener, DroneSessionManager.Listener, DroneSession.Listener, MissionExecutor.Listener, FuncExecutor.Listener, ModeExecutor.Listener {
     private enum Tracking {
         NONE,
         DRONE_NORTH_UP,
@@ -90,6 +85,7 @@ public class MapboxMapFragment extends Fragment implements Dronelink.Listener, D
     private ModeExecutor modeExecutor;
     private com.mapbox.mapboxsdk.maps.MapView mapView;
     private MapboxMap map;
+    private LocationComponent locationComponent;
     private Annotation missionRequiredTakeoffAreaAnnotation;
     private List<Annotation> missionRestrictionZoneAnnotations = new ArrayList<>();
     private Annotation missionEstimateBackgroundAnnotation;
@@ -104,6 +100,7 @@ public class MapboxMapFragment extends Fragment implements Dronelink.Listener, D
     private boolean missionCentered = false;
     private String currentMissionEstimateID = null;
     private Tracking tracking = Tracking.NONE;
+    private boolean disposed = false;
 
     private DroneStateAdapter getDroneState() {
         final DroneSession session = this.session;
@@ -113,32 +110,9 @@ public class MapboxMapFragment extends Fragment implements Dronelink.Listener, D
         return session.getState().value;
     }
 
-    public MapboxMapFragment() {}
-
-    @Override
-    public void onCreate(final Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-    }
-
-    @Override
-    public View onCreateView(final LayoutInflater inflater, final ViewGroup container, final Bundle savedInstanceState) {
-        final View view = inflater.inflate(R.layout.fragment_mapbox_map, container, false);
-        view.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
-        return view;
-    }
-
-    @Override
-    public void onViewCreated(final View view, @Nullable final Bundle savedInstanceState) {
-        super.onViewCreated(view, savedInstanceState);
-        mapView = getView().findViewById(R.id.mapView);
-        mapView.onCreate(savedInstanceState);
-        mapView.getMapAsync(this);
-    }
-
-    @Override
-    public void onStart() {
-        super.onStart();
-        mapView.onStart();
+    public MapboxMapController(final MapboxMap map, final MapView mapView) {
+        this.map = map;
+        this.mapView = mapView;
 
         final DroneSessionManager manager = Dronelink.getInstance().getTargetDroneSessionManager();
         if (manager != null) {
@@ -153,24 +127,55 @@ public class MapboxMapFragment extends Fragment implements Dronelink.Listener, D
                 updateTimer();
             }
         }, 0, updateMillis);
+
+        map.setStyle(Style.SATELLITE_STREETS, new Style.OnStyleLoaded() {
+            @Override
+            public void onStyleLoaded(@NonNull Style style) {
+                enableLocationComponent(style);
+
+                map.getUiSettings().setTiltGesturesEnabled(false);
+                map.getUiSettings().setCompassGravity(Gravity.BOTTOM | Gravity.RIGHT);
+
+                style.addImage("drone-home", BitmapFactory.decodeResource(mapView.getResources(), R.drawable.home));
+                final GeoJsonSource droneHomeSource = new GeoJsonSource("drone-home", Feature.fromGeometry(Point.fromLngLat(0, 0)));
+                style.addSource(droneHomeSource);
+
+                final SymbolLayer droneHomeLayer;
+                droneHomeLayer = new SymbolLayer("drone-home", "drone-home");
+                droneHomeLayer.withProperties(PropertyFactory.iconImage("drone-home"), PropertyFactory.iconAllowOverlap(true));
+                style.addLayer(droneHomeLayer);
+
+                style.addImage("drone", BitmapFactory.decodeResource(mapView.getResources(), R.drawable.drone));
+                final GeoJsonSource droneSource = new GeoJsonSource("drone", Feature.fromGeometry(Point.fromLngLat(0, 0)));
+                style.addSource(droneSource);
+
+                final SymbolLayer droneLayer;
+                droneLayer = new SymbolLayer("drone", "drone");
+                droneLayer.withProperties(PropertyFactory.iconImage("drone"), PropertyFactory.iconAllowOverlap(true));
+                style.addLayer(droneLayer);
+
+                style.addImage("mode-target", BitmapFactory.decodeResource(mapView.getResources(), R.drawable.drone));
+                final GeoJsonSource modeTargetSource = new GeoJsonSource("mode-target", Feature.fromGeometry(Point.fromLngLat(0, 0)));
+                style.addSource(modeTargetSource);
+
+                final SymbolLayer modeTargetLayer;
+                modeTargetLayer = new SymbolLayer("mode-target", "mode-target");
+                modeTargetLayer.withProperties(PropertyFactory.iconImage("mode-target"), PropertyFactory.iconAllowOverlap(true), PropertyFactory.iconOpacity((float) 0.5));
+                style.addLayer(modeTargetLayer);
+            }
+        });
     }
 
-    @Override
-    public void onResume() {
-        super.onResume();
-        mapView.onResume();
-    }
+    @SuppressWarnings({"MissingPermission"})
+    public void dispose() {
+        if (disposed) {
+            return;
+        }
+        disposed = true;
 
-    @Override
-    public void onPause() {
-        super.onPause();
-        mapView.onPause();
-    }
-
-    @Override
-    public void onStop() {
-        super.onStop();
-        mapView.onStop();
+        locationComponent.setLocationComponentEnabled(false);
+        map = null;
+        mapView = null;
 
         if (updateTimer != null) {
             updateTimer.cancel();
@@ -203,38 +208,20 @@ public class MapboxMapFragment extends Fragment implements Dronelink.Listener, D
         }
     }
 
-    @Override
-    public void onLowMemory() {
-        super.onLowMemory();
-        mapView.onLowMemory();
-    }
-
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-        mapView.onDestroy();
-    }
-
-    @Override
-    public void onSaveInstanceState(final Bundle outState) {
-        super.onSaveInstanceState(outState);
-        mapView.onSaveInstanceState(outState);
-    }
-
     public interface MoreMenuItem {
         String getTitle();
         void onClick();
     }
 
-    public void onMore(final Context context, final View anchor, final MapboxMapFragment.MoreMenuItem[] actions) {
-        final PopupMenu actionSheet = new PopupMenu(context, anchor);
+    public void onMore(final Context context, final View anchor, final MapboxMapController.MoreMenuItem[] actions) {
+        final PopupMenu actionSheet = new PopupMenu(new ContextThemeWrapper(context, R.style.PopupMenuOverlapAnchor), anchor);
 
         actionSheet.getMenu().add(R.string.MapboxMap_reset);
         actionSheet.getMenu().add(R.string.MapboxMap_drone_heading);
         actionSheet.getMenu().add(R.string.MapboxMap_drone_north_up);
 
         if (actions != null) {
-            for (final MapboxMapFragment.MoreMenuItem action : actions) {
+            for (final MapboxMapController.MoreMenuItem action : actions) {
                 actionSheet.getMenu().add(action.getTitle());
             }
         }
@@ -242,23 +229,23 @@ public class MapboxMapFragment extends Fragment implements Dronelink.Listener, D
         actionSheet.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
             @Override
             public boolean onMenuItemClick(final MenuItem item) {
-                if (item.getTitle() == getString(R.string.MapboxMap_reset)) {
+                if (item.getTitle() == context.getString(R.string.MapboxMap_reset)) {
                     tracking = Tracking.NONE;
                     return true;
                 }
 
-                if (item.getTitle() == getString(R.string.MapboxMap_drone_heading)) {
+                if (item.getTitle() == context.getString(R.string.MapboxMap_drone_heading)) {
                     tracking = Tracking.DRONE_HEADING;
                     return true;
                 }
 
-                if (item.getTitle() == getString(R.string.MapboxMap_drone_north_up)) {
+                if (item.getTitle() == context.getString(R.string.MapboxMap_drone_north_up)) {
                     tracking = Tracking.DRONE_NORTH_UP;
                     return true;
                 }
 
                 if (actions != null) {
-                    for (final MapboxMapFragment.MoreMenuItem action : actions) {
+                    for (final MapboxMapController.MoreMenuItem action : actions) {
                         if (item.getTitle() == action.getTitle()) {
                             action.onClick();
                             return true;
@@ -273,16 +260,21 @@ public class MapboxMapFragment extends Fragment implements Dronelink.Listener, D
         actionSheet.show();
     }
 
-    private void updateTimer() {
-        final Activity activity = getActivity();
-        if (activity != null) {
-            activity.runOnUiThread(update);
+    private void runOnUiThread(final Runnable runnable) {
+        if (disposed) {
+            return;
         }
+
+        mapView.post(runnable);
+    }
+
+    private void updateTimer() {
+        runOnUiThread(update);
     }
 
     private Runnable update = new Runnable() {
         public void run() {
-            if (!isAdded() || map == null) {
+            if (map == null) {
                 return;
             }
 
@@ -349,10 +341,7 @@ public class MapboxMapFragment extends Fragment implements Dronelink.Listener, D
                 new Handler().postDelayed(new Runnable() {
                     @Override
                     public void run() {
-                        final Activity activity = getActivity();
-                        if (activity != null) {
-                            activity.runOnUiThread(updateMissionRequiredTakeoffArea);
-                        }
+                        runOnUiThread(updateMissionRequiredTakeoffArea);
                     }
                 }, 100);
                 return;
@@ -386,10 +375,7 @@ public class MapboxMapFragment extends Fragment implements Dronelink.Listener, D
                 new Handler().postDelayed(new Runnable() {
                     @Override
                     public void run() {
-                        final Activity activity = getActivity();
-                        if (activity != null) {
-                            activity.runOnUiThread(updateMissionRestrictionZones);
-                        }
+                        runOnUiThread(updateMissionRestrictionZones);
                     }
                 }, 100);
                 return;
@@ -447,10 +433,7 @@ public class MapboxMapFragment extends Fragment implements Dronelink.Listener, D
                 new Handler().postDelayed(new Runnable() {
                     @Override
                     public void run() {
-                        final Activity activity = getActivity();
-                        if (activity != null) {
-                            activity.runOnUiThread(updateMissionEstimate);
-                        }
+                        runOnUiThread(updateMissionEstimate);
                     }
                 }, 100);
                 return;
@@ -573,7 +556,7 @@ public class MapboxMapFragment extends Fragment implements Dronelink.Listener, D
 
         if (reengagementCoordinate != null && (!engaged || reengaging)) {
             missionReengagementDroneAnnotation = map.addMarker(new MarkerOptions()
-                    .setIcon(IconFactory.getInstance(getActivity()).fromResource(R.drawable.drone_reengagement))
+                    .setIcon(IconFactory.getInstance(mapView.getContext()).fromResource(R.drawable.drone_reengagement))
                     .setPosition(reengagementCoordinate));
         }
 
@@ -619,7 +602,7 @@ public class MapboxMapFragment extends Fragment implements Dronelink.Listener, D
 
             while (funcDroneAnnotations.size() < spatials.size()) {
                 funcDroneAnnotations.add(map.addMarker(new MarkerOptions()
-                        .setIcon(IconFactory.getInstance(getActivity()).fromResource(R.drawable.func_input_drone))
+                        .setIcon(IconFactory.getInstance(mapView.getContext()).fromResource(R.drawable.func_input_drone))
                         .setPosition(new LatLng(spatials.get(funcDroneAnnotations.size()).coordinate.latitude, spatials.get(funcDroneAnnotations.size()).coordinate.longitude))));
             }
 
@@ -642,15 +625,12 @@ public class MapboxMapFragment extends Fragment implements Dronelink.Listener, D
                 final FuncMapOverlay[] mapOverlays = funcExecutorLocal.getMapOverlays(session, new FuncExecutor.FuncExecuteError() {
                     @Override
                     public void error(final String value) {
-                        final Activity activity = getActivity();
-                        if (activity != null) {
-                            activity.runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    Toast.makeText(getContext(), value, Toast.LENGTH_LONG).show();
-                                }
-                            });
-                        }
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                Toast.makeText(mapView.getContext(), value, Toast.LENGTH_LONG).show();
+                            }
+                        });
                     }
                 });
 
@@ -761,17 +741,14 @@ public class MapboxMapFragment extends Fragment implements Dronelink.Listener, D
 
         final Location droneLocation = state.getLocation();
         if (droneLocation != null && missionExecutor == null) {
-            final Activity activity = getActivity();
-            if (activity != null) {
-                activity.runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        if (map != null) {
-                            map.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(droneLocation.getLatitude(), droneLocation.getLongitude()), 18.5));
-                        }
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    if (map != null) {
+                        map.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(droneLocation.getLatitude(), droneLocation.getLongitude()), 18.5));
                     }
-                });
-            }
+                }
+            });
         }
     }
 
@@ -796,13 +773,10 @@ public class MapboxMapFragment extends Fragment implements Dronelink.Listener, D
         missionCentered = false;
         executor.addListener(this);
         applyUserInterfaceSettings(executor.userInterfaceSettings);
-        final Activity activity = getActivity();
-        if (activity != null) {
-            activity.runOnUiThread(updateMissionRequiredTakeoffArea);
-            activity.runOnUiThread(updateMissionRestrictionZones);
-            if (executor.isEstimated()) {
-                activity.runOnUiThread(updateMissionEstimate);
-            }
+        runOnUiThread(updateMissionRequiredTakeoffArea);
+        runOnUiThread(updateMissionRestrictionZones);
+        if (executor.isEstimated()) {
+            runOnUiThread(updateMissionEstimate);
         }
     }
 
@@ -811,12 +785,9 @@ public class MapboxMapFragment extends Fragment implements Dronelink.Listener, D
         missionExecutor = null;
         missionCentered = false;
         executor.removeListener(this);
-        final Activity activity = getActivity();
-        if (activity != null) {
-            activity.runOnUiThread(updateMissionRequiredTakeoffArea);
-            activity.runOnUiThread(updateMissionRestrictionZones);
-            activity.runOnUiThread(updateMissionEstimate);
-        }
+        runOnUiThread(updateMissionRequiredTakeoffArea);
+        runOnUiThread(updateMissionRestrictionZones);
+        runOnUiThread(updateMissionEstimate);
     }
 
     @Override
@@ -824,20 +795,14 @@ public class MapboxMapFragment extends Fragment implements Dronelink.Listener, D
         funcExecutor = executor;
         executor.addListener(this);
         applyUserInterfaceSettings(executor.getUserInterfaceSettings());
-        final Activity activity = getActivity();
-        if (activity != null) {
-            activity.runOnUiThread(updateFuncElements);
-        }
+        runOnUiThread(updateFuncElements);
     }
 
     @Override
     public void onFuncUnloaded(final FuncExecutor executor) {
         funcExecutor = null;
         executor.removeListener(this);
-        final Activity activity = getActivity();
-        if (activity != null) {
-            activity.runOnUiThread(updateFuncElements);
-        }
+        runOnUiThread(updateFuncElements);
     }
 
     @Override
@@ -863,10 +828,7 @@ public class MapboxMapFragment extends Fragment implements Dronelink.Listener, D
 
     @Override
     public void onMissionEstimated(final MissionExecutor executor, final MissionExecutor.Estimate estimate) {
-        final Activity activity = getActivity();
-        if (activity != null) {
-            activity.runOnUiThread(updateMissionEstimate);
-        }
+        runOnUiThread(updateMissionEstimate);
     }
 
     @Override
@@ -883,35 +845,23 @@ public class MapboxMapFragment extends Fragment implements Dronelink.Listener, D
     @Override
     public void onMissionExecuted(final MissionExecutor executor, final MissionExecutor.Engagement engagement) {
         if ((missionReengagementEstimateBackgroundAnnotation == null && executor.isReengaging()) || (missionReengagementEstimateBackgroundAnnotation != null && !executor.isReengaging())) {
-            final Activity activity = getActivity();
-            if (activity != null) {
-                activity.runOnUiThread(updateMissionReengagementEstimate);
-            }
+            runOnUiThread(updateMissionReengagementEstimate);
         }
     }
 
     @Override
     public void onMissionDisengaged(final MissionExecutor executor, final MissionExecutor.Engagement engagement, final Message reason) {
-        final Activity activity = getActivity();
-        if (activity != null) {
-            activity.runOnUiThread(updateMissionReengagementEstimate);
-        }
+        runOnUiThread(updateMissionReengagementEstimate);
     }
 
     @Override
     public void onMissionUpdatedDisconnected(final MissionExecutor executor, final MissionExecutor.Engagement engagement) {
-        final Activity activity = getActivity();
-        if (activity != null) {
-            activity.runOnUiThread(updateMissionReengagementEstimate);
-        }
+        runOnUiThread(updateMissionReengagementEstimate);
     }
 
     @Override
     public void onFuncInputsChanged(final FuncExecutor executor) {
-        final Activity activity = getActivity();
-        if (activity != null) {
-            activity.runOnUiThread(updateFuncElements);
-        }
+        runOnUiThread(updateFuncElements);
     }
 
     @Override
@@ -928,71 +878,24 @@ public class MapboxMapFragment extends Fragment implements Dronelink.Listener, D
 
     @Override
     public void onModeEngaged(final ModeExecutor executor, final ModeExecutor.Engagement engagement) {
-        final Activity activity = getActivity();
-        if (activity != null) {
-            activity.runOnUiThread(updateModeElements);
-        }
+        runOnUiThread(updateModeElements);
     }
 
     @Override
     public void onModeExecuted(final ModeExecutor executor, final ModeExecutor.Engagement engagement) {
-        final Activity activity = getActivity();
-        if (activity != null) {
-            activity.runOnUiThread(updateModeElements);
-        }
+        runOnUiThread(updateModeElements);
     }
 
     @Override
     public void onModeDisengaged(final ModeExecutor executor, final ModeExecutor.Engagement engagement, final Message reason) {}
 
-    @Override
-    public void onMapReady(@NonNull final MapboxMap mapboxMap) {
-        map = mapboxMap;
-        final MapboxMapFragment self = this;
-        mapboxMap.setStyle(Style.SATELLITE_STREETS, new Style.OnStyleLoaded() {
-            @Override
-            public void onStyleLoaded(@NonNull Style style) {
-                enableLocationComponent(style);
-
-                map.getUiSettings().setTiltGesturesEnabled(false);
-                map.getUiSettings().setCompassGravity(Gravity.BOTTOM | Gravity.RIGHT);
-
-                style.addImage("drone-home", BitmapFactory.decodeResource(MapboxMapFragment.this.getResources(), R.drawable.home));
-                final GeoJsonSource droneHomeSource = new GeoJsonSource("drone-home", Feature.fromGeometry(Point.fromLngLat(0, 0)));
-                style.addSource(droneHomeSource);
-
-                final SymbolLayer droneHomeLayer;
-                droneHomeLayer = new SymbolLayer("drone-home", "drone-home");
-                droneHomeLayer.withProperties(PropertyFactory.iconImage("drone-home"), PropertyFactory.iconAllowOverlap(true));
-                style.addLayer(droneHomeLayer);
-
-                style.addImage("drone", BitmapFactory.decodeResource(MapboxMapFragment.this.getResources(), R.drawable.drone));
-                final GeoJsonSource droneSource = new GeoJsonSource("drone", Feature.fromGeometry(Point.fromLngLat(0, 0)));
-                style.addSource(droneSource);
-
-                final SymbolLayer droneLayer;
-                droneLayer = new SymbolLayer("drone", "drone");
-                droneLayer.withProperties(PropertyFactory.iconImage("drone"), PropertyFactory.iconAllowOverlap(true));
-                style.addLayer(droneLayer);
-
-                style.addImage("mode-target", BitmapFactory.decodeResource(MapboxMapFragment.this.getResources(), R.drawable.drone));
-                final GeoJsonSource modeTargetSource = new GeoJsonSource("mode-target", Feature.fromGeometry(Point.fromLngLat(0, 0)));
-                style.addSource(modeTargetSource);
-
-                final SymbolLayer modeTargetLayer;
-                modeTargetLayer = new SymbolLayer("mode-target", "mode-target");
-                modeTargetLayer.withProperties(PropertyFactory.iconImage("mode-target"), PropertyFactory.iconAllowOverlap(true), PropertyFactory.iconOpacity((float) 0.5));
-                style.addLayer(modeTargetLayer);
-            }
-        });
-    }
-
     @SuppressWarnings({"MissingPermission"})
     private void enableLocationComponent(final Style style) {
-        if (PermissionsManager.areLocationPermissionsGranted(getContext())) {
-            final LocationComponent locationComponent = map.getLocationComponent();
-            locationComponent.activateLocationComponent(LocationComponentActivationOptions.builder(getContext(), style).build());
+        if (PermissionsManager.areLocationPermissionsGranted(mapView.getContext())) {
+            locationComponent = map.getLocationComponent();
+            locationComponent.activateLocationComponent(LocationComponentActivationOptions.builder(mapView.getContext(), style).build());
             locationComponent.setLocationComponentEnabled(true);
+            locationComponent.setMaxAnimationFps(30);
             locationComponent.setRenderMode(RenderMode.COMPASS);
             locationComponent.getLocationEngine().getLastLocation(new LocationEngineCallback<LocationEngineResult>() {
                 @Override

@@ -37,7 +37,6 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 public class CameraOffsetsFragment extends Fragment implements DroneSessionManager.Listener, DroneSession.Listener {
-    private static final Gson gson = Kernel.createGson();
     private DroneSession session;
     private ExposureCompensationStepCameraCommand exposureCommand = null;
 
@@ -203,7 +202,7 @@ public class CameraOffsetsFragment extends Fragment implements DroneSessionManag
                 cTextView.setText((steps > 0 ? "+" : "") + steps);
             }
             else {
-                cTextView.setText(exposureCompensation == null ? "" : Dronelink.getInstance().formatEnum("CameraExposureCompensation", Kernel.enumRawValue(gson, exposureCompensation), ""));
+                cTextView.setText(exposureCompensation == null ? "" : Dronelink.getInstance().formatEnum("CameraExposureCompensation", Kernel.enumRawValue(exposureCompensation), ""));
             }
         }
     };
