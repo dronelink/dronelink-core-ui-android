@@ -173,7 +173,9 @@ public class MapboxMapController implements Dronelink.Listener, DroneSessionMana
         }
         disposed = true;
 
-        locationComponent.setLocationComponentEnabled(false);
+        if (locationComponent != null) {
+            locationComponent.setLocationComponentEnabled(false);
+        }
         map = null;
         mapView = null;
 
@@ -655,6 +657,10 @@ public class MapboxMapController implements Dronelink.Listener, DroneSessionMana
 
     private Runnable updateModeElements = new Runnable() {
         public void run() {
+            if (map == null) {
+                return;
+            }
+
             final ModeExecutor modeExecutorLocal = modeExecutor;
             if (modeExecutorLocal == null || !modeExecutorLocal.isEngaged()) {
                 return;
@@ -769,6 +775,7 @@ public class MapboxMapController implements Dronelink.Listener, DroneSessionMana
 
     @Override
     public void onMissionLoaded(final MissionExecutor executor) {
+        currentMissionEstimateID = null;
         missionExecutor = executor;
         missionCentered = false;
         executor.addListener(this);
