@@ -326,25 +326,26 @@ public class FuncFragment extends Fragment implements Dronelink.Listener, DroneS
             return;
         }
 
-        funcExecutor.addNextDynamicInput(session, new FuncExecutor.FuncExecuteError() {
+        funcExecutor.addNextDynamicInput(session, new FuncExecutor.FuncExecuteFinish() {
             @Override
-            public void error(final String value) {
-                showToast(value);
-                inputIndex -= 1;
-                if (inputIndex < 0) {
-                    inputIndex = 0;
-                    intro = true;
-                }
-                else {
-                    readValue();
-                }
-
-                getActivity().runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        getActivity().runOnUiThread(updateViews);
+            public void finish(final String error) {
+                if (error != null) {
+                    showToast(error);
+                    inputIndex -= 1;
+                    if (inputIndex < 0) {
+                        inputIndex = 0;
+                        intro = true;
+                    } else {
+                        readValue();
                     }
-                });
+
+                    getActivity().runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            getActivity().runOnUiThread(updateViews);
+                        }
+                    });
+                }
             }
         });
     }
