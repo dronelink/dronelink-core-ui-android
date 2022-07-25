@@ -627,12 +627,6 @@ public class MapboxMapController implements Dronelink.Listener, DroneSessionMana
                 final FuncMapOverlay[] mapOverlays = funcExecutorLocal.getMapOverlays(session, new FuncExecutor.FuncExecuteError() {
                     @Override
                     public void error(final String value) {
-                        runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                Toast.makeText(mapView.getContext(), value, Toast.LENGTH_LONG).show();
-                            }
-                        });
                     }
                 });
 

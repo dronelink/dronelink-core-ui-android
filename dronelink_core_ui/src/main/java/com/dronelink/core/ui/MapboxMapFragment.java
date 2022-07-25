@@ -19,7 +19,6 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.PopupMenu;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -642,15 +641,6 @@ public class MapboxMapFragment extends Fragment implements Dronelink.Listener, D
                 final FuncMapOverlay[] mapOverlays = funcExecutorLocal.getMapOverlays(session, new FuncExecutor.FuncExecuteError() {
                     @Override
                     public void error(final String value) {
-                        final Activity activity = getActivity();
-                        if (activity != null) {
-                            activity.runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    Toast.makeText(getContext(), value, Toast.LENGTH_LONG).show();
-                                }
-                            });
-                        }
                     }
                 });
 
