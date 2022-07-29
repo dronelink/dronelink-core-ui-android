@@ -173,14 +173,13 @@ public class MapboxMapController implements Dronelink.Listener, DroneSessionMana
         }
         disposed = true;
 
-        if (locationComponent != null) {
-            locationComponent.setLocationComponentEnabled(false);
-        }
-        map = null;
-        mapView = null;
-
         if (updateTimer != null) {
             updateTimer.cancel();
+        }
+
+        if (locationComponent != null) {
+            locationComponent.onStop();
+            locationComponent.setLocationComponentEnabled(false);
         }
 
         final DroneSessionManager manager = Dronelink.getInstance().getTargetDroneSessionManager();
@@ -208,6 +207,10 @@ public class MapboxMapController implements Dronelink.Listener, DroneSessionMana
         if (modeExecutor != null) {
             modeExecutor.removeListener(this);
         }
+
+        map = null;
+        mapView.onStop();
+        mapView = null;
     }
 
     public interface MoreMenuItem {
