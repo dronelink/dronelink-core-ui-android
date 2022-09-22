@@ -6,6 +6,7 @@
 //
 package com.dronelink.core.ui;
 
+import android.app.Activity;
 import android.content.Context;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
@@ -16,7 +17,6 @@ import android.view.Gravity;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.PopupMenu;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 
@@ -86,6 +86,7 @@ public class MapboxMapController implements Dronelink.Listener, DroneSessionMana
     private com.mapbox.mapboxsdk.maps.MapView mapView;
     private MapboxMap map;
     private LocationComponent locationComponent;
+    private Marker missionReferenceMarker;
     private Annotation missionRequiredTakeoffAreaAnnotation;
     private List<Annotation> missionRestrictionZoneAnnotations = new ArrayList<>();
     private Annotation missionEstimateBackgroundAnnotation;
@@ -338,6 +339,27 @@ public class MapboxMapController implements Dronelink.Listener, DroneSessionMana
             map.animateCamera(CameraUpdateFactory.newLatLngBounds(bounds.build(), direction < 0 ? direction + 360 : direction, 0, (int) (Math.max(mapView.getHeight(), mapView.getWidth()) * 0.05)));
         }
     }
+
+    private Runnable addMissionReferenceMarker = new Runnable() {
+        public void run() {
+            if (map == null) {
+                new Handler().postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        runOnUiThread(addMissionReferenceMarker);
+                    }
+                }, 100);
+                return;
+            }
+
+            final MissionExecutor missionExecutorLocal = missionExecutor;
+            if (missionExecutorLocal != null) {
+                missionReferenceMarker = map.addMarker(new MarkerOptions()
+                        .setIcon(IconFactory.getInstance(mapView.getContext()).fromResource(R.drawable.mission_reference))
+                        .setPosition(getLatLng(missionExecutorLocal.referenceCoordinate.getLocation())));
+            }
+        }
+    };
 
     @SuppressWarnings({"MissingPermission"})
     private Runnable updateMissionRequiredTakeoffArea = new Runnable() {
@@ -777,6 +799,9 @@ public class MapboxMapController implements Dronelink.Listener, DroneSessionMana
         missionCentered = false;
         executor.addListener(this);
         applyUserInterfaceSettings(executor.userInterfaceSettings);
+        if (executor.userInterfaceSettings != null && executor.userInterfaceSettings.droneOffsetsVisible != null && executor.userInterfaceSettings.droneOffsetsVisible) {
+            runOnUiThread(addMissionReferenceMarker);
+        }
         runOnUiThread(updateMissionRequiredTakeoffArea);
         runOnUiThread(updateMissionRestrictionZones);
         if (executor.isEstimated()) {
@@ -789,6 +814,15 @@ public class MapboxMapController implements Dronelink.Listener, DroneSessionMana
         missionExecutor = null;
         missionCentered = false;
         executor.removeListener(this);
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if (missionReferenceMarker != null) {
+                    map.removeMarker(missionReferenceMarker);
+                }
+                missionReferenceMarker = null;
+            }
+        });
         runOnUiThread(updateMissionRequiredTakeoffArea);
         runOnUiThread(updateMissionRestrictionZones);
         runOnUiThread(updateMissionEstimate);

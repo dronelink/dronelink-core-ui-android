@@ -89,6 +89,7 @@ public class MapboxMapFragment extends Fragment implements Dronelink.Listener, D
     private ModeExecutor modeExecutor;
     private com.mapbox.mapboxsdk.maps.MapView mapView;
     private MapboxMap map;
+    private Marker missionReferenceMarker;
     private Annotation missionRequiredTakeoffAreaAnnotation;
     private List<Annotation> missionRestrictionZoneAnnotations = new ArrayList<>();
     private Annotation missionEstimateBackgroundAnnotation;
@@ -340,6 +341,30 @@ public class MapboxMapFragment extends Fragment implements Dronelink.Listener, D
             map.animateCamera(CameraUpdateFactory.newLatLngBounds(bounds.build(), direction < 0 ? direction + 360 : direction, 0, (int) (Math.max(mapView.getHeight(), mapView.getWidth()) * 0.05)));
         }
     }
+
+    private Runnable addMissionReferenceMarker = new Runnable() {
+        public void run() {
+            if (map == null) {
+                new Handler().postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        final Activity activity = getActivity();
+                        if (activity != null) {
+                            activity.runOnUiThread(addMissionReferenceMarker);
+                        }
+                    }
+                }, 100);
+                return;
+            }
+
+            final MissionExecutor missionExecutorLocal = missionExecutor;
+            if (missionExecutorLocal != null) {
+                missionReferenceMarker = map.addMarker(new MarkerOptions()
+                        .setIcon(IconFactory.getInstance(mapView.getContext()).fromResource(R.drawable.mission_reference))
+                        .setPosition(getLatLng(missionExecutorLocal.referenceCoordinate.getLocation())));
+            }
+        }
+    };
 
     @SuppressWarnings({"MissingPermission"})
     private Runnable updateMissionRequiredTakeoffArea = new Runnable() {
@@ -788,6 +813,9 @@ public class MapboxMapFragment extends Fragment implements Dronelink.Listener, D
         applyUserInterfaceSettings(executor.userInterfaceSettings);
         final Activity activity = getActivity();
         if (activity != null) {
+            if (executor.userInterfaceSettings != null && executor.userInterfaceSettings.droneOffsetsVisible != null && executor.userInterfaceSettings.droneOffsetsVisible) {
+                activity.runOnUiThread(addMissionReferenceMarker);
+            }
             activity.runOnUiThread(updateMissionRequiredTakeoffArea);
             activity.runOnUiThread(updateMissionRestrictionZones);
             if (executor.isEstimated()) {
@@ -803,6 +831,15 @@ public class MapboxMapFragment extends Fragment implements Dronelink.Listener, D
         executor.removeListener(this);
         final Activity activity = getActivity();
         if (activity != null) {
+            activity.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    if (missionReferenceMarker != null) {
+                        map.removeMarker(missionReferenceMarker);
+                    }
+                    missionReferenceMarker = null;
+                }
+            });
             activity.runOnUiThread(updateMissionRequiredTakeoffArea);
             activity.runOnUiThread(updateMissionRestrictionZones);
             activity.runOnUiThread(updateMissionEstimate);
