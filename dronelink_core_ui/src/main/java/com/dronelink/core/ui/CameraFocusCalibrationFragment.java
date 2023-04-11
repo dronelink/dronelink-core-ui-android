@@ -492,9 +492,6 @@ public class CameraFocusCalibrationFragment extends Fragment implements Dronelin
     public void onRegistered(final String error) {}
 
     @Override
-    public void onDroneSessionManagerAdded(final DroneSessionManager manager) {}
-
-    @Override
     public void onMissionLoaded(final MissionExecutor executor) {}
 
     @Override

@@ -383,9 +383,6 @@ public class ModeFragment extends Fragment implements Dronelink.Listener, DroneS
     public void onRegistered(final String error) {}
 
     @Override
-    public void onDroneSessionManagerAdded(final DroneSessionManager manager) {}
-
-    @Override
     public void onMissionLoaded(final MissionExecutor executor) {}
 
     @Override
