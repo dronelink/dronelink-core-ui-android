@@ -935,7 +935,7 @@ public class MapboxMapController implements Dronelink.Listener, DroneSessionMana
             locationComponent.getLocationEngine().getLastLocation(new LocationEngineCallback<LocationEngineResult>() {
                 @Override
                 public void onSuccess(LocationEngineResult result) {
-                    if (result.getLastLocation() != null && !missionCentered && session == null) {
+                    if (map != null && result.getLastLocation() != null && !missionCentered && session == null) {
                         map.moveCamera(CameraUpdateFactory.newLatLngZoom(getLatLng(result.getLastLocation()), 17));
                     }
                 }

@@ -1,14 +1,14 @@
 apply plugin: 'com.android.library'
-apply plugin: 'com.github.dcendents.android-maven'
 
 android {
+    namespace 'com.dronelink.core.ui'
     compileSdkVersion 33
 
     defaultConfig {
         minSdkVersion 21
         targetSdkVersion 33
         versionCode 1
-        versionName "4.4.0"
+        versionName "4.5.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles 'consumer-rules.pro'
@@ -25,15 +25,16 @@ android {
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
-    implementation 'androidx.appcompat:appcompat:1.5.1'
+    implementation 'androidx.appcompat:appcompat:1.6.1'
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
     implementation 'com.google.android.material:material:1.6.1'
     implementation 'com.mapbox.mapboxsdk:mapbox-android-sdk:9.7.2'
-    implementation 'com.microsoft.maps:maps-sdk:1.2.0'
+    //implementation 'com.microsoft.maps:maps-sdk:1.2.0'
+    //https://github.com/microsoft/MapsSDK-Native/issues/59
+    compileOnly files('libs/maps-sdk-1.2.0.aar')
     implementation 'com.squareup.picasso:picasso:2.71828'
     implementation 'com.squareup.okhttp3:okhttp:3.14.9'
     implementation 'com.github.stfalcon-studio:StfalconImageViewer:v1.0.1'
-    implementation 'com.github.dronelink:dronelink-core-android:4.4.0'
-
+    implementation 'com.github.dronelink:dronelink-core-android:4.5.0'
 }
