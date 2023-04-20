@@ -41,6 +41,7 @@ import com.dronelink.core.kernel.core.Message;
 import com.dronelink.core.kernel.core.PlanRestrictionZone;
 import com.dronelink.core.kernel.core.UserInterfaceSettings;
 import com.dronelink.core.kernel.core.enums.VariableValueType;
+import com.mapbox.android.core.location.LocationEngine;
 import com.mapbox.android.core.location.LocationEngineCallback;
 import com.mapbox.android.core.location.LocationEngineResult;
 import com.mapbox.android.core.permissions.PermissionsManager;
@@ -932,19 +933,22 @@ public class MapboxMapController implements Dronelink.Listener, DroneSessionMana
             locationComponent.setLocationComponentEnabled(true);
             locationComponent.setMaxAnimationFps(30);
             locationComponent.setRenderMode(RenderMode.COMPASS);
-            locationComponent.getLocationEngine().getLastLocation(new LocationEngineCallback<LocationEngineResult>() {
-                @Override
-                public void onSuccess(LocationEngineResult result) {
-                    if (map != null && result.getLastLocation() != null && !missionCentered && session == null) {
-                        map.moveCamera(CameraUpdateFactory.newLatLngZoom(getLatLng(result.getLastLocation()), 17));
+            final LocationEngine locationEngine = locationComponent.getLocationEngine();
+            if (locationEngine != null) {
+                locationEngine.getLastLocation(new LocationEngineCallback<LocationEngineResult>() {
+                    @Override
+                    public void onSuccess(LocationEngineResult result) {
+                        if (map != null && result.getLastLocation() != null && !missionCentered && session == null) {
+                            map.moveCamera(CameraUpdateFactory.newLatLngZoom(getLatLng(result.getLastLocation()), 17));
+                        }
                     }
-                }
 
-                @Override
-                public void onFailure(@NonNull Exception exception) {
+                    @Override
+                    public void onFailure(@NonNull Exception exception) {
 
-                }
-            });
+                    }
+                });
+            }
         }
     }
 
