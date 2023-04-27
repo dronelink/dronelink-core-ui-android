@@ -45,29 +45,29 @@ import com.dronelink.core.kernel.core.Message;
 import com.dronelink.core.kernel.core.PlanRestrictionZone;
 import com.dronelink.core.kernel.core.UserInterfaceSettings;
 import com.dronelink.core.kernel.core.enums.VariableValueType;
-import com.mapbox.android.core.location.LocationEngineCallback;
-import com.mapbox.android.core.location.LocationEngineResult;
-import com.mapbox.android.core.permissions.PermissionsManager;
-import com.mapbox.geojson.Feature;
-import com.mapbox.geojson.Point;
-import com.mapbox.mapboxsdk.annotations.Annotation;
-import com.mapbox.mapboxsdk.annotations.IconFactory;
-import com.mapbox.mapboxsdk.annotations.Marker;
-import com.mapbox.mapboxsdk.annotations.MarkerOptions;
-import com.mapbox.mapboxsdk.annotations.PolygonOptions;
-import com.mapbox.mapboxsdk.annotations.PolylineOptions;
-import com.mapbox.mapboxsdk.camera.CameraUpdateFactory;
-import com.mapbox.mapboxsdk.geometry.LatLng;
-import com.mapbox.mapboxsdk.geometry.LatLngBounds;
-import com.mapbox.mapboxsdk.location.LocationComponent;
-import com.mapbox.mapboxsdk.location.LocationComponentActivationOptions;
-import com.mapbox.mapboxsdk.location.modes.RenderMode;
-import com.mapbox.mapboxsdk.maps.MapboxMap;
-import com.mapbox.mapboxsdk.maps.OnMapReadyCallback;
-import com.mapbox.mapboxsdk.maps.Style;
-import com.mapbox.mapboxsdk.style.layers.PropertyFactory;
-import com.mapbox.mapboxsdk.style.layers.SymbolLayer;
-import com.mapbox.mapboxsdk.style.sources.GeoJsonSource;
+//import com.mapbox.android.core.location.LocationEngineCallback;
+//import com.mapbox.android.core.location.LocationEngineResult;
+//import com.mapbox.android.core.permissions.PermissionsManager;
+//import com.mapbox.geojson.Feature;
+//import com.mapbox.geojson.Point;
+//import com.mapbox.mapboxsdk.annotations.Annotation;
+//import com.mapbox.mapboxsdk.annotations.IconFactory;
+//import com.mapbox.mapboxsdk.annotations.Marker;
+//import com.mapbox.mapboxsdk.annotations.MarkerOptions;
+//import com.mapbox.mapboxsdk.annotations.PolygonOptions;
+//import com.mapbox.mapboxsdk.annotations.PolylineOptions;
+//import com.mapbox.mapboxsdk.camera.CameraUpdateFactory;
+//import com.mapbox.mapboxsdk.geometry.LatLng;
+//import com.mapbox.mapboxsdk.geometry.LatLngBounds;
+//import com.mapbox.mapboxsdk.location.LocationComponent;
+//import com.mapbox.mapboxsdk.location.LocationComponentActivationOptions;
+//import com.mapbox.mapboxsdk.location.modes.RenderMode;
+//import com.mapbox.mapboxsdk.maps.MapboxMap;
+//import com.mapbox.mapboxsdk.maps.OnMapReadyCallback;
+//import com.mapbox.mapboxsdk.maps.Style;
+//import com.mapbox.mapboxsdk.style.layers.PropertyFactory;
+//import com.mapbox.mapboxsdk.style.layers.SymbolLayer;
+//import com.mapbox.mapboxsdk.style.sources.GeoJsonSource;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -76,7 +76,7 @@ import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
-public class MapboxMapFragment extends Fragment implements Dronelink.Listener, DroneSessionManager.Listener, DroneSession.Listener, MissionExecutor.Listener, FuncExecutor.Listener, ModeExecutor.Listener, OnMapReadyCallback {
+public class MapboxMapFragment extends Fragment implements Dronelink.Listener, DroneSessionManager.Listener, DroneSession.Listener, MissionExecutor.Listener, FuncExecutor.Listener, ModeExecutor.Listener { //,OnMapReadyCallback
     private enum Tracking {
         NONE,
         DRONE_NORTH_UP,
@@ -87,18 +87,19 @@ public class MapboxMapFragment extends Fragment implements Dronelink.Listener, D
     private MissionExecutor missionExecutor;
     private FuncExecutor funcExecutor;
     private ModeExecutor modeExecutor;
-    private com.mapbox.mapboxsdk.maps.MapView mapView;
-    private MapboxMap map;
-    private Marker missionReferenceMarker;
-    private Annotation missionRequiredTakeoffAreaAnnotation;
-    private List<Annotation> missionRestrictionZoneAnnotations = new ArrayList<>();
-    private Annotation missionEstimateBackgroundAnnotation;
-    private Annotation missionEstimateForegroundAnnotation;
-    private Annotation missionReengagementEstimateBackgroundAnnotation;
-    private Annotation missionReengagementEstimateForegroundAnnotation;
-    private Marker missionReengagementDroneAnnotation;
-    private List<Marker> funcDroneAnnotations = new ArrayList<>();
-    private List<Annotation> funcMapOverlayAnnotations = new ArrayList<>();
+
+//    private com.mapbox.mapboxsdk.maps.MapView mapView;
+//    private MapboxMap map;
+//    private Marker missionReferenceMarker;
+//    private Annotation missionRequiredTakeoffAreaAnnotation;
+//    private List<Annotation> missionRestrictionZoneAnnotations = new ArrayList<>();
+//    private Annotation missionEstimateBackgroundAnnotation;
+//    private Annotation missionEstimateForegroundAnnotation;
+//    private Annotation missionReengagementEstimateBackgroundAnnotation;
+//    private Annotation missionReengagementEstimateForegroundAnnotation;
+//    private Marker missionReengagementDroneAnnotation;
+//    private List<Marker> funcDroneAnnotations = new ArrayList<>();
+//    private List<Annotation> funcMapOverlayAnnotations = new ArrayList<>();
     private Timer updateTimer;
     private final long updateMillis = 100;
     private boolean missionCentered = false;
@@ -130,15 +131,15 @@ public class MapboxMapFragment extends Fragment implements Dronelink.Listener, D
     @Override
     public void onViewCreated(final View view, @Nullable final Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        mapView = getView().findViewById(R.id.mapView);
-        mapView.onCreate(savedInstanceState);
-        mapView.getMapAsync(this);
+//        mapView = getView().findViewById(R.id.mapView);
+//        mapView.onCreate(savedInstanceState);
+//        mapView.getMapAsync(this);
     }
 
     @Override
     public void onStart() {
         super.onStart();
-        mapView.onStart();
+        //mapView.onStart();
 
         final DroneSessionManager manager = Dronelink.getInstance().getTargetDroneSessionManager();
         if (manager != null) {
@@ -158,19 +159,19 @@ public class MapboxMapFragment extends Fragment implements Dronelink.Listener, D
     @Override
     public void onResume() {
         super.onResume();
-        mapView.onResume();
+        //mapView.onResume();
     }
 
     @Override
     public void onPause() {
         super.onPause();
-        mapView.onPause();
+        //mapView.onPause();
     }
 
     @Override
     public void onStop() {
         super.onStop();
-        mapView.onStop();
+        //mapView.onStop();
 
         if (updateTimer != null) {
             updateTimer.cancel();
@@ -206,19 +207,19 @@ public class MapboxMapFragment extends Fragment implements Dronelink.Listener, D
     @Override
     public void onLowMemory() {
         super.onLowMemory();
-        mapView.onLowMemory();
+        //mapView.onLowMemory();
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
-        mapView.onDestroy();
+        //mapView.onDestroy();
     }
 
     @Override
     public void onSaveInstanceState(final Bundle outState) {
         super.onSaveInstanceState(outState);
-        mapView.onSaveInstanceState(outState);
+        //mapView.onSaveInstanceState(outState);
     }
 
     public interface MoreMenuItem {
@@ -282,29 +283,29 @@ public class MapboxMapFragment extends Fragment implements Dronelink.Listener, D
 
     private Runnable update = new Runnable() {
         public void run() {
-            if (!isAdded() || map == null) {
+            if (!isAdded()) { // || map == null
                 return;
             }
 
-            final Style style = map.getStyle();
+            //final Style style = map.getStyle();
             final DroneStateAdapter state = getDroneState();
-            if (style == null || state == null) {
-                return;
-            }
+//            if (style == null || state == null) {
+//                return;
+//            }
 
             final Location droneHomeLocation = state.getHomeLocation();
             if (droneHomeLocation != null) {
-                final GeoJsonSource droneHomeSource = style.getSourceAs("drone-home");
-                droneHomeSource.setGeoJson(Feature.fromGeometry(Point.fromLngLat(droneHomeLocation.getLongitude(), droneHomeLocation.getLatitude())));
+//                final GeoJsonSource droneHomeSource = style.getSourceAs("drone-home");
+//                droneHomeSource.setGeoJson(Feature.fromGeometry(Point.fromLngLat(droneHomeLocation.getLongitude(), droneHomeLocation.getLatitude())));
             }
 
             Location droneLocation = state.getLocation();
             if (droneLocation != null) {
-                final GeoJsonSource droneSource = style.getSourceAs("drone");
-                final DroneOffsets offsets = Dronelink.getInstance().droneOffsets;
-                droneLocation = Convert.locationWithBearing(droneLocation, offsets.droneCoordinate.direction + Math.PI, offsets.droneCoordinate.magnitude);
-                droneSource.setGeoJson(Feature.fromGeometry(Point.fromLngLat(droneLocation.getLongitude(), droneLocation.getLatitude())));
-                style.getLayerAs("drone").setProperties(PropertyFactory.iconRotate((float)(Convert.RadiansToDegrees(state.getOrientation().getYaw()) - map.getCameraPosition().bearing)));
+//                final GeoJsonSource droneSource = style.getSourceAs("drone");
+//                final DroneOffsets offsets = Dronelink.getInstance().droneOffsets;
+//                droneLocation = Convert.locationWithBearing(droneLocation, offsets.droneCoordinate.direction + Math.PI, offsets.droneCoordinate.magnitude);
+//                droneSource.setGeoJson(Feature.fromGeometry(Point.fromLngLat(droneLocation.getLongitude(), droneLocation.getLatitude())));
+//                style.getLayerAs("drone").setProperties(PropertyFactory.iconRotate((float)(Convert.RadiansToDegrees(state.getOrientation().getYaw()) - map.getCameraPosition().bearing)));
             }
 
             if (tracking != Tracking.NONE) {
@@ -312,117 +313,117 @@ public class MapboxMapFragment extends Fragment implements Dronelink.Listener, D
                 if (location != null) {
                     final double distance = Math.max(20, state.getAltitude() / 2.0);
 
-                    final List<LatLng> visibleCoordinates = new ArrayList<>();
-                    visibleCoordinates.add(getLatLng(Convert.locationWithBearing(location, 0, distance)));
-                    visibleCoordinates.add(getLatLng(Convert.locationWithBearing(location, Math.PI / 2, distance)));
-                    visibleCoordinates.add(getLatLng(Convert.locationWithBearing(location, Math.PI, distance)));
-                    visibleCoordinates.add(getLatLng(Convert.locationWithBearing(location, 3 * Math.PI / 2, distance)));
-                    setVisibleCoordinates(visibleCoordinates, tracking == Tracking.DRONE_NORTH_UP ? 0 : Convert.RadiansToDegrees(state.getOrientation().getYaw()));
+//                    final List<LatLng> visibleCoordinates = new ArrayList<>();
+//                    visibleCoordinates.add(getLatLng(Convert.locationWithBearing(location, 0, distance)));
+//                    visibleCoordinates.add(getLatLng(Convert.locationWithBearing(location, Math.PI / 2, distance)));
+//                    visibleCoordinates.add(getLatLng(Convert.locationWithBearing(location, Math.PI, distance)));
+//                    visibleCoordinates.add(getLatLng(Convert.locationWithBearing(location, 3 * Math.PI / 2, distance)));
+//                    setVisibleCoordinates(visibleCoordinates, tracking == Tracking.DRONE_NORTH_UP ? 0 : Convert.RadiansToDegrees(state.getOrientation().getYaw()));
                 }
             }
         }
     };
 
-    private void setVisibleCoordinates(final List<LatLng> visibleCoordinates) {
-        setVisibleCoordinates(visibleCoordinates, null);
-    }
+//    private void setVisibleCoordinates(final List<LatLng> visibleCoordinates) {
+//        setVisibleCoordinates(visibleCoordinates, null);
+//    }
 
-    private void setVisibleCoordinates(final List<LatLng> visibleCoordinates, final Double direction) {
+    private void setVisibleCoordinates(final List<String> visibleCoordinates, final Double direction) { //TODO parameter type List<LatLng> visibleCoordinates
         if (visibleCoordinates.size() == 0) {
             return;
         }
 
-        final LatLngBounds.Builder bounds = new LatLngBounds.Builder();
-        bounds.includes(visibleCoordinates);
-        if (direction == null) {
-            map.animateCamera(CameraUpdateFactory.newLatLngBounds(bounds.build(), (int) (Math.max(mapView.getHeight(), mapView.getWidth()) * 0.05)));
-        }
-        else {
-            map.animateCamera(CameraUpdateFactory.newLatLngBounds(bounds.build(), direction < 0 ? direction + 360 : direction, 0, (int) (Math.max(mapView.getHeight(), mapView.getWidth()) * 0.05)));
-        }
+//        final LatLngBounds.Builder bounds = new LatLngBounds.Builder();
+//        bounds.includes(visibleCoordinates);
+//        if (direction == null) {
+//            map.animateCamera(CameraUpdateFactory.newLatLngBounds(bounds.build(), (int) (Math.max(mapView.getHeight(), mapView.getWidth()) * 0.05)));
+//        }
+//        else {
+//            map.animateCamera(CameraUpdateFactory.newLatLngBounds(bounds.build(), direction < 0 ? direction + 360 : direction, 0, (int) (Math.max(mapView.getHeight(), mapView.getWidth()) * 0.05)));
+//        }
     }
 
-    private Runnable addMissionReferenceMarker = new Runnable() {
-        public void run() {
-            if (map == null) {
-                new Handler().postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        final Activity activity = getActivity();
-                        if (activity != null) {
-                            activity.runOnUiThread(addMissionReferenceMarker);
-                        }
-                    }
-                }, 100);
-                return;
-            }
+//    private Runnable addMissionReferenceMarker = new Runnable() {
+//        public void run() {
+//            if (map == null) {
+//                new Handler().postDelayed(new Runnable() {
+//                    @Override
+//                    public void run() {
+//                        final Activity activity = getActivity();
+//                        if (activity != null) {
+//                            activity.runOnUiThread(addMissionReferenceMarker);
+//                        }
+//                    }
+//                }, 100);
+//                return;
+//            }
+//
+//            final MissionExecutor missionExecutorLocal = missionExecutor;
+//            if (missionExecutorLocal != null) {
+//                missionReferenceMarker = map.addMarker(new MarkerOptions()
+//                        .setIcon(IconFactory.getInstance(mapView.getContext()).fromResource(R.drawable.mission_reference))
+//                        .setPosition(getLatLng(missionExecutorLocal.referenceCoordinate.getLocation())));
+//            }
+//        }
+//    };
 
-            final MissionExecutor missionExecutorLocal = missionExecutor;
-            if (missionExecutorLocal != null) {
-                missionReferenceMarker = map.addMarker(new MarkerOptions()
-                        .setIcon(IconFactory.getInstance(mapView.getContext()).fromResource(R.drawable.mission_reference))
-                        .setPosition(getLatLng(missionExecutorLocal.referenceCoordinate.getLocation())));
-            }
-        }
-    };
-
-    @SuppressWarnings({"MissingPermission"})
-    private Runnable updateMissionRequiredTakeoffArea = new Runnable() {
-        public void run() {
-            if (map == null) {
-                new Handler().postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        final Activity activity = getActivity();
-                        if (activity != null) {
-                            activity.runOnUiThread(updateMissionRequiredTakeoffArea);
-                        }
-                    }
-                }, 100);
-                return;
-            }
-
-            if (missionRequiredTakeoffAreaAnnotation != null) {
-                map.removeAnnotation(missionRequiredTakeoffAreaAnnotation);
-            }
-
-
-            final MissionExecutor missionExecutorLocal = missionExecutor;
-            if (missionExecutorLocal != null) {
-                final MissionExecutor.TakeoffArea requiredTakeoffArea = missionExecutorLocal.requiredTakeoffArea;
-                if (requiredTakeoffArea != null) {
-                    final Location takeoffLocation = requiredTakeoffArea.coordinate.getLocation();
-                    final List<LatLng> takeoffAreaPoints = new LinkedList<>();
-                    for (int i = 0; i < 100; i++) {
-                        final Location location = Convert.locationWithBearing(takeoffLocation, (double)i / 100.0 * Math.PI * 2.0, requiredTakeoffArea.distanceTolerance.horizontal);
-                        takeoffAreaPoints.add(getLatLng(location));
-                    }
-                    missionRequiredTakeoffAreaAnnotation = map.addPolygon(new PolygonOptions().addAll(takeoffAreaPoints).alpha((float)0.25).fillColor(Color.parseColor("#ffa726")));
-                }
-            }
-        }
-    };
+//    @SuppressWarnings({"MissingPermission"})
+//    private Runnable updateMissionRequiredTakeoffArea = new Runnable() {
+//        public void run() {
+//            if (map == null) {
+//                new Handler().postDelayed(new Runnable() {
+//                    @Override
+//                    public void run() {
+//                        final Activity activity = getActivity();
+//                        if (activity != null) {
+//                            activity.runOnUiThread(updateMissionRequiredTakeoffArea);
+//                        }
+//                    }
+//                }, 100);
+//                return;
+//            }
+//
+//            if (missionRequiredTakeoffAreaAnnotation != null) {
+//                map.removeAnnotation(missionRequiredTakeoffAreaAnnotation);
+//            }
+//
+//
+//            final MissionExecutor missionExecutorLocal = missionExecutor;
+//            if (missionExecutorLocal != null) {
+//                final MissionExecutor.TakeoffArea requiredTakeoffArea = missionExecutorLocal.requiredTakeoffArea;
+//                if (requiredTakeoffArea != null) {
+//                    final Location takeoffLocation = requiredTakeoffArea.coordinate.getLocation();
+//                    final List<LatLng> takeoffAreaPoints = new LinkedList<>();
+//                    for (int i = 0; i < 100; i++) {
+//                        final Location location = Convert.locationWithBearing(takeoffLocation, (double)i / 100.0 * Math.PI * 2.0, requiredTakeoffArea.distanceTolerance.horizontal);
+//                        takeoffAreaPoints.add(getLatLng(location));
+//                    }
+//                    missionRequiredTakeoffAreaAnnotation = map.addPolygon(new PolygonOptions().addAll(takeoffAreaPoints).alpha((float)0.25).fillColor(Color.parseColor("#ffa726")));
+//                }
+//            }
+//        }
+//    };
 
     @SuppressWarnings({"MissingPermission"})
     private Runnable updateMissionRestrictionZones = new Runnable() {
         public void run() {
-            if (map == null) {
-                new Handler().postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        final Activity activity = getActivity();
-                        if (activity != null) {
-                            activity.runOnUiThread(updateMissionRestrictionZones);
-                        }
-                    }
-                }, 100);
-                return;
-            }
+//            if (map == null) {
+//                new Handler().postDelayed(new Runnable() {
+//                    @Override
+//                    public void run() {
+//                        final Activity activity = getActivity();
+//                        if (activity != null) {
+//                            activity.runOnUiThread(updateMissionRestrictionZones);
+//                        }
+//                    }
+//                }, 100);
+//                return;
+//            }
 
-            for (final Annotation missionRestrictionZoneAnnotation : missionRestrictionZoneAnnotations) {
-                map.removeAnnotation(missionRestrictionZoneAnnotation);
-            }
-            missionRestrictionZoneAnnotations.clear();
+//            for (final Annotation missionRestrictionZoneAnnotation : missionRestrictionZoneAnnotations) {
+//                map.removeAnnotation(missionRestrictionZoneAnnotation);
+//            }
+//            missionRestrictionZoneAnnotations.clear();
 
             final MissionExecutor missionExecutorLocal = missionExecutor;
             if (missionExecutorLocal != null) {
@@ -434,30 +435,29 @@ public class MapboxMapFragment extends Fragment implements Dronelink.Listener, D
                             continue;
                         }
 
-                        final List<LatLng> points = new LinkedList<>();
-                        switch (restrictionZone.zone.shape) {
-                            case CIRCLE:
-                                final Location center = coordinates[0].getLocation();
-                                final double radius = center.distanceTo(coordinates[1].getLocation());
-                                for (int p = 0; p < 100; p++) {
-                                    final Location location = Convert.locationWithBearing(center, (double)p / 100.0 * Math.PI * 2.0, radius);
-                                    points.add(getLatLng(location));
-                                }
-                                break;
-
-                            case POLYGON:
-                                for (int c = 0; c < coordinates.length; c++) {
-                                    points.add(new LatLng(coordinates[c].latitude, coordinates[c].longitude));
-                                }
-                                break;
-                        }
-
+//                        final List<LatLng> points = new LinkedList<>();
+//                        switch (restrictionZone.zone.shape) {
+//                            case CIRCLE:
+//                                final Location center = coordinates[0].getLocation();
+//                                final double radius = center.distanceTo(coordinates[1].getLocation());
+//                                for (int p = 0; p < 100; p++) {
+//                                    final Location location = Convert.locationWithBearing(center, (double)p / 100.0 * Math.PI * 2.0, radius);
+//                                    points.add(getLatLng(location));
+//                                }
+//                                break;
+//
+//                            case POLYGON:
+//                                for (int c = 0; c < coordinates.length; c++) {
+//                                    points.add(new LatLng(coordinates[c].latitude, coordinates[c].longitude));
+//                                }
+//                                break;
+//                        }
                         final int fillColor = DronelinkUI.parseHexColor(restrictionZone.zone.color, Color.argb(255,255, 23, 68));
-                        final Annotation missionRestrictionZoneAnnotation = map.addPolygon(new PolygonOptions().addAll(points)
-                                .alpha(restrictionZone.zone.color != null && restrictionZone.zone.color.length() == 9 ? ((float)Color.alpha(fillColor)) / 255f : (float)0.5)
-                                .fillColor(fillColor)
-                                .strokeColor(DronelinkUI.parseHexColor(restrictionZone.zone.color, Color.argb((int)(255 * 0.7), 255, 23, 68))));
-                        missionRestrictionZoneAnnotations.add(missionRestrictionZoneAnnotation);
+//                        final Annotation missionRestrictionZoneAnnotation = map.addPolygon(new PolygonOptions().addAll(points)
+//                                .alpha(restrictionZone.zone.color != null && restrictionZone.zone.color.length() == 9 ? ((float)Color.alpha(fillColor)) / 255f : (float)0.5)
+//                                .fillColor(fillColor)
+//                                .strokeColor(DronelinkUI.parseHexColor(restrictionZone.zone.color, Color.argb((int)(255 * 0.7), 255, 23, 68))));
+//                        missionRestrictionZoneAnnotations.add(missionRestrictionZoneAnnotation);
                     }
                 }
             }
@@ -467,18 +467,18 @@ public class MapboxMapFragment extends Fragment implements Dronelink.Listener, D
     @SuppressWarnings({"MissingPermission"})
     private Runnable updateMissionEstimate = new Runnable() {
         public void run() {
-            if (map == null) {
-                new Handler().postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        final Activity activity = getActivity();
-                        if (activity != null) {
-                            activity.runOnUiThread(updateMissionEstimate);
-                        }
-                    }
-                }, 100);
-                return;
-            }
+//            if (map == null) {
+//                new Handler().postDelayed(new Runnable() {
+//                    @Override
+//                    public void run() {
+//                        final Activity activity = getActivity();
+//                        if (activity != null) {
+//                            activity.runOnUiThread(updateMissionEstimate);
+//                        }
+//                    }
+//                }, 100);
+//                return;
+//            }
 
             final MissionExecutor missionExecutorLocal = missionExecutor;
             final MissionExecutor.Estimate estimate = missionExecutorLocal != null ? missionExecutor.getEstimate() : null;
@@ -488,46 +488,46 @@ public class MapboxMapFragment extends Fragment implements Dronelink.Listener, D
             }
             currentMissionEstimateID = id;
 
-            if (missionEstimateBackgroundAnnotation != null) {
-                map.removeAnnotation(missionEstimateBackgroundAnnotation);
-            }
+//            if (missionEstimateBackgroundAnnotation != null) {
+//                map.removeAnnotation(missionEstimateBackgroundAnnotation);
+//            }
 
-            if (missionEstimateForegroundAnnotation != null) {
-                map.removeAnnotation(missionEstimateForegroundAnnotation);
-            }
+//            if (missionEstimateForegroundAnnotation != null) {
+//                map.removeAnnotation(missionEstimateForegroundAnnotation);
+//            }
 
             if (missionExecutorLocal == null || estimate == null) {
                 return;
             }
 
-            final List<LatLng> visibleCoordinates = new LinkedList<>();
+            //final List<LatLng> visibleCoordinates = new LinkedList<>();
 
             final GeoSpatial[] estimateSpatials = estimate.spatials;
             if (estimateSpatials != null && estimateSpatials.length > 0) {
-                final List<LatLng> pathPoints = new LinkedList<>();
-                for (final GeoSpatial spatial : estimateSpatials) {
-                    pathPoints.add(new LatLng(spatial.coordinate.latitude, spatial.coordinate.longitude));
-                }
+                //final List<LatLng> pathPoints = new LinkedList<>();
+//                for (final GeoSpatial spatial : estimateSpatials) {
+//                    pathPoints.add(new LatLng(spatial.coordinate.latitude, spatial.coordinate.longitude));
+//                }
 
-                missionEstimateBackgroundAnnotation = map.addPolyline(new PolylineOptions().addAll(pathPoints).width(6).color(Color.parseColor("#0277bd")));
-                missionEstimateForegroundAnnotation = map.addPolyline(new PolylineOptions().addAll(pathPoints).width((float) 2.5).color(Color.parseColor("#26c6da")));
+//                missionEstimateBackgroundAnnotation = map.addPolyline(new PolylineOptions().addAll(pathPoints).width(6).color(Color.parseColor("#0277bd")));
+//                missionEstimateForegroundAnnotation = map.addPolyline(new PolylineOptions().addAll(pathPoints).width((float) 2.5).color(Color.parseColor("#26c6da")));
 
                 if (!missionCentered) {
-                    visibleCoordinates.addAll(pathPoints);
+                    //visibleCoordinates.addAll(pathPoints);
                 }
             }
 
-            final List<LatLng> reengagementPoints = missionReengagementEstimate();
-            if (reengagementPoints != null) {
-                if (!missionCentered) {
-                    visibleCoordinates.addAll(reengagementPoints);
-                }
-            }
+            //final List<LatLng> reengagementPoints = missionReengagementEstimate();
+//            if (reengagementPoints != null) {
+//                if (!missionCentered) {
+//                    visibleCoordinates.addAll(reengagementPoints);
+//                }
+//            }
 
-            if (visibleCoordinates.size() > 1) {
-                missionCentered = true;
-                setVisibleCoordinates(visibleCoordinates);
-            }
+//            if (visibleCoordinates.size() > 1) {
+//                missionCentered = true;
+//                setVisibleCoordinates(visibleCoordinates);
+//            }
         }
     };
 
@@ -538,21 +538,21 @@ public class MapboxMapFragment extends Fragment implements Dronelink.Listener, D
         }
     };
 
-    private List<LatLng> missionReengagementEstimate() {
-        if (missionReengagementEstimateBackgroundAnnotation != null) {
-            map.removeAnnotation(missionReengagementEstimateBackgroundAnnotation);
-        }
-        missionReengagementEstimateBackgroundAnnotation = null;
-
-        if (missionReengagementEstimateForegroundAnnotation != null) {
-            map.removeAnnotation(missionReengagementEstimateForegroundAnnotation);
-        }
-        missionReengagementEstimateForegroundAnnotation = null;
-
-        if (missionReengagementDroneAnnotation != null) {
-            map.removeAnnotation(missionReengagementDroneAnnotation);
-        }
-        missionReengagementDroneAnnotation = null;
+    private Object missionReengagementEstimate() { //TODO return type List<LatLng>
+//        if (missionReengagementEstimateBackgroundAnnotation != null) {
+//            map.removeAnnotation(missionReengagementEstimateBackgroundAnnotation);
+//        }
+//        missionReengagementEstimateBackgroundAnnotation = null;
+//
+//        if (missionReengagementEstimateForegroundAnnotation != null) {
+//            map.removeAnnotation(missionReengagementEstimateForegroundAnnotation);
+//        }
+//        missionReengagementEstimateForegroundAnnotation = null;
+//
+//        if (missionReengagementDroneAnnotation != null) {
+//            map.removeAnnotation(missionReengagementDroneAnnotation);
+//        }
+//        missionReengagementDroneAnnotation = null;
 
         final MissionExecutor missionExecutor = this.missionExecutor;
         if (missionExecutor == null) {
@@ -569,39 +569,40 @@ public class MapboxMapFragment extends Fragment implements Dronelink.Listener, D
             }
         }
 
-        List<LatLng> reengagementPoints = null;
-        if (reengagementEstimateSpatials != null && reengagementEstimateSpatials.length > 0) {
-            reengagementPoints = new LinkedList<>();
-            for (final GeoSpatial spatial : reengagementEstimateSpatials) {
-                reengagementPoints.add(new LatLng(spatial.coordinate.latitude, spatial.coordinate.longitude));
-            }
-        }
+//        List<LatLng> reengagementPoints = null;
+//        if (reengagementEstimateSpatials != null && reengagementEstimateSpatials.length > 0) {
+//            reengagementPoints = new LinkedList<>();
+//            for (final GeoSpatial spatial : reengagementEstimateSpatials) {
+//                reengagementPoints.add(new LatLng(spatial.coordinate.latitude, spatial.coordinate.longitude));
+//            }
+//        }
+//
+//        if (reengaging && reengagementPoints != null) {
+//            missionReengagementEstimateBackgroundAnnotation = map.addPolyline(new PolylineOptions().addAll(reengagementPoints).width(6).color(Color.parseColor("#6a1b9a")));
+//            missionReengagementEstimateForegroundAnnotation = map.addPolyline(new PolylineOptions().addAll(reengagementPoints).width((float) 2.5).color(Color.parseColor("#e040fb")));
+//        }
 
-        if (reengaging && reengagementPoints != null) {
-            missionReengagementEstimateBackgroundAnnotation = map.addPolyline(new PolylineOptions().addAll(reengagementPoints).width(6).color(Color.parseColor("#6a1b9a")));
-            missionReengagementEstimateForegroundAnnotation = map.addPolyline(new PolylineOptions().addAll(reengagementPoints).width((float) 2.5).color(Color.parseColor("#e040fb")));
-        }
+//        LatLng reengagementCoordinate = null;
+//        if (reengaging) {
+//            if (reengagementPoints != null && reengagementPoints.size() > 0) {
+//                reengagementCoordinate = reengagementPoints.get(reengagementPoints.size() - 1);
+//            }
+//        }
+//        else {
+//            final GeoSpatial reengagementSpatial = missionExecutor.getReengagementSpatial();
+//            if (reengagementSpatial != null) {
+//                reengagementCoordinate = new LatLng(reengagementSpatial.coordinate.latitude, reengagementSpatial.coordinate.longitude);
+//            }
+//        }
 
-        LatLng reengagementCoordinate = null;
-        if (reengaging) {
-            if (reengagementPoints != null && reengagementPoints.size() > 0) {
-                reengagementCoordinate = reengagementPoints.get(reengagementPoints.size() - 1);
-            }
-        }
-        else {
-            final GeoSpatial reengagementSpatial = missionExecutor.getReengagementSpatial();
-            if (reengagementSpatial != null) {
-                reengagementCoordinate = new LatLng(reengagementSpatial.coordinate.latitude, reengagementSpatial.coordinate.longitude);
-            }
-        }
+//        if (reengagementCoordinate != null && (!engaged || reengaging)) {
+//            missionReengagementDroneAnnotation = map.addMarker(new MarkerOptions()
+//                    .setIcon(IconFactory.getInstance(getActivity()).fromResource(R.drawable.drone_reengagement))
+//                    .setPosition(reengagementCoordinate));
+//        }
 
-        if (reengagementCoordinate != null && (!engaged || reengaging)) {
-            missionReengagementDroneAnnotation = map.addMarker(new MarkerOptions()
-                    .setIcon(IconFactory.getInstance(getActivity()).fromResource(R.drawable.drone_reengagement))
-                    .setPosition(reengagementCoordinate));
-        }
-
-        return reengagementPoints;
+        //return reengagementPoints;
+        return null;
     }
 
     private Runnable updateFuncElements = new Runnable() {
@@ -637,30 +638,30 @@ public class MapboxMapFragment extends Fragment implements Dronelink.Listener, D
                 inputIndex++;
             }
 
-            while (funcDroneAnnotations.size() > spatials.size()) {
-                map.removeMarker(funcDroneAnnotations.remove(funcDroneAnnotations.size() - 1));
-            }
-
-            while (funcDroneAnnotations.size() < spatials.size()) {
-                funcDroneAnnotations.add(map.addMarker(new MarkerOptions()
-                        .setIcon(IconFactory.getInstance(getActivity()).fromResource(R.drawable.func_input_drone))
-                        .setPosition(new LatLng(spatials.get(funcDroneAnnotations.size()).coordinate.latitude, spatials.get(funcDroneAnnotations.size()).coordinate.longitude))));
-            }
-
-            int index = 0;
-            for (final Marker funcDroneAnnotation : funcDroneAnnotations) {
-                funcDroneAnnotation.setPosition(new LatLng(spatials.get(index).coordinate.latitude, spatials.get(index).coordinate.longitude));
-                index++;
-            }
-
-            if (mapCenterSpatial != null) {
-                map.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(mapCenterSpatial.coordinate.latitude, mapCenterSpatial.coordinate.longitude), 19.25));
-            }
-
-            for (final Annotation funcMapOverlayAnnotation : funcMapOverlayAnnotations) {
-                map.removeAnnotation(funcMapOverlayAnnotation);
-            }
-            funcMapOverlayAnnotations.clear();
+//            while (funcDroneAnnotations.size() > spatials.size()) {
+//                map.removeMarker(funcDroneAnnotations.remove(funcDroneAnnotations.size() - 1));
+//            }
+//
+//            while (funcDroneAnnotations.size() < spatials.size()) {
+//                funcDroneAnnotations.add(map.addMarker(new MarkerOptions()
+//                        .setIcon(IconFactory.getInstance(getActivity()).fromResource(R.drawable.func_input_drone))
+//                        .setPosition(new LatLng(spatials.get(funcDroneAnnotations.size()).coordinate.latitude, spatials.get(funcDroneAnnotations.size()).coordinate.longitude))));
+//            }
+//
+//            int index = 0;
+//            for (final Marker funcDroneAnnotation : funcDroneAnnotations) {
+//                funcDroneAnnotation.setPosition(new LatLng(spatials.get(index).coordinate.latitude, spatials.get(index).coordinate.longitude));
+//                index++;
+//            }
+//
+//            if (mapCenterSpatial != null) {
+//                map.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(mapCenterSpatial.coordinate.latitude, mapCenterSpatial.coordinate.longitude), 19.25));
+//            }
+//
+//            for (final Annotation funcMapOverlayAnnotation : funcMapOverlayAnnotations) {
+//                map.removeAnnotation(funcMapOverlayAnnotation);
+//            }
+//            funcMapOverlayAnnotations.clear();
 
             if (funcExecutorLocal != null) {
                 final FuncMapOverlay[] mapOverlays = funcExecutorLocal.getMapOverlays(session, new FuncExecutor.FuncExecuteError() {
@@ -671,17 +672,17 @@ public class MapboxMapFragment extends Fragment implements Dronelink.Listener, D
 
                 if (mapOverlays != null && mapOverlays.length > 0) {
                     for (final FuncMapOverlay mapOverlay : mapOverlays) {
-                        final List<LatLng> points = new LinkedList<>();
+                        //final List<LatLng> points = new LinkedList<>();
                         for (int c = 0; c < mapOverlay.coordinates.length; c++) {
-                            points.add(new LatLng(mapOverlay.coordinates[c].latitude, mapOverlay.coordinates[c].longitude));
+                            //points.add(new LatLng(mapOverlay.coordinates[c].latitude, mapOverlay.coordinates[c].longitude));
                         }
 
                         final int fillColor = DronelinkUI.parseHexColor(mapOverlay.color, Color.argb(255,255, 23, 68));
-                        final Annotation funcMapOverlayAnnotation = map.addPolygon(new PolygonOptions().addAll(points)
-                                .alpha(mapOverlay.color != null && mapOverlay.color.length() == 9 ? ((float)Color.alpha(fillColor)) / 255f : (float)0.5)
-                                .fillColor(fillColor)
-                                .strokeColor(DronelinkUI.parseHexColor(mapOverlay.color, Color.argb((int)(255 * 0.7), 255, 23, 68))));
-                        funcMapOverlayAnnotations.add(funcMapOverlayAnnotation);
+//                        final Annotation funcMapOverlayAnnotation = map.addPolygon(new PolygonOptions().addAll(points)
+//                                .alpha(mapOverlay.color != null && mapOverlay.color.length() == 9 ? ((float)Color.alpha(fillColor)) / 255f : (float)0.5)
+//                                .fillColor(fillColor)
+//                                .strokeColor(DronelinkUI.parseHexColor(mapOverlay.color, Color.argb((int)(255 * 0.7), 255, 23, 68))));
+//                        funcMapOverlayAnnotations.add(funcMapOverlayAnnotation);
                     }
                 }
             }
@@ -695,30 +696,30 @@ public class MapboxMapFragment extends Fragment implements Dronelink.Listener, D
                 return;
             }
 
-            final Style style = map.getStyle();
-            if (style == null) {
-                return;
-            }
+//            final Style style = map.getStyle();
+//            if (style == null) {
+//                return;
+//            }
 
             final GeoSpatial modeTarget = modeExecutorLocal.getTarget();
             if (modeTarget != null) {
-                final GeoJsonSource modeTargetSource = style.getSourceAs("mode-target");
-                modeTargetSource.setGeoJson(Feature.fromGeometry(Point.fromLngLat(modeTarget.coordinate.longitude, modeTarget.coordinate.latitude)));
-                style.getLayerAs("mode-target").setProperties(PropertyFactory.iconRotate((float)(Convert.RadiansToDegrees(modeTarget.orientation.getYaw()) - map.getCameraPosition().bearing)));
+//                final GeoJsonSource modeTargetSource = style.getSourceAs("mode-target");
+//                modeTargetSource.setGeoJson(Feature.fromGeometry(Point.fromLngLat(modeTarget.coordinate.longitude, modeTarget.coordinate.latitude)));
+//                style.getLayerAs("mode-target").setProperties(PropertyFactory.iconRotate((float)(Convert.RadiansToDegrees(modeTarget.orientation.getYaw()) - map.getCameraPosition().bearing)));
             }
 
             if (tracking == Tracking.NONE) {
-                final List<LatLng> visibleCoordinates = new LinkedList<>();
-                final GeoCoordinate[] modeVisibleCoordinates = modeExecutorLocal.getVisibleCoordinates();
-                if (modeVisibleCoordinates != null) {
-                    for (final GeoCoordinate coordinate : modeVisibleCoordinates) {
-                        visibleCoordinates.add(new LatLng(coordinate.latitude, coordinate.longitude));
-                    }
-                }
-
-                if (visibleCoordinates.size() > 0) {
-                    setVisibleCoordinates(visibleCoordinates);
-                }
+//                final List<LatLng> visibleCoordinates = new LinkedList<>();
+//                final GeoCoordinate[] modeVisibleCoordinates = modeExecutorLocal.getVisibleCoordinates();
+//                if (modeVisibleCoordinates != null) {
+//                    for (final GeoCoordinate coordinate : modeVisibleCoordinates) {
+//                        visibleCoordinates.add(new LatLng(coordinate.latitude, coordinate.longitude));
+//                    }
+//                }
+//
+//                if (visibleCoordinates.size() > 0) {
+//                    setVisibleCoordinates(visibleCoordinates);
+//                }
             }
         }
     };
@@ -778,9 +779,9 @@ public class MapboxMapFragment extends Fragment implements Dronelink.Listener, D
                 activity.runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        if (map != null) {
-                            map.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(droneLocation.getLatitude(), droneLocation.getLongitude()), 18.5));
-                        }
+//                        if (map != null) {
+//                            map.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(droneLocation.getLatitude(), droneLocation.getLongitude()), 18.5));
+//                        }
                     }
                 });
             }
@@ -811,9 +812,9 @@ public class MapboxMapFragment extends Fragment implements Dronelink.Listener, D
         final Activity activity = getActivity();
         if (activity != null) {
             if (executor.userInterfaceSettings != null && executor.userInterfaceSettings.droneOffsetsVisible != null && executor.userInterfaceSettings.droneOffsetsVisible) {
-                activity.runOnUiThread(addMissionReferenceMarker);
+                //activity.runOnUiThread(addMissionReferenceMarker);
             }
-            activity.runOnUiThread(updateMissionRequiredTakeoffArea);
+            //activity.runOnUiThread(updateMissionRequiredTakeoffArea);
             activity.runOnUiThread(updateMissionRestrictionZones);
             if (executor.isEstimated()) {
                 activity.runOnUiThread(updateMissionEstimate);
@@ -831,13 +832,13 @@ public class MapboxMapFragment extends Fragment implements Dronelink.Listener, D
             activity.runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    if (missionReferenceMarker != null) {
-                        map.removeMarker(missionReferenceMarker);
-                    }
-                    missionReferenceMarker = null;
+//                    if (missionReferenceMarker != null) {
+//                        map.removeMarker(missionReferenceMarker);
+//                    }
+//                    missionReferenceMarker = null;
                 }
             });
-            activity.runOnUiThread(updateMissionRequiredTakeoffArea);
+            //activity.runOnUiThread(updateMissionRequiredTakeoffArea);
             activity.runOnUiThread(updateMissionRestrictionZones);
             activity.runOnUiThread(updateMissionEstimate);
         }
@@ -906,12 +907,12 @@ public class MapboxMapFragment extends Fragment implements Dronelink.Listener, D
 
     @Override
     public void onMissionExecuted(final MissionExecutor executor, final MissionExecutor.Engagement engagement) {
-        if ((missionReengagementEstimateBackgroundAnnotation == null && executor.isReengaging()) || (missionReengagementEstimateBackgroundAnnotation != null && !executor.isReengaging())) {
-            final Activity activity = getActivity();
-            if (activity != null) {
-                activity.runOnUiThread(updateMissionReengagementEstimate);
-            }
-        }
+//        if ((missionReengagementEstimateBackgroundAnnotation == null && executor.isReengaging()) || (missionReengagementEstimateBackgroundAnnotation != null && !executor.isReengaging())) {
+//            final Activity activity = getActivity();
+//            if (activity != null) {
+//                activity.runOnUiThread(updateMissionReengagementEstimate);
+//            }
+//        }
     }
 
     @Override
@@ -969,72 +970,72 @@ public class MapboxMapFragment extends Fragment implements Dronelink.Listener, D
     @Override
     public void onModeDisengaged(final ModeExecutor executor, final ModeExecutor.Engagement engagement, final Message reason) {}
 
-    @Override
-    public void onMapReady(@NonNull final MapboxMap mapboxMap) {
-        map = mapboxMap;
-        final MapboxMapFragment self = this;
-        mapboxMap.setStyle(Style.SATELLITE_STREETS, new Style.OnStyleLoaded() {
-            @Override
-            public void onStyleLoaded(@NonNull Style style) {
-                enableLocationComponent(style);
+//    @Override
+//    public void onMapReady(@NonNull final MapboxMap mapboxMap) {
+//        map = mapboxMap;
+//        final MapboxMapFragment self = this;
+//        mapboxMap.setStyle(Style.SATELLITE_STREETS, new Style.OnStyleLoaded() {
+//            @Override
+//            public void onStyleLoaded(@NonNull Style style) {
+//                enableLocationComponent(style);
+//
+//                map.getUiSettings().setTiltGesturesEnabled(false);
+//                map.getUiSettings().setCompassGravity(Gravity.BOTTOM | Gravity.RIGHT);
+//
+//                style.addImage("drone-home", BitmapFactory.decodeResource(MapboxMapFragment.this.getResources(), R.drawable.home));
+//                final GeoJsonSource droneHomeSource = new GeoJsonSource("drone-home", Feature.fromGeometry(Point.fromLngLat(0, 0)));
+//                style.addSource(droneHomeSource);
+//
+//                final SymbolLayer droneHomeLayer;
+//                droneHomeLayer = new SymbolLayer("drone-home", "drone-home");
+//                droneHomeLayer.withProperties(PropertyFactory.iconImage("drone-home"), PropertyFactory.iconAllowOverlap(true));
+//                style.addLayer(droneHomeLayer);
+//
+//                style.addImage("drone", BitmapFactory.decodeResource(MapboxMapFragment.this.getResources(), R.drawable.drone));
+//                final GeoJsonSource droneSource = new GeoJsonSource("drone", Feature.fromGeometry(Point.fromLngLat(0, 0)));
+//                style.addSource(droneSource);
+//
+//                final SymbolLayer droneLayer;
+//                droneLayer = new SymbolLayer("drone", "drone");
+//                droneLayer.withProperties(PropertyFactory.iconImage("drone"), PropertyFactory.iconAllowOverlap(true));
+//                style.addLayer(droneLayer);
+//
+//                style.addImage("mode-target", BitmapFactory.decodeResource(MapboxMapFragment.this.getResources(), R.drawable.drone));
+//                final GeoJsonSource modeTargetSource = new GeoJsonSource("mode-target", Feature.fromGeometry(Point.fromLngLat(0, 0)));
+//                style.addSource(modeTargetSource);
+//
+//                final SymbolLayer modeTargetLayer;
+//                modeTargetLayer = new SymbolLayer("mode-target", "mode-target");
+//                modeTargetLayer.withProperties(PropertyFactory.iconImage("mode-target"), PropertyFactory.iconAllowOverlap(true), PropertyFactory.iconOpacity((float) 0.5));
+//                style.addLayer(modeTargetLayer);
+//            }
+//        });
+//    }
 
-                map.getUiSettings().setTiltGesturesEnabled(false);
-                map.getUiSettings().setCompassGravity(Gravity.BOTTOM | Gravity.RIGHT);
+//    @SuppressWarnings({"MissingPermission"})
+//    private void enableLocationComponent(final Style style) {
+//        if (PermissionsManager.areLocationPermissionsGranted(getContext())) {
+//            final LocationComponent locationComponent = map.getLocationComponent();
+//            locationComponent.activateLocationComponent(LocationComponentActivationOptions.builder(getContext(), style).build());
+//            locationComponent.setLocationComponentEnabled(true);
+//            locationComponent.setRenderMode(RenderMode.COMPASS);
+//            locationComponent.getLocationEngine().getLastLocation(new LocationEngineCallback<LocationEngineResult>() {
+//                @Override
+//                public void onSuccess(LocationEngineResult result) {
+//                    if (result.getLastLocation() != null && !missionCentered && session == null) {
+//                        map.moveCamera(CameraUpdateFactory.newLatLngZoom(getLatLng(result.getLastLocation()), 17));
+//                    }
+//                }
+//
+//                @Override
+//                public void onFailure(@NonNull Exception exception) {
+//
+//                }
+//            });
+//        }
+//    }
 
-                style.addImage("drone-home", BitmapFactory.decodeResource(MapboxMapFragment.this.getResources(), R.drawable.home));
-                final GeoJsonSource droneHomeSource = new GeoJsonSource("drone-home", Feature.fromGeometry(Point.fromLngLat(0, 0)));
-                style.addSource(droneHomeSource);
-
-                final SymbolLayer droneHomeLayer;
-                droneHomeLayer = new SymbolLayer("drone-home", "drone-home");
-                droneHomeLayer.withProperties(PropertyFactory.iconImage("drone-home"), PropertyFactory.iconAllowOverlap(true));
-                style.addLayer(droneHomeLayer);
-
-                style.addImage("drone", BitmapFactory.decodeResource(MapboxMapFragment.this.getResources(), R.drawable.drone));
-                final GeoJsonSource droneSource = new GeoJsonSource("drone", Feature.fromGeometry(Point.fromLngLat(0, 0)));
-                style.addSource(droneSource);
-
-                final SymbolLayer droneLayer;
-                droneLayer = new SymbolLayer("drone", "drone");
-                droneLayer.withProperties(PropertyFactory.iconImage("drone"), PropertyFactory.iconAllowOverlap(true));
-                style.addLayer(droneLayer);
-
-                style.addImage("mode-target", BitmapFactory.decodeResource(MapboxMapFragment.this.getResources(), R.drawable.drone));
-                final GeoJsonSource modeTargetSource = new GeoJsonSource("mode-target", Feature.fromGeometry(Point.fromLngLat(0, 0)));
-                style.addSource(modeTargetSource);
-
-                final SymbolLayer modeTargetLayer;
-                modeTargetLayer = new SymbolLayer("mode-target", "mode-target");
-                modeTargetLayer.withProperties(PropertyFactory.iconImage("mode-target"), PropertyFactory.iconAllowOverlap(true), PropertyFactory.iconOpacity((float) 0.5));
-                style.addLayer(modeTargetLayer);
-            }
-        });
-    }
-
-    @SuppressWarnings({"MissingPermission"})
-    private void enableLocationComponent(final Style style) {
-        if (PermissionsManager.areLocationPermissionsGranted(getContext())) {
-            final LocationComponent locationComponent = map.getLocationComponent();
-            locationComponent.activateLocationComponent(LocationComponentActivationOptions.builder(getContext(), style).build());
-            locationComponent.setLocationComponentEnabled(true);
-            locationComponent.setRenderMode(RenderMode.COMPASS);
-            locationComponent.getLocationEngine().getLastLocation(new LocationEngineCallback<LocationEngineResult>() {
-                @Override
-                public void onSuccess(LocationEngineResult result) {
-                    if (result.getLastLocation() != null && !missionCentered && session == null) {
-                        map.moveCamera(CameraUpdateFactory.newLatLngZoom(getLatLng(result.getLastLocation()), 17));
-                    }
-                }
-
-                @Override
-                public void onFailure(@NonNull Exception exception) {
-
-                }
-            });
-        }
-    }
-
-    private LatLng getLatLng(final Location location) {
-        return new LatLng(location.getLatitude(), location.getLongitude());
-    }
+//    private LatLng getLatLng(final Location location) {
+//        return new LatLng(location.getLatitude(), location.getLongitude());
+//    }
 }
