@@ -41,31 +41,31 @@ import com.dronelink.core.kernel.core.Message;
 import com.dronelink.core.kernel.core.PlanRestrictionZone;
 import com.dronelink.core.kernel.core.UserInterfaceSettings;
 import com.dronelink.core.kernel.core.enums.VariableValueType;
-import com.mapbox.maps.MapView;
-import com.mapbox.maps.MapboxMap;
-//import com.mapbox.android.core.location.LocationEngineCallback;
-//import com.mapbox.android.core.location.LocationEngineResult;
-//import com.mapbox.android.core.permissions.PermissionsManager;
-//import com.mapbox.geojson.Feature;
-//import com.mapbox.geojson.Point;
-//import com.mapbox.mapboxsdk.annotations.Annotation;
-//import com.mapbox.mapboxsdk.annotations.IconFactory;
-//import com.mapbox.mapboxsdk.annotations.Marker;
-//import com.mapbox.mapboxsdk.annotations.MarkerOptions;
-//import com.mapbox.mapboxsdk.annotations.PolygonOptions;
-//import com.mapbox.mapboxsdk.annotations.PolylineOptions;
-//import com.mapbox.mapboxsdk.camera.CameraUpdateFactory;
-//import com.mapbox.mapboxsdk.geometry.LatLng;
-//import com.mapbox.mapboxsdk.geometry.LatLngBounds;
-//import com.mapbox.mapboxsdk.location.LocationComponent;
-//import com.mapbox.mapboxsdk.location.LocationComponentActivationOptions;
-//import com.mapbox.mapboxsdk.location.modes.RenderMode;
-//import com.mapbox.mapboxsdk.maps.MapView;
-//import com.mapbox.mapboxsdk.maps.MapboxMap;
-//import com.mapbox.mapboxsdk.maps.Style;
-//import com.mapbox.mapboxsdk.style.layers.PropertyFactory;
-//import com.mapbox.mapboxsdk.style.layers.SymbolLayer;
-//import com.mapbox.mapboxsdk.style.sources.GeoJsonSource;
+
+import com.mapbox.android.core.location.LocationEngine;
+import com.mapbox.android.core.location.LocationEngineCallback;
+import com.mapbox.android.core.location.LocationEngineResult;
+import com.mapbox.android.core.permissions.PermissionsManager;
+import com.mapbox.geojson.Feature;
+import com.mapbox.geojson.Point;
+import com.mapbox.mapboxsdk.annotations.Annotation;
+import com.mapbox.mapboxsdk.annotations.IconFactory;
+import com.mapbox.mapboxsdk.annotations.Marker;
+import com.mapbox.mapboxsdk.annotations.MarkerOptions;
+import com.mapbox.mapboxsdk.annotations.PolygonOptions;
+import com.mapbox.mapboxsdk.annotations.PolylineOptions;
+import com.mapbox.mapboxsdk.camera.CameraUpdateFactory;
+import com.mapbox.mapboxsdk.geometry.LatLng;
+import com.mapbox.mapboxsdk.geometry.LatLngBounds;
+import com.mapbox.mapboxsdk.location.LocationComponent;
+import com.mapbox.mapboxsdk.location.LocationComponentActivationOptions;
+import com.mapbox.mapboxsdk.location.modes.RenderMode;
+import com.mapbox.mapboxsdk.maps.MapView;
+import com.mapbox.mapboxsdk.maps.MapboxMap;
+import com.mapbox.mapboxsdk.maps.Style;
+import com.mapbox.mapboxsdk.style.layers.PropertyFactory;
+import com.mapbox.mapboxsdk.style.layers.SymbolLayer;
+import com.mapbox.mapboxsdk.style.sources.GeoJsonSource;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -928,7 +928,7 @@ public class MapboxMapController implements Dronelink.Listener, DroneSessionMana
     @Override
     public void onModeDisengaged(final ModeExecutor executor, final ModeExecutor.Engagement engagement, final Message reason) {}
 
-    //@SuppressWarnings({"MissingPermission"})
+//    @SuppressWarnings({"MissingPermission"})
 //    private void enableLocationComponent(final Style style) {
 //        if (PermissionsManager.areLocationPermissionsGranted(mapView.getContext())) {
 //            locationComponent = map.getLocationComponent();
@@ -936,23 +936,27 @@ public class MapboxMapController implements Dronelink.Listener, DroneSessionMana
 //            locationComponent.setLocationComponentEnabled(true);
 //            locationComponent.setMaxAnimationFps(30);
 //            locationComponent.setRenderMode(RenderMode.COMPASS);
-//            locationComponent.getLocationEngine().getLastLocation(new LocationEngineCallback<LocationEngineResult>() {
-//                @Override
-//                public void onSuccess(LocationEngineResult result) {
-//                    if (map != null && result.getLastLocation() != null && !missionCentered && session == null) {
-//                        map.moveCamera(CameraUpdateFactory.newLatLngZoom(getLatLng(result.getLastLocation()), 17));
+//            final LocationEngine locationEngine = locationComponent.getLocationEngine();
+//            if (locationEngine != null) {
+//                locationEngine.getLastLocation(new LocationEngineCallback<LocationEngineResult>() {
+//                    @Override
+//                    public void onSuccess(LocationEngineResult result) {
+//                        if (map != null && result.getLastLocation() != null && !missionCentered && session == null) {
+//                            map.moveCamera(CameraUpdateFactory.newLatLngZoom(getLatLng(result.getLastLocation()), 17));
+//                        }
 //                    }
-//                }
 //
-//                @Override
-//                public void onFailure(@NonNull Exception exception) {
+//                    @Override
+//                    public void onFailure(@NonNull Exception exception) {
 //
-//                }
-//            });
+//                    }
+//                });
+//            }
 //        }
 //    }
-
+//
 //    private LatLng getLatLng(final Location location) {
 //        return new LatLng(location.getLatitude(), location.getLongitude());
 //    }
+
 }
