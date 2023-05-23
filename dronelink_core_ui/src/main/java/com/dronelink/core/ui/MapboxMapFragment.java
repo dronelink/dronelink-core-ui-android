@@ -18,7 +18,6 @@ import android.location.Location;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
-import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
@@ -56,12 +55,9 @@ import com.mapbox.geojson.Point;
 import com.mapbox.maps.CameraOptions;
 import com.mapbox.maps.EdgeInsets;
 import com.mapbox.maps.GeoJSONSourceData;
-import com.mapbox.maps.MapInitOptions;
 import com.mapbox.maps.MapView;
 import com.mapbox.maps.MapboxMap;
-import com.mapbox.maps.ResourceOptions;
 import com.mapbox.maps.Style;
-import com.mapbox.maps.TileStoreUsageMode;
 import com.mapbox.maps.extension.style.layers.generated.SymbolLayer;
 import com.mapbox.maps.extension.style.sources.generated.GeoJsonSource;
 import com.mapbox.maps.plugin.Plugin;
@@ -158,23 +154,18 @@ public class MapboxMapFragment extends Fragment implements Dronelink.Listener, D
     @Override
     public void onViewCreated(final View view, @Nullable final Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        Log.e("MAPBOXTEST", "MAP ABOUT TO BUILD");
-        final ResourceOptions resourceOptions = new ResourceOptions.Builder()
-                .accessToken("pk.eyJ1IjoiZHJvbmVsaW5rIiwiYSI6ImNqcHdvZm12NjE0bTQ0OXBjcHV2bGZmYWYifQ.zpJXSjHjzV_w2reksB6Q7A")
-                .tileStoreUsageMode(TileStoreUsageMode.READ_ONLY).build();
-        final MapInitOptions mapInitOptions = new MapInitOptions(requireContext(), resourceOptions);
-        mapView = new MapView(requireContext(), mapInitOptions);
+        mapView = getView().findViewById(R.id.mapView);
         mapView.setVisibility(View.INVISIBLE);
         this.map = mapView.getMapboxMap();
+
         final AnnotationPlugin annotationPlugin = mapView.getPlugin(Plugin.MAPBOX_ANNOTATION_PLUGIN_ID);
         if (annotationPlugin == null) {
             return;
         }
-        Log.e("MAPBOXTEST", "mapView exists: " + (mapView.toString()));
-
         polygonAnnotationManager = createPolygonAnnotationManager(annotationPlugin, new AnnotationConfig("drone-home", "polygon-annotation-layer"));
         polylineAnnotationManager = createPolylineAnnotationManager(annotationPlugin, new AnnotationConfig("drone-home", "polyline-annotation-layer"));
         pointAnnotationManager = createPointAnnotationManager(annotationPlugin, new AnnotationConfig("drone-home", "point-annotation-layer"));
+
         map.loadStyleUri(Style.SATELLITE_STREETS, style -> {
             enableLocationComponent();
             ScaleBarUtils.getScaleBar(mapView).setEnabled(false);
@@ -213,9 +204,7 @@ public class MapboxMapFragment extends Fragment implements Dronelink.Listener, D
 
             //Delay 100 ms to avoid screen flicker and for location listener to fire.
             new Handler(Looper.getMainLooper()).postDelayed(() -> mapView.setVisibility(View.VISIBLE), 100);
-            Log.e("MAPBOXTEST", "finish on style loaded.");
         });
-        Log.e("MAPBOXTEST", "finish on style loaded.");
     }
 
     @Override
