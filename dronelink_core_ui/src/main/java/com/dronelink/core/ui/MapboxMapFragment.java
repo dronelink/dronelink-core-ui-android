@@ -346,7 +346,6 @@ public class MapboxMapFragment extends Fragment implements Dronelink.Listener, D
             }
 
             final Location droneHomeLocation = state.getHomeLocation();
-
             if (droneHomeLocation != null) {
                 style.setStyleGeoJSONSourceData("drone-home", GeoJSONSourceData.valueOf(Feature.fromGeometry(Point.fromLngLat(droneHomeLocation.getLongitude(), droneHomeLocation.getLatitude()))));
             }

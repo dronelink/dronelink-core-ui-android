@@ -23,7 +23,6 @@ import android.view.View;
 import android.widget.PopupMenu;
 
 
-
 import com.dronelink.core.CameraFile;
 import com.dronelink.core.Convert;
 import com.dronelink.core.DroneOffsets;
@@ -45,8 +44,6 @@ import com.dronelink.core.kernel.core.Message;
 import com.dronelink.core.kernel.core.PlanRestrictionZone;
 import com.dronelink.core.kernel.core.UserInterfaceSettings;
 import com.dronelink.core.kernel.core.enums.VariableValueType;
-
-
 import com.mapbox.android.core.permissions.PermissionsManager;
 import com.mapbox.geojson.Feature;
 import com.mapbox.geojson.Point;
@@ -213,6 +210,8 @@ public class MapboxMapController implements Dronelink.Listener, DroneSessionMana
         }
 
         if (locationComponent != null) {
+            locationComponent.onStop();
+            locationComponent.setEnabled(false);
             locationComponent.removeOnIndicatorPositionChangedListener(indicatorPositionChangedListener);
             locationComponent = null;
         }
@@ -242,6 +241,7 @@ public class MapboxMapController implements Dronelink.Listener, DroneSessionMana
         if (modeExecutor != null) {
             modeExecutor.removeListener(this);
         }
+
         polygonAnnotationManager = null;
         pointAnnotationManager = null;
         polylineAnnotationManager = null;
@@ -258,6 +258,7 @@ public class MapboxMapController implements Dronelink.Listener, DroneSessionMana
 
     public void onMore(final Context context, final View anchor, final MapboxMapController.MoreMenuItem[] actions) {
         final PopupMenu actionSheet = new PopupMenu(new ContextThemeWrapper(context, R.style.PopupMenuOverlapAnchor), anchor);
+
         actionSheet.getMenu().add(R.string.MapboxMap_reset);
         actionSheet.getMenu().add(R.string.MapboxMap_drone_heading);
         actionSheet.getMenu().add(R.string.MapboxMap_drone_north_up);
@@ -327,7 +328,6 @@ public class MapboxMapController implements Dronelink.Listener, DroneSessionMana
             }
 
             final Location droneHomeLocation = state.getHomeLocation();
-
             if (droneHomeLocation != null) {
                 style.setStyleGeoJSONSourceData("drone-home", GeoJSONSourceData.valueOf(Feature.fromGeometry(Point.fromLngLat(droneHomeLocation.getLongitude(), droneHomeLocation.getLatitude()))));
             }
@@ -360,7 +360,7 @@ public class MapboxMapController implements Dronelink.Listener, DroneSessionMana
         setVisibleCoordinates(visibleCoordinates, null);
     }
 
-    private void setVisibleCoordinates(final List<Point> visibleCoordinates, final Double direction) { //TODO parameters were final List<LatLng> visibleCoordinates, final Double direction
+    private void setVisibleCoordinates(final List<Point> visibleCoordinates, final Double direction) {
         if (visibleCoordinates.size() == 0) {
             return;
         }
@@ -1003,5 +1003,4 @@ public class MapboxMapController implements Dronelink.Listener, DroneSessionMana
     private Point getPoint(final Location location) {
         return Point.fromLngLat(location.getLongitude(), location.getLatitude());
     }
-
 }
