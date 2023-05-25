@@ -17,7 +17,6 @@ import android.graphics.Color;
 import android.location.Location;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.Looper;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
@@ -126,6 +125,8 @@ public class MapboxMapFragment extends Fragment implements Dronelink.Listener, D
     private Timer updateTimer;
     private final long updateMillis = 100;
     private boolean missionCentered = false;
+    private boolean mapStyleLoaded = false;
+    private boolean setMapVisibilityDuringStyleLoad = false;
     private String currentMissionEstimateID = null;
     private Tracking tracking = Tracking.NONE;
 
@@ -155,7 +156,6 @@ public class MapboxMapFragment extends Fragment implements Dronelink.Listener, D
     public void onViewCreated(final View view, @Nullable final Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         mapView = getView().findViewById(R.id.mapView);
-        mapView.setVisibility(View.INVISIBLE);
         this.map = mapView.getMapboxMap();
 
         final AnnotationPlugin annotationPlugin = mapView.getPlugin(Plugin.MAPBOX_ANNOTATION_PLUGIN_ID);
@@ -202,8 +202,10 @@ public class MapboxMapFragment extends Fragment implements Dronelink.Listener, D
             modeTargetLayer.iconOpacity(0.5);
             modeTargetLayer.bindTo(style);
 
-            //Delay 100 ms to avoid screen flicker and for location listener to fire.
-            new Handler(Looper.getMainLooper()).postDelayed(() -> mapView.setVisibility(View.VISIBLE), 100);
+            if (setMapVisibilityDuringStyleLoad) {
+                mapView.setVisibility(View.VISIBLE);
+            }
+            mapStyleLoaded = true;
         });
     }
 
@@ -384,16 +386,28 @@ public class MapboxMapFragment extends Fragment implements Dronelink.Listener, D
         }
 
         final double inset = 0.2;
+        final float density = mapView.getResources().getDisplayMetrics().density;
+        final float heightDp = mapView.getHeight() / density;
+        final float widthDp = mapView.getWidth() / density;
+
         final EdgeInsets edgePadding = new EdgeInsets(
-                mapView.getHeight() * (mapView.getHeight() > 300 ? 0.25 : inset),
-                mapView.getWidth() * inset,
-                mapView.getHeight() * (mapView.getHeight() > 300 ? 0.38 : inset),
-                mapView.getWidth() * inset);
+                heightDp * (heightDp > 300 ? 0.25 : inset),
+                widthDp * inset,
+                heightDp * (heightDp > 300 ? 0.38 : inset),
+                widthDp * inset);
 
         final Double updatedDirection = direction == null ? null : direction < 0 ? direction + 360 : direction;
-        CameraOptions cameraOptions = map.cameraForCoordinates(visibleCoordinates, edgePadding, updatedDirection, null);
-        CameraAnimationsUtils.getCamera(mapView).easeTo(cameraOptions, new MapAnimationOptions.Builder().duration(CAMERA_ANIMATION_DURATION).build());
-
+        final CameraOptions cameraOptions = map.cameraForCoordinates(visibleCoordinates, edgePadding, updatedDirection, null);
+        if (mapView.getVisibility() == View.INVISIBLE) {
+            if (mapStyleLoaded) {
+                map.setCamera(cameraOptions);
+                mapView.setVisibility(View.VISIBLE);
+            } else {
+                setMapVisibilityDuringStyleLoad = true;
+            }
+        } else {
+            CameraAnimationsUtils.getCamera(mapView).easeTo(cameraOptions, new MapAnimationOptions.Builder().duration(CAMERA_ANIMATION_DURATION).build());
+        }
     }
 
     private Runnable addMissionReferenceMarker = new Runnable() {
@@ -852,8 +866,17 @@ public class MapboxMapFragment extends Fragment implements Dronelink.Listener, D
                     @Override
                     public void run() {
                         if (map != null) {
-                            CameraOptions cameraOptions = new CameraOptions.Builder().center(getPoint(droneLocation)).zoom(18.5).build();
-                            CameraAnimationsUtils.getCamera(mapView).easeTo(cameraOptions, new MapAnimationOptions.Builder().duration(CAMERA_ANIMATION_DURATION).build());
+                            final CameraOptions cameraOptions = new CameraOptions.Builder().center(getPoint(droneLocation)).zoom(18.5).build();
+                            if (mapView.getVisibility() == View.INVISIBLE) {
+                                if (mapStyleLoaded) {
+                                    map.setCamera(cameraOptions);
+                                    mapView.setVisibility(View.VISIBLE);
+                                } else {
+                                    setMapVisibilityDuringStyleLoad = true;
+                                }
+                            } else {
+                                CameraAnimationsUtils.getCamera(mapView).easeTo(cameraOptions, new MapAnimationOptions.Builder().duration(CAMERA_ANIMATION_DURATION).build());
+                            }
                         }
                     }
                 });
@@ -1058,6 +1081,9 @@ public class MapboxMapFragment extends Fragment implements Dronelink.Listener, D
                     initialLocationUpdated = true;
                     final CameraOptions cameraOptions = new CameraOptions.Builder().center(point).zoom(17.0).build();
                     map.setCamera(cameraOptions);
+                    if (mapView.getVisibility() == View.INVISIBLE) {
+                        mapView.setVisibility(View.VISIBLE);
+                    }
                 }
             };
 
