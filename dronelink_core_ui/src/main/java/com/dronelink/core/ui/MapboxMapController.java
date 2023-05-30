@@ -137,6 +137,9 @@ public class MapboxMapController implements Dronelink.Listener, DroneSessionMana
     public MapboxMapController(final MapView mapView) {
         this.mapView = mapView;
         this.map = mapView.getMapboxMap();
+        //Set map invisible here to avoid flicker of wrong style/location when map is loaded.
+        //It is set back to visible once style is loaded and correct location is set.
+        this.mapView.setVisibility(View.INVISIBLE);
         final AnnotationPlugin annotationPlugin = mapView.getPlugin(Plugin.MAPBOX_ANNOTATION_PLUGIN_ID);
         if (annotationPlugin == null) {
             return;

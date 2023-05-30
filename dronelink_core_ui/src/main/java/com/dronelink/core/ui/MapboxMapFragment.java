@@ -156,6 +156,9 @@ public class MapboxMapFragment extends Fragment implements Dronelink.Listener, D
     public void onViewCreated(final View view, @Nullable final Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         mapView = getView().findViewById(R.id.mapView);
+        //Set map invisible here to avoid flicker of wrong style/location when map is loaded.
+        //It is set back to visible once style is loaded and correct location is set.
+        mapView.setVisibility(View.INVISIBLE);
         this.map = mapView.getMapboxMap();
 
         final AnnotationPlugin annotationPlugin = mapView.getPlugin(Plugin.MAPBOX_ANNOTATION_PLUGIN_ID);
