@@ -1047,12 +1047,11 @@ public class MapboxMapFragment extends Fragment implements Dronelink.Listener, D
             final LocationComponentPlugin2 locationComponent2 = LocationComponentUtils.getLocationComponent2(mapView);
             locationComponent2.setShowAccuracyRing(true);
             locationComponent2.setPuckBearingSource(PuckBearingSource.HEADING);
-
-            if (!missionCentered && session == null) {
+            if (!missionCentered) {
                 final Location userLocation = Dronelink.getInstance().getLocation();
                 if (userLocation != null) {
                     final Point userLocationPoint = Point.fromLngLat(userLocation.getLongitude(), userLocation.getLatitude());
-                    setCameraOptions(new CameraOptions.Builder().center(userLocationPoint).zoom( 17.0).build(),false);
+                    setCameraOptions(new CameraOptions.Builder().center(userLocationPoint).zoom(17.0).build(),false);
                 }
             }
         }
