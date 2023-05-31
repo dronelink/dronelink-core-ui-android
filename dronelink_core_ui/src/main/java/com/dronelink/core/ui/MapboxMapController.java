@@ -73,7 +73,6 @@ import com.mapbox.maps.plugin.animation.MapAnimationOptions;
 import com.mapbox.maps.plugin.locationcomponent.LocationComponentPlugin;
 import com.mapbox.maps.plugin.locationcomponent.LocationComponentPlugin2;
 import com.mapbox.maps.plugin.locationcomponent.LocationComponentUtils;
-import com.mapbox.maps.plugin.locationcomponent.OnIndicatorPositionChangedListener;
 import com.mapbox.maps.plugin.scalebar.ScaleBarUtils;
 
 import java.util.ArrayList;
@@ -99,9 +98,8 @@ public class MapboxMapController implements Dronelink.Listener, DroneSessionMana
     private ModeExecutor modeExecutor;
     private MapView mapView;
     private MapboxMap map;
+    private CameraOptions cameraOptions;
     private LocationComponentPlugin locationComponent;
-    private OnIndicatorPositionChangedListener indicatorPositionChangedListener;
-    private boolean initialLocationUpdated = false;
     private PolygonAnnotationManager polygonAnnotationManager;
     private PointAnnotationManager pointAnnotationManager;
     private PolylineAnnotationManager polylineAnnotationManager;
@@ -112,16 +110,15 @@ public class MapboxMapController implements Dronelink.Listener, DroneSessionMana
     private PolylineAnnotation missionEstimateForegroundAnnotation;
     private PolylineAnnotation missionReengagementEstimateBackgroundAnnotation;
     private PolylineAnnotation missionReengagementEstimateForegroundAnnotation;
-    private List<PolygonAnnotation> missionRestrictionZoneAnnotations = new ArrayList<>();
-    private List<PolygonAnnotation> funcMapOverlayAnnotations = new ArrayList<>();
-    private List<PointAnnotation> funcDroneAnnotations = new ArrayList<>();
+    private final List<PolygonAnnotation> missionRestrictionZoneAnnotations = new ArrayList<>();
+    private final List<PolygonAnnotation> funcMapOverlayAnnotations = new ArrayList<>();
+    private final List<PointAnnotation> funcDroneAnnotations = new ArrayList<>();
     private SymbolLayer droneLayer;
     private SymbolLayer modeTargetLayer;
     private Timer updateTimer;
     private final long updateMillis = 100;
     private boolean missionCentered = false;
-    private boolean mapStyleLoaded = false;
-    private boolean setMapVisibilityDuringStyleLoad = false;
+    private boolean setMapVisibilityAfterStyleLoad = false;
     private String currentMissionEstimateID = null;
     private Tracking tracking = Tracking.NONE;
     private boolean disposed = false;
@@ -158,6 +155,7 @@ public class MapboxMapController implements Dronelink.Listener, DroneSessionMana
             }
         }, 0, updateMillis);
 
+        cameraOptions = new CameraOptions.Builder().build();
         polygonAnnotationManager = createPolygonAnnotationManager(annotationPlugin, new AnnotationConfig("drone-home", "polygon-annotation-layer"));
         polylineAnnotationManager = createPolylineAnnotationManager(annotationPlugin, new AnnotationConfig("drone-home", "polyline-annotation-layer"));
         pointAnnotationManager = createPointAnnotationManager(annotationPlugin, new AnnotationConfig("drone-home", "point-annotation-layer"));
@@ -197,10 +195,10 @@ public class MapboxMapController implements Dronelink.Listener, DroneSessionMana
             modeTargetLayer.iconOpacity(0.5);
             modeTargetLayer.bindTo(style);
 
-            if (setMapVisibilityDuringStyleLoad) {
-                mapView.setVisibility(View.VISIBLE);
+            if (setMapVisibilityAfterStyleLoad) {
+                cameraOptions = new CameraOptions.Builder().center(map.getCameraState().getCenter()).zoom(map.getCameraState().getZoom()).build();
+                cameraOptionsPending(cameraOptions, false);
             }
-            mapStyleLoaded = true;
         });
     }
 
@@ -218,7 +216,6 @@ public class MapboxMapController implements Dronelink.Listener, DroneSessionMana
         if (locationComponent != null) {
             locationComponent.onStop();
             locationComponent.setEnabled(false);
-            locationComponent.removeOnIndicatorPositionChangedListener(indicatorPositionChangedListener);
             locationComponent = null;
         }
 
@@ -247,14 +244,6 @@ public class MapboxMapController implements Dronelink.Listener, DroneSessionMana
         if (modeExecutor != null) {
             modeExecutor.removeListener(this);
         }
-
-        polygonAnnotationManager = null;
-        pointAnnotationManager = null;
-        polylineAnnotationManager = null;
-        droneLayer = null;
-        modeTargetLayer = null;
-        map = null;
-        mapView = null;
     }
 
     public interface MoreMenuItem {
@@ -383,17 +372,8 @@ public class MapboxMapController implements Dronelink.Listener, DroneSessionMana
                 widthDp * inset);
 
         final Double updatedDirection = direction == null ? null : direction < 0 ? direction + 360 : direction;
-        final CameraOptions cameraOptions = map.cameraForCoordinates(visibleCoordinates, edgePadding, updatedDirection, null);
-        if (mapView.getVisibility() == View.INVISIBLE) {
-            if (mapStyleLoaded) {
-                map.setCamera(cameraOptions);
-                mapView.setVisibility(View.VISIBLE);
-            } else {
-                setMapVisibilityDuringStyleLoad = true;
-            }
-        } else {
-            CameraAnimationsUtils.getCamera(mapView).easeTo(cameraOptions, new MapAnimationOptions.Builder().duration(CAMERA_ANIMATION_DURATION).build());
-        }
+        cameraOptions = map.cameraForCoordinates(visibleCoordinates, edgePadding, updatedDirection, null);
+        cameraOptionsPending(cameraOptions, true);
     }
 
     private Runnable addMissionReferenceMarker = new Runnable() {
@@ -709,9 +689,9 @@ public class MapboxMapController implements Dronelink.Listener, DroneSessionMana
             }
 
             if (mapCenterSpatial != null) {
-                final CameraOptions cameraOptions = new CameraOptions.Builder()
+                cameraOptions = new CameraOptions.Builder()
                         .center(Point.fromLngLat(mapCenterSpatial.coordinate.longitude, mapCenterSpatial.coordinate.latitude)).zoom(19.25).build();
-                CameraAnimationsUtils.getCamera(mapView).easeTo(cameraOptions, new MapAnimationOptions.Builder().duration(CAMERA_ANIMATION_DURATION).build());
+                cameraOptionsPending(cameraOptions, true);
             }
 
             for (final PolygonAnnotation funcMapOverlayAnnotation : funcMapOverlayAnnotations) {
@@ -838,17 +818,8 @@ public class MapboxMapController implements Dronelink.Listener, DroneSessionMana
                 @Override
                 public void run() {
                     if (map != null) {
-                        final CameraOptions cameraOptions = new CameraOptions.Builder().center(getPoint(droneLocation)).zoom(18.5).build();
-                        if (mapView.getVisibility() == View.INVISIBLE) {
-                            if (mapStyleLoaded) {
-                                map.setCamera(cameraOptions);
-                                mapView.setVisibility(View.VISIBLE);
-                            } else {
-                                setMapVisibilityDuringStyleLoad = true;
-                            }
-                        } else {
-                            CameraAnimationsUtils.getCamera(mapView).easeTo(cameraOptions, new MapAnimationOptions.Builder().duration(CAMERA_ANIMATION_DURATION).build());
-                        }
+                        cameraOptions = new CameraOptions.Builder().center(getPoint(droneLocation)).zoom(18.5).build();
+                        cameraOptionsPending(cameraOptions, true);
                     }
                 }
             });
@@ -1010,23 +981,37 @@ public class MapboxMapController implements Dronelink.Listener, DroneSessionMana
             locationComponent = LocationComponentUtils.getLocationComponent(mapView);
             locationComponent.setEnabled(true);
             locationComponent.setLocationPuck(LocationComponentUtils.createDefault2DPuck(locationComponent, mapView.getContext(), true));
+            //Per Mapbox docs https://docs.mapbox.com/android/maps/guides/user-location/ Interface LocationComponentPlugin2 extends the original LocationComponentPlugin interface, it is introduced inorder to avoid breaking API changes.
             LocationComponentPlugin2 locationComponent2 = LocationComponentUtils.getLocationComponent2(mapView);
             locationComponent2.setShowAccuracyRing(true);
             locationComponent2.setPuckBearingSource(PuckBearingSource.HEADING);
 
-            final Location homeLocation = session == null ? null : session.getState().value.getHomeLocation();
-            indicatorPositionChangedListener = point -> {
-                if (map != null && !missionCentered && (session == null || homeLocation == null) && !initialLocationUpdated) {
-                    initialLocationUpdated = true;
-                    final CameraOptions cameraOptions = new CameraOptions.Builder().center(point).zoom(17.0).build();
-                    map.setCamera(cameraOptions);
-                    if (mapView.getVisibility() == View.INVISIBLE) {
-                        mapView.setVisibility(View.VISIBLE);
-                    }
-                }
-            };
+            final Location userLocation = Dronelink.getInstance().getLocation();
+            final Point userLocationPoint = userLocation == null ? null : Point.fromLngLat(userLocation.getLongitude(), userLocation.getLatitude());
+            cameraOptions = new CameraOptions.Builder().center(userLocationPoint).zoom(userLocationPoint != null ? 17.0 : 0.0).build();
+            cameraOptionsPending(cameraOptions,false);
+        }
+    }
 
-            locationComponent.addOnIndicatorPositionChangedListener(indicatorPositionChangedListener);
+    private void cameraOptionsPending(final CameraOptions cameraOptions, final boolean animated) {
+        if (map == null || cameraOptions == null) {
+            return;
+        }
+
+        if (map.getStyle() == null) {
+            map.setCamera(cameraOptions);
+            setMapVisibilityAfterStyleLoad = true;
+            return;
+        }
+
+        if (animated && mapView.getVisibility() == View.VISIBLE) {
+            CameraAnimationsUtils.getCamera(mapView).easeTo(cameraOptions, new MapAnimationOptions.Builder().duration(CAMERA_ANIMATION_DURATION).build());
+        } else if (!animated || mapView.getVisibility() == View.INVISIBLE) {
+            map.setCamera(cameraOptions);
+        }
+
+        if (mapView.getVisibility() == View.INVISIBLE) {
+            mapView.setVisibility(View.VISIBLE);
         }
     }
 
