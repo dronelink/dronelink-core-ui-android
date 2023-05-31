@@ -215,7 +215,6 @@ public class MapboxMapController implements Dronelink.Listener, DroneSessionMana
         if (locationComponent != null) {
             locationComponent.onStop();
             locationComponent.setEnabled(false);
-            locationComponent = null;
         }
 
         final DroneSessionManager manager = Dronelink.getInstance().getTargetDroneSessionManager();

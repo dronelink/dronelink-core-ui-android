@@ -239,7 +239,6 @@ public class MapboxMapFragment extends Fragment implements Dronelink.Listener, D
         if (locationComponent != null) {
             locationComponent.onStop();
             locationComponent.setEnabled(false);
-            locationComponent = null;
         }
 
         final DroneSessionManager manager = Dronelink.getInstance().getTargetDroneSessionManager();
