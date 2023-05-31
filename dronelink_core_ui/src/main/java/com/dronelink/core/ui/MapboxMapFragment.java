@@ -1054,8 +1054,10 @@ public class MapboxMapFragment extends Fragment implements Dronelink.Listener, D
 
             final Location userLocation = Dronelink.getInstance().getLocation();
             final Point userLocationPoint = userLocation == null ? null : Point.fromLngLat(userLocation.getLongitude(), userLocation.getLatitude());
-            cameraOptions = new CameraOptions.Builder().center(userLocationPoint).zoom(userLocationPoint != null ? 17.0 : 0.0).build();
-            cameraOptionsPending(cameraOptions,false);
+            if (!missionCentered && session == null) {
+                cameraOptions = new CameraOptions.Builder().center(userLocationPoint).zoom(userLocationPoint != null ? 17.0 : 0.0).build();
+                cameraOptionsPending(cameraOptions,false);
+            }
         }
     }
 
