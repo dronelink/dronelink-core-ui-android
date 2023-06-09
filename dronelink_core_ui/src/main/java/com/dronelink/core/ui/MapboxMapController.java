@@ -52,6 +52,7 @@ import com.mapbox.maps.GeoJSONSourceData;
 import com.mapbox.maps.MapView;
 import com.mapbox.maps.MapboxMap;
 import com.mapbox.maps.Style;
+import com.mapbox.maps.extension.observable.eventdata.MapLoadedEventData;
 import com.mapbox.maps.plugin.Plugin;
 import com.mapbox.maps.plugin.PuckBearingSource;
 import com.mapbox.maps.plugin.annotation.AnnotationConfig;
@@ -64,15 +65,18 @@ import com.mapbox.maps.plugin.annotation.generated.PolygonAnnotationOptions;
 import com.mapbox.maps.plugin.annotation.generated.PolylineAnnotation;
 import com.mapbox.maps.plugin.annotation.generated.PolylineAnnotationManager;
 import com.mapbox.maps.plugin.annotation.generated.PolylineAnnotationOptions;
+import com.mapbox.maps.plugin.attribution.AttributionViewPlugin;
 import com.mapbox.maps.plugin.compass.CompassViewPlugin;
 import com.mapbox.maps.plugin.annotation.AnnotationPlugin;
 import com.mapbox.maps.extension.style.layers.generated.SymbolLayer;
 import com.mapbox.maps.extension.style.sources.generated.GeoJsonSource;
 import com.mapbox.maps.plugin.animation.CameraAnimationsUtils;
 import com.mapbox.maps.plugin.animation.MapAnimationOptions;
+import com.mapbox.maps.plugin.delegates.listeners.OnMapLoadedListener;
 import com.mapbox.maps.plugin.locationcomponent.LocationComponentPlugin;
 import com.mapbox.maps.plugin.locationcomponent.LocationComponentPlugin2;
 import com.mapbox.maps.plugin.locationcomponent.LocationComponentUtils;
+import com.mapbox.maps.plugin.logo.LogoViewPlugin;
 import com.mapbox.maps.plugin.scalebar.ScaleBarUtils;
 
 import java.util.ArrayList;
@@ -98,6 +102,7 @@ public class MapboxMapController implements Dronelink.Listener, DroneSessionMana
     private ModeExecutor modeExecutor;
     private MapView mapView;
     private MapboxMap map;
+    private OnMapLoadedListener mapLoadedListener;
     private LocationComponentPlugin locationComponent;
     private PolygonAnnotationManager polygonAnnotationManager;
     private PointAnnotationManager pointAnnotationManager;
@@ -159,11 +164,8 @@ public class MapboxMapController implements Dronelink.Listener, DroneSessionMana
         pointAnnotationManager = createPointAnnotationManager(annotationPlugin, new AnnotationConfig("drone-home", "point-annotation-layer"));
         map.loadStyleUri(Style.SATELLITE_STREETS, style -> {
             enableLocationComponent();
-            ScaleBarUtils.getScaleBar(mapView).setEnabled(false);
-            final CompassViewPlugin compassViewPlugin = mapView.getPlugin(Plugin.MAPBOX_COMPASS_PLUGIN_ID);
-            if (compassViewPlugin != null) {
-                compassViewPlugin.setPosition(Gravity.BOTTOM | Gravity.RIGHT);
-            }
+            mapLoadedListener = mapLoadedEventData -> setMapUISettings();
+            map.addOnMapLoadedListener(mapLoadedListener);
 
             style.addImage("drone-home", BitmapFactory.decodeResource(mapView.getResources(), R.drawable.home));
             final GeoJsonSource droneHomeSource = new GeoJsonSource.Builder("drone-home").build();
@@ -215,6 +217,10 @@ public class MapboxMapController implements Dronelink.Listener, DroneSessionMana
         if (locationComponent != null) {
             locationComponent.onStop();
             locationComponent.setEnabled(false);
+        }
+
+        if (mapLoadedListener != null) {
+            map.removeOnMapLoadedListener(mapLoadedListener);
         }
 
         final DroneSessionManager manager = Dronelink.getInstance().getTargetDroneSessionManager();
@@ -1001,6 +1007,25 @@ public class MapboxMapController implements Dronelink.Listener, DroneSessionMana
             map.setCamera(cameraOptions);
         }
         cameraOptionsInitialized = true;
+    }
+
+    private void setMapUISettings() {
+        final AttributionViewPlugin attributionViewPlugin = mapView.getPlugin(Plugin.MAPBOX_ATTRIBUTION_PLUGIN_ID);
+        final LogoViewPlugin logoViewPlugin = mapView.getPlugin(Plugin.MAPBOX_LOGO_PLUGIN_ID);
+        final float widthDp = mapView.getWidth() / mapView.getResources().getDisplayMetrics().density;
+        if (attributionViewPlugin != null) {
+            attributionViewPlugin.setPosition(Gravity.BOTTOM | Gravity.RIGHT);
+            attributionViewPlugin.setMarginRight(widthDp * 0.15f);
+        }
+        if (logoViewPlugin != null) {
+            logoViewPlugin.setMarginLeft(widthDp * 0.2f);
+        }
+
+        ScaleBarUtils.getScaleBar(mapView).setEnabled(false);
+        final CompassViewPlugin compassViewPlugin = mapView.getPlugin(Plugin.MAPBOX_COMPASS_PLUGIN_ID);
+        if (compassViewPlugin != null) {
+            compassViewPlugin.setPosition(Gravity.BOTTOM | Gravity.RIGHT);
+        }
     }
 
     private Point getPoint(final Location location) {
