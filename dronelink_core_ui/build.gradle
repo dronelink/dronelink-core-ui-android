@@ -29,7 +29,7 @@ dependencies {
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
     implementation 'com.google.android.material:material:1.6.1'
-    implementation 'com.mapbox.maps:android:10.12.2'
+    implementation 'com.mapbox.mapboxsdk:mapbox-android-sdk:9.7.2'
     //implementation 'com.microsoft.maps:maps-sdk:1.2.0'
     //https://github.com/microsoft/MapsSDK-Native/issues/59
     compileOnly files('libs/maps-sdk-1.2.0.aar')
