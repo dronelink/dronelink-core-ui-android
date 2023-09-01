@@ -781,6 +781,9 @@ public class FuncFragment extends Fragment implements Dronelink.Listener, DroneS
     }
 
     @Override
+    public void onDroneSessionManagerAdded(final DroneSessionManager droneSessionManager) {}
+
+    @Override
     public void onRegistered(final String error) {}
 
     @Override

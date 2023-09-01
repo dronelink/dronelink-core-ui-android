@@ -219,50 +219,30 @@ public class ModeFragment extends Fragment implements Dronelink.Listener, DroneS
                         return;
                     }
 
-                    try {
-                        modeExecutor.engage(session, new Executor.EngageDisallowed() {
-                            @Override
-                            public void disallowed(final Message reason) {
-                                Handler handler = new Handler(Looper.getMainLooper());
-                                handler.post(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        final AlertDialog.Builder alertDialog = new AlertDialog.Builder(getActivity());
-                                        alertDialog.setTitle(reason.title);
-                                        if (reason.details != null) {
-                                            alertDialog.setMessage(reason.details);
+                    modeExecutor.engage(session, new Executor.EngageDisallowed() {
+                        @Override
+                        public void disallowed(final Message reason) {
+                            Handler handler = new Handler(Looper.getMainLooper());
+                            handler.post(new Runnable() {
+                                @Override
+                                public void run() {
+                                    final AlertDialog.Builder alertDialog = new AlertDialog.Builder(getActivity());
+                                    alertDialog.setTitle(reason.title);
+                                    if (reason.details != null) {
+                                        alertDialog.setMessage(reason.details);
+                                    }
+                                    alertDialog.setPositiveButton(getString(R.string.Executable_dismiss), new DialogInterface.OnClickListener() {
+                                        @Override
+                                        public void onClick(final DialogInterface d, int i) {
+                                            d.dismiss();
                                         }
-                                        alertDialog.setPositiveButton(getString(R.string.Executable_dismiss), new DialogInterface.OnClickListener() {
-                                            @Override
-                                            public void onClick(final DialogInterface d, int i) {
-                                                d.dismiss();
-                                            }
-                                        });
-                                        alertDialog.show();
-                                    }
-                                });
-                                getActivity().runOnUiThread(updateViews);
-                            }
-                        });
-                    } catch (final Dronelink.DroneSerialNumberUnavailableException e) {
-                        Handler handler = new Handler(Looper.getMainLooper());
-                        handler.post(new Runnable() {
-                            @Override
-                            public void run() {
-                                final AlertDialog.Builder alertDialog = new AlertDialog.Builder(getActivity());
-                                alertDialog.setTitle(getString(R.string.Executable_start_engage_droneSerialNumberUnavailable_title));
-                                alertDialog.setMessage(getString(R.string.Executable_start_engage_droneSerialNumberUnavailable_message));
-                                alertDialog.setPositiveButton(getString(R.string.Executable_dismiss), new DialogInterface.OnClickListener() {
-                                    @Override
-                                    public void onClick(final DialogInterface d, int i) {
-                                        d.dismiss();
-                                    }
-                                });
-                                alertDialog.show();
-                            }
-                        });
-                        getActivity().runOnUiThread(updateViews);
-                    }
+                                    });
+                                    alertDialog.show();
+                                }
+                            });
+                            getActivity().runOnUiThread(updateViews);
+                        }
+                    });
                 }
             });
         }
@@ -378,6 +358,9 @@ public class ModeFragment extends Fragment implements Dronelink.Listener, DroneS
             activity.runOnUiThread(updateViews);
         }
     }
+
+    @Override
+    public void onDroneSessionManagerAdded(final DroneSessionManager droneSessionManager) {}
 
     @Override
     public void onRegistered(final String error) {}

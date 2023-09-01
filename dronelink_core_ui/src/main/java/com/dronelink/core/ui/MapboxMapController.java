@@ -133,7 +133,8 @@ public class MapboxMapController implements Dronelink.Listener, DroneSessionMana
         map.setStyle(Style.SATELLITE_STREETS, new Style.OnStyleLoaded() {
             @Override
             public void onStyleLoaded(@NonNull Style style) {
-                enableLocationComponent(style);
+                //TODO causes a crash: IncompatibleClassChangeError: Found interface com.google.android.gms.location.FusedLocationProviderClient
+                // enableLocationComponent(style);
 
                 map.getUiSettings().setTiltGesturesEnabled(false);
                 map.getUiSettings().setCompassGravity(Gravity.BOTTOM | Gravity.RIGHT);
@@ -178,11 +179,11 @@ public class MapboxMapController implements Dronelink.Listener, DroneSessionMana
         if (updateTimer != null) {
             updateTimer.cancel();
         }
-
-        if (locationComponent != null) {
-            locationComponent.onStop();
-            locationComponent.setLocationComponentEnabled(false);
-        }
+//TODO re-enable if we turn the location component back on
+//        if (locationComponent != null) {
+//            locationComponent.onStop();
+//            locationComponent.setLocationComponentEnabled(false);
+//        }
 
         final DroneSessionManager manager = Dronelink.getInstance().getTargetDroneSessionManager();
         if (manager != null) {
@@ -748,6 +749,9 @@ public class MapboxMapController implements Dronelink.Listener, DroneSessionMana
         this.session = null;
         session.removeListener(this);
     }
+
+    @Override
+    public void onDroneSessionManagerAdded(final DroneSessionManager droneSessionManager) {}
 
     @Override
     public void onRegistered(final String error) {}

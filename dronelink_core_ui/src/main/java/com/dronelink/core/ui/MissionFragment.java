@@ -188,7 +188,6 @@ public class MissionFragment extends Fragment implements Dronelink.Listener, Dro
                 }
 
                 final Intent intent = new Intent(getActivity(), EmbedActivity.class);
-                intent.putExtra("url", missionExecutor.detailsURL);
                 intent.putExtra("network.error", getString(R.string.Mission_details_network_error));
                 startActivity(intent);
             }
@@ -391,50 +390,30 @@ public class MissionFragment extends Fragment implements Dronelink.Listener, Dro
                         return;
                     }
 
-                    try {
-                        missionExecutor.engage(session, new Executor.EngageDisallowed() {
-                            @Override
-                            public void disallowed(final Message reason) {
-                                Handler handler = new Handler(Looper.getMainLooper());
-                                handler.post(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        final AlertDialog.Builder alertDialog = new AlertDialog.Builder(getActivity());
-                                        alertDialog.setTitle(reason.title);
-                                        if (reason.details != null) {
-                                            alertDialog.setMessage(reason.details);
+                    missionExecutor.engage(session, new Executor.EngageDisallowed() {
+                        @Override
+                        public void disallowed(final Message reason) {
+                            Handler handler = new Handler(Looper.getMainLooper());
+                            handler.post(new Runnable() {
+                                @Override
+                                public void run() {
+                                    final AlertDialog.Builder alertDialog = new AlertDialog.Builder(getActivity());
+                                    alertDialog.setTitle(reason.title);
+                                    if (reason.details != null) {
+                                        alertDialog.setMessage(reason.details);
+                                    }
+                                    alertDialog.setPositiveButton(getString(R.string.Executable_dismiss), new DialogInterface.OnClickListener() {
+                                        @Override
+                                        public void onClick(final DialogInterface d, int i) {
+                                            d.dismiss();
                                         }
-                                        alertDialog.setPositiveButton(getString(R.string.Executable_dismiss), new DialogInterface.OnClickListener() {
-                                            @Override
-                                            public void onClick(final DialogInterface d, int i) {
-                                                d.dismiss();
-                                            }
-                                        });
-                                        alertDialog.show();
-                                    }
-                                });
-                                activity.runOnUiThread(updateViews);
-                            }
-                        });
-                    } catch (final Dronelink.DroneSerialNumberUnavailableException e) {
-                        Handler handler = new Handler(Looper.getMainLooper());
-                        handler.post(new Runnable() {
-                            @Override
-                            public void run() {
-                                final AlertDialog.Builder alertDialog = new AlertDialog.Builder(getActivity());
-                                alertDialog.setTitle(getString(R.string.Executable_start_engage_droneSerialNumberUnavailable_title));
-                                alertDialog.setMessage(getString(R.string.Executable_start_engage_droneSerialNumberUnavailable_message));
-                                alertDialog.setPositiveButton(getString(R.string.Executable_dismiss), new DialogInterface.OnClickListener() {
-                                    @Override
-                                    public void onClick(final DialogInterface d, int i) {
-                                        d.dismiss();
-                                    }
-                                });
-                                alertDialog.show();
-                            }
-                        });
-                        activity.runOnUiThread(updateViews);
-                    }
+                                    });
+                                    alertDialog.show();
+                                }
+                            });
+                            activity.runOnUiThread(updateViews);
+                        }
+                    });
                 }
             });
         }
@@ -476,7 +455,7 @@ public class MissionFragment extends Fragment implements Dronelink.Listener, Dro
                 progressBar.setVisibility(View.INVISIBLE);
                 dismissButton.setVisibility(View.INVISIBLE);
                 messagesTextView.setVisibility(View.INVISIBLE);
-                detailsButton.setVisibility(missionExecutorLocal.isEngaged() || missionExecutorLocal.detailsURL == null ? View.INVISIBLE : View.VISIBLE);
+                detailsButton.setVisibility(missionExecutorLocal.isEngaged() || true ? View.INVISIBLE : View.VISIBLE);
 
                 subtitleTextView.setText(getString(R.string.Mission_estimating));
                 return;
@@ -532,7 +511,7 @@ public class MissionFragment extends Fragment implements Dronelink.Listener, Dro
             progressBar.setVisibility(View.VISIBLE);
             dismissButton.setVisibility(missionExecutorLocal.isEngaged() ? View.INVISIBLE : View.VISIBLE);
             messagesTextView.setVisibility(expanded ? View.VISIBLE : View.INVISIBLE);
-            detailsButton.setVisibility(missionExecutorLocal.isEngaged() || missionExecutorLocal.detailsURL == null ? View.INVISIBLE : View.VISIBLE);
+            detailsButton.setVisibility(missionExecutorLocal.isEngaged() || true ? View.INVISIBLE : View.VISIBLE);
 
             primaryButton.setEnabled(session != null);
 
@@ -621,6 +600,9 @@ public class MissionFragment extends Fragment implements Dronelink.Listener, Dro
             activity.runOnUiThread(updateViews);
         }
     }
+
+    @Override
+    public void onDroneSessionManagerAdded(final DroneSessionManager droneSessionManager) {}
 
     @Override
     public void onRegistered(final String error) {}

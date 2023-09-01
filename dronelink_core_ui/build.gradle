@@ -8,7 +8,7 @@ android {
         minSdkVersion 21
         targetSdkVersion 33
         versionCode 1
-        versionName "4.7.0"
+        versionName "4.8.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles 'consumer-rules.pro'
@@ -36,5 +36,5 @@ dependencies {
     implementation 'com.squareup.picasso:picasso:2.71828'
     implementation 'com.squareup.okhttp3:okhttp:3.14.9'
     implementation 'com.github.stfalcon-studio:StfalconImageViewer:v1.0.1'
-    implementation 'com.github.dronelink:dronelink-core-android:4.7.0'
+    implementation 'com.github.dronelink:dronelink-core-android:4.8.0'
 }

@@ -489,6 +489,9 @@ public class CameraFocusCalibrationFragment extends Fragment implements Dronelin
     }
 
     @Override
+    public void onDroneSessionManagerAdded(final DroneSessionManager droneSessionManager) {}
+
+    @Override
     public void onRegistered(final String error) {}
 
     @Override

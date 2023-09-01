@@ -759,6 +759,9 @@ public class MapboxMapFragment extends Fragment implements Dronelink.Listener, D
     }
 
     @Override
+    public void onDroneSessionManagerAdded(final DroneSessionManager droneSessionManager) {}
+
+    @Override
     public void onRegistered(final String error) {}
 
     @Override

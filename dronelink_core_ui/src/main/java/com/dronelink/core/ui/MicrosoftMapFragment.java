@@ -954,6 +954,9 @@ public class MicrosoftMapFragment extends Fragment implements Dronelink.Listener
     }
 
     @Override
+    public void onDroneSessionManagerAdded(final DroneSessionManager droneSessionManager) {}
+
+    @Override
     public void onRegistered(final String error) {}
 
     @Override
