@@ -41,6 +41,7 @@ import com.dronelink.core.DatedValue;
 import com.dronelink.core.DroneSession;
 import com.dronelink.core.DroneSessionManager;
 import com.dronelink.core.Dronelink;
+import com.dronelink.core.EnumValueObject;
 import com.dronelink.core.FuncExecutor;
 import com.dronelink.core.MissionExecutor;
 import com.dronelink.core.ModeExecutor;
@@ -384,10 +385,20 @@ public class FuncFragment extends Fragment implements Dronelink.Listener, DroneS
                 else {
                     if (input.enumValues.length == 2) {
                         if (variableRadioButton1.isChecked()) {
-                            value = input.enumValues[0];
+                            if (input.enumValues[0] instanceof String) {
+                                value = input.enumValues[0];
+                            }
+                            else {
+                                value = ((EnumValueObject)input.enumValues[0]).value;
+                            }
                         }
                         else if (variableRadioButton2.isChecked()) {
-                            value = input.enumValues[1];
+                            if (input.enumValues[1] instanceof String) {
+                                value = input.enumValues[1];
+                            }
+                            else {
+                                value = ((EnumValueObject)input.enumValues[1]).value;
+                            }
                         }
                     }
                     else {
@@ -441,8 +452,13 @@ public class FuncFragment extends Fragment implements Dronelink.Listener, DroneS
 
             case STRING:
                 if (input.enumValues != null) {
-                    for (final String enumValue : input.enumValues) {
-                        enumValues.add(enumValue);
+                    for (final Object enumValue : input.enumValues) {
+                        if (enumValue instanceof String) {
+                            enumValues.add((String)enumValue);
+                        }
+                        else {
+                            enumValues.add(((EnumValueObject)enumValue).value);
+                        }
                     }
                 }
                 break;
