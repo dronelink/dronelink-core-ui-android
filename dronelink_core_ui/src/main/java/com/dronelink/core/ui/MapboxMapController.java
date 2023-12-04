@@ -139,6 +139,15 @@ public class MapboxMapController implements Dronelink.Listener, DroneSessionMana
                 map.getUiSettings().setTiltGesturesEnabled(false);
                 map.getUiSettings().setCompassGravity(Gravity.BOTTOM | Gravity.RIGHT);
 
+                style.addImage("location-puck", BitmapFactory.decodeResource(mapView.getResources(), R.drawable.location_puck));
+                final GeoJsonSource locationPuckSource = new GeoJsonSource("location-puck", Feature.fromGeometry(Point.fromLngLat(0, 0)));
+                style.addSource(locationPuckSource);
+
+                final SymbolLayer locationPuckLayer;
+                locationPuckLayer = new SymbolLayer("location-puck", "location-puck");
+                locationPuckLayer.withProperties(PropertyFactory.iconImage("location-puck"), PropertyFactory.iconAllowOverlap(true));
+                style.addLayer(locationPuckLayer);
+
                 style.addImage("drone-home", BitmapFactory.decodeResource(mapView.getResources(), R.drawable.home));
                 final GeoJsonSource droneHomeSource = new GeoJsonSource("drone-home", Feature.fromGeometry(Point.fromLngLat(0, 0)));
                 style.addSource(droneHomeSource);
@@ -290,6 +299,12 @@ public class MapboxMapController implements Dronelink.Listener, DroneSessionMana
             final DroneStateAdapter state = getDroneState();
             if (style == null || state == null) {
                 return;
+            }
+
+            final Location pilotLocation = Dronelink.getInstance().getLocation();
+            if (pilotLocation != null) {
+                final GeoJsonSource locationPuckSource = style.getSourceAs("location-puck");
+                locationPuckSource.setGeoJson(Feature.fromGeometry(Point.fromLngLat(pilotLocation.getLongitude(), pilotLocation.getLatitude())));
             }
 
             final Location droneHomeLocation = state.getHomeLocation();
