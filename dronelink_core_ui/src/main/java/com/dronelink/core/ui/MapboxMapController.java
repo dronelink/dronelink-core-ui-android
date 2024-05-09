@@ -6,7 +6,6 @@
 //
 package com.dronelink.core.ui;
 
-import android.app.Activity;
 import android.content.Context;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
@@ -102,6 +101,7 @@ public class MapboxMapController implements Dronelink.Listener, DroneSessionMana
     private boolean missionCentered = false;
     private String currentMissionEstimateID = null;
     private Tracking tracking = Tracking.NONE;
+    private List<LatLng> missionEstimateVisibleCoordinates;
     private boolean disposed = false;
 
     private DroneStateAdapter getDroneState() {
@@ -247,6 +247,10 @@ public class MapboxMapController implements Dronelink.Listener, DroneSessionMana
             @Override
             public boolean onMenuItemClick(final MenuItem item) {
                 if (item.getTitle() == context.getString(R.string.MapboxMap_reset)) {
+                    final List<LatLng> missionEstimateVisibleCoordinatesLocal = missionEstimateVisibleCoordinates;
+                    if (missionEstimateVisibleCoordinatesLocal != null) {
+                        setVisibleCoordinates(missionEstimateVisibleCoordinatesLocal);
+                    }
                     tracking = Tracking.NONE;
                     return true;
                 }
@@ -529,6 +533,7 @@ public class MapboxMapController implements Dronelink.Listener, DroneSessionMana
 
             if (visibleCoordinates.size() > 1) {
                 missionCentered = true;
+                missionEstimateVisibleCoordinates = visibleCoordinates;
                 setVisibleCoordinates(visibleCoordinates);
             }
         }
@@ -830,6 +835,7 @@ public class MapboxMapController implements Dronelink.Listener, DroneSessionMana
     public void onMissionUnloaded(final MissionExecutor executor) {
         missionExecutor = null;
         missionCentered = false;
+        missionEstimateVisibleCoordinates = null;
         executor.removeListener(this);
         runOnUiThread(new Runnable() {
             @Override
