@@ -835,6 +835,7 @@ public class MapboxMapController implements Dronelink.Listener, DroneSessionMana
     public void onMissionUnloaded(final MissionExecutor executor) {
         missionExecutor = null;
         missionCentered = false;
+        missionEstimateVisibleCoordinates = null;
         executor.removeListener(this);
         runOnUiThread(new Runnable() {
             @Override
